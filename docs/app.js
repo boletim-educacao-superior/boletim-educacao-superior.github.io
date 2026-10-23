@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância") são da equipe e "lida" é de cada pessoa: as duas ficam
 // no servidor de acesso (acesso.js / acesso/Acesso.gs). A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023195024"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023204118"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -46,7 +46,7 @@ const VISOES = {
   },
   "sinalizadas": {
     titulo: "Sinalizadas", explica: "Notícias que alguém da equipe marcou para acompanhar. Todos veem as mesmas.",
-    filtro: (it) => marca(it) === "sinalizada", semPeriodo: true,
+    filtro: (it) => marca(it) === "sinalizada", semPeriodo: true, semPrioridade: true,
   },
   "nao-lidas": {
     titulo: "Não lidas", explica: "O que você ainda não abriu nem marcou como lido.",
@@ -58,7 +58,7 @@ const VISOES = {
   },
   "sem-relevancia": {
     titulo: "Sem relevância", explica: "Notícias que a equipe marcou como fora do nosso interesse. Os motivos ajudam a ajustar as regras do Radar.",
-    filtro: (it) => marca(it) === "irrelevante", semPeriodo: true, comRotina: true,
+    filtro: (it) => marca(it) === "irrelevante", semPeriodo: true, semPrioridade: true, comRotina: true,
   },
 };
 
@@ -217,10 +217,13 @@ function salvarFiltros() {
     rotina: $("f-rotina").checked, instituicoes: [...estado.instituicoes],
   });
 }
+// O sistema sempre abre mostrando os urgentes (pedido do Diego); a pessoa muda a prioridade se quiser.
+// Os demais filtros (período, setor, instituições...) voltam como estavam na última visita.
+const PRIORIDADE_INICIAL = "urgente";
 function restaurarFiltros() {
+  $("f-prioridade").value = PRIORIDADE_INICIAL;
   const f = lerLocal("radar.filtros", null);
   if (!f) return;
-  $("f-prioridade").value = f.prioridade ?? "";
   $("f-periodo").value = f.periodo ?? "30";
   // Só restaura o setor se ele ainda existir nos dados.
   if ([...$("f-setor").options].some((o) => o.value === f.setor)) $("f-setor").value = f.setor;
@@ -238,7 +241,7 @@ function semAcento(s) {
 function filtrar() {
   const visao = VISOES[estado.visao];
   const busca = semAcento($("f-busca").value.trim());
-  const prio = $("f-prioridade").value;
+  const prio = visao.semPrioridade ? "" : $("f-prioridade").value;
   const tema = $("f-tema").value;
   const setor = $("f-setor").value;
   const tipo = $("f-tipo").value;
