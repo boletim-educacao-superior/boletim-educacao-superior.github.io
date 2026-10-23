@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261023211635"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023213130"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -139,19 +139,25 @@ function trocarModo(modo) {
   $a("form-codigo").hidden = entrar;
   limparMsgs();
   if (entrar) { setTimeout(() => $a("entrar-email").focus(), 0); return; }
-  const primeiro = modo === "primeiro";
-  $a("codigo-titulo").textContent = primeiro ? "Primeiro acesso" : "Esqueci a senha";
-  $a("codigo-explica").textContent = primeiro
-    ? "Digite o e-mail cadastrado pelo administrador. Você vai receber um código para criar sua senha."
-    : "Digite seu e-mail. Você vai receber um código para criar uma senha nova.";
+  modoCodigo = modo;
+  const textos = {
+    primeiro: ["Primeiro acesso", "Digite o e-mail cadastrado pelo administrador. Você vai receber um código para criar sua senha."],
+    esqueci: ["Esqueci a senha", "Digite seu e-mail. Você vai receber um código para criar uma senha nova."],
+    cadastro: ["Criar minha conta", "Digite seu nome e e-mail. Você vai receber um código para confirmar o e-mail e criar sua senha."],
+  }[modo];
+  $a("codigo-titulo").textContent = textos[0];
+  $a("codigo-explica").textContent = textos[1];
+  $a("codigo-nome-rot").hidden = modo !== "cadastro";
+  $a("codigo-nome").readOnly = false;
   $a("codigo-email").value = $a("entrar-email").value;
   $a("codigo-email").readOnly = false;
   $a("codigo-passo2").hidden = true;
   $a("codigo-reenviar").hidden = true;
   $a("codigo-botao").textContent = "Enviar código";
   ["codigo-codigo", "codigo-senha", "codigo-senha2"].forEach((id) => ($a(id).value = ""));
-  setTimeout(() => $a("codigo-email").focus(), 0);
+  setTimeout(() => $a(modo === "cadastro" ? "codigo-nome" : "codigo-email").focus(), 0);
 }
+let modoCodigo = "primeiro";
 
 function limparMsgs() { document.querySelectorAll(".msg").forEach((m) => { m.textContent = ""; m.className = "msg"; }); }
 function msg(form, texto, tipo = "erro") { const m = form.querySelector(".msg"); m.textContent = texto; m.className = `msg msg-${tipo}`; }
@@ -174,7 +180,8 @@ function entrou(dados) {
 const iniciais = (n) => String(n || "").split(" ").filter((p) => p.length > 2 || /^[A-ZÀ-Ú]/.test(p))
   .filter((p) => !/^(de|da|do|dos|das|e)$/i.test(p))
   .map((p) => p[0]).filter((c, i, a) => i === 0 || i === a.length - 1).join("").toUpperCase() || "?";
-const ROTULO_PERFIL = (p) => (p.admin ? "Administrador" : "Equipe");
+const ROTULO_PERFIL = (p) => (p.admin ? "Administrador" : p.tipo === "usuario" ? "Usuário" : "Equipe CINEA");
+const ehUsuario = () => Acesso.perfil?.tipo === "usuario";
 
 function preencherConta(perfil) {
   Acesso.perfil = perfil;
@@ -182,7 +189,8 @@ function preencherConta(perfil) {
   $a("usuario-nome").title = `Meu perfil (${perfil.email})`;
   const tag = $a("perfil-topo");
   tag.textContent = ROTULO_PERFIL(perfil);
-  tag.dataset.perfil = perfil.admin ? "admin" : "equipe";
+  tag.dataset.perfil = perfil.admin ? "admin" : perfil.tipo === "usuario" ? "usuario" : "equipe";
+  document.body.classList.toggle("perfil-usuario", perfil.tipo === "usuario");
   $a("sigla-topo").textContent = iniciais(perfil.nome || perfil.email);
   $a("sigla-topo").title = `${perfil.nome} · Meu perfil`;
 }
@@ -229,9 +237,13 @@ document.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("clic
 
 async function enviarCodigo() {
   const form = $a("form-codigo"), email = $a("codigo-email").value.trim();
+  if (modoCodigo === "cadastro" && $a("codigo-nome").value.trim().length < 3) return msg(form, "Digite seu nome.");
   if (!email) return msg(form, "Digite seu e-mail.");
-  await servidor("pedirCodigo", { email });
+  // Criar conta: o servidor cadastra (perfil Usuário) e manda o código; nos outros casos, só manda o código.
+  if (modoCodigo === "cadastro") await servidor("cadastrar", { nome: $a("codigo-nome").value.trim(), email });
+  else await servidor("pedirCodigo", { email });
   $a("codigo-email").readOnly = true;
+  $a("codigo-nome").readOnly = true;
   $a("codigo-passo2").hidden = false;
   $a("codigo-reenviar").hidden = false;
   msg(form, `Enviamos um código para ${email}. Ele vale por 15 minutos (confira também o spam).`, "ok");
@@ -454,19 +466,23 @@ async function carregarEquipe(lista) {
     const eu = Acesso.perfil && p.email === Acesso.perfil.email;
     const situacao = p.tem_senha ? `<span class="ok">Ativa</span>` : `<span class="pendente">Ainda não criou a senha</span>`;
     return `<tr data-email="${esc(p.email)}">
-      <td><strong>${esc(p.nome)}</strong>${p.admin ? ' <span class="selo">admin</span>' : ""}${eu ? ' <span class="selo selo-eu">você</span>' : ""}
+      <td><strong>${esc(p.nome)}</strong>${p.admin ? ' <span class="selo">admin</span>' : ""}${p.perfil === "usuario" ? ' <span class="selo selo-usuario" title="Criou a própria conta: marcações só dele(a)">usuário</span>' : ""}${eu ? ' <span class="selo selo-eu">você</span>' : ""}
         <div class="detalhe">${esc(p.email)}</div></td>
       <td>${situacao}${p.boasvindas_em ? `<div class="detalhe">Boas-vindas em ${dataCurta(p.boasvindas_em)}</div>` : ""}</td>
       <td class="nowrap">${dataCurta(p.ultimo_acesso)}</td>
       <td><div class="acoes-linha">
-        <button type="button" class="link" data-acao="admin">${p.admin ? "Tirar admin" : "Tornar admin"}</button>
+        ${p.perfil === "usuario"
+          ? '<button type="button" class="link" data-acao="promover" title="Passa a marcar notícias para toda a equipe">Tornar equipe CINEA</button>'
+          : `<button type="button" class="link" data-acao="admin">${p.admin ? "Tirar admin" : "Tornar admin"}</button>`}
+        ${p.perfil !== "usuario" && !p.admin && !eu ? '<button type="button" class="link" data-acao="rebaixar">Tornar usuário</button>' : ""}
         <button type="button" class="link" data-acao="boasvindas">Reenviar boas-vindas</button>
         ${p.tem_senha && !eu ? '<button type="button" class="link" data-acao="apagarSenha">Apagar senha</button>' : ""}
         ${eu ? "" : '<button type="button" class="link perigo" data-acao="remover">Remover</button>'}
       </div></td></tr>`;
   }).join("") || `<tr><td colspan="4" class="carregando">Ninguém cadastrado.</td></tr>`;
-  const semSenha = lista.filter((p) => !p.tem_senha).length;
-  $a("equipe-conta").textContent = `· ${lista.length} pessoa(s)` + (semSenha ? ` · ${semSenha} ainda sem senha` : "");
+  const semSenha = lista.filter((p) => !p.tem_senha).length, usuarios = lista.filter((p) => p.perfil === "usuario").length;
+  $a("equipe-conta").textContent = `· ${lista.length - usuarios} da equipe CINEA · ${usuarios} usuário(s) cadastrado(s)` +
+    (semSenha ? ` · ${semSenha} ainda sem senha` : "");
   corpo.querySelectorAll("[data-acao]").forEach((b) => b.addEventListener("click", () => acaoMembro(b, lista)));
 }
 
@@ -482,11 +498,13 @@ async function acaoMembro(botao, lista) {
     let nova;
     await ocupado(botao, async () => {
       if (acao === "admin") nova = await api("salvarMembro", p.email, p.nome, !p.admin, false);
+      if (acao === "promover") nova = await api("salvarMembro", p.email, p.nome, false, false, "equipe");
+      if (acao === "rebaixar") nova = await api("salvarMembro", p.email, p.nome, false, false, "usuario");
       if (acao === "boasvindas") nova = await api("enviarBoasVindas", p.email);
       if (acao === "apagarSenha") nova = await api("apagarSenha", p.email);
       if (acao === "remover") nova = await api("removerMembro", p.email);
     });
-    const feito = { admin: "Perfil atualizado.", boasvindas: `Boas-vindas enviado para ${p.email}.`, apagarSenha: "Senha apagada.", remover: `${p.nome} foi removido(a).` };
+    const feito = { promover: `${p.nome} agora é da equipe do CINEA.`, rebaixar: `${p.nome} agora tem perfil de usuário.`, admin: "Perfil atualizado.", boasvindas: `Boas-vindas enviado para ${p.email}.`, apagarSenha: "Senha apagada.", remover: `${p.nome} foi removido(a).` };
     msg(form, feito[acao], "ok");
     carregarEquipe(nova);
   } catch (e) { msg(form, e.message); }
@@ -559,7 +577,9 @@ function montarUso(u) {
     [u.aberturas, "Acessos ao painel", `${u.dias === 7 ? "nos últimos 7 dias" : `nos últimos ${u.dias} dias`}`],
     [u.visitantes, "Navegadores diferentes", "cada navegador conta uma vez"],
     [u.aberturas_equipe, "Acessos da equipe", `${u.pessoas_equipe} pessoa(s) com login · ${pct(u.aberturas_equipe, u.aberturas)}%`],
+    [u.aberturas_usuarios, "Acessos de usuários", `${u.pessoas_usuarios} usuário(s) com conta própria · ${pct(u.aberturas_usuarios, u.aberturas)}%`],
     [u.aberturas_publico, "Acessos de visitantes", `sem login · ${pct(u.aberturas_publico, u.aberturas)}%`],
+    [u.cadastros_novos, "Contas criadas", `no período · ${u.total_usuarios} usuário(s) no total`],
     [u.noticias_abertas, "Notícias abertas", u.csv ? `${u.csv} exportação(ões) para Excel` : "cliques no título"],
     [`${pct(u.dispositivos.celular, u.aberturas)}%`, "Pelo celular", `${u.dispositivos.celular} de ${u.aberturas} acessos`],
   ];
@@ -576,8 +596,9 @@ function montarUso(u) {
       ${barrasPorDia(u.serie)}
     </div>
     <div class="uso-tabelas">
-      ${tabelaUso("Quem da equipe acessou", ["Pessoa", "Acessos", "Último"],
-        u.equipe.map((e) => [e.nome, e.n, dataCurta(e.ultimo)]), "Ninguém da equipe entrou com login neste período.")}
+      ${tabelaUso("Quem acessou com login", ["Pessoa", "Acessos", "Último"],
+        u.equipe.map((e) => [`${e.nome}${e.perfil === "usuario" ? " (usuário)" : ""}`, e.n, dataCurta(e.ultimo)]),
+        "Ninguém entrou com login neste período.")}
       ${tabelaUso("Seções mais vistas", ["Seção", "Vezes"], u.visoes.map((v) => [NOME_VISAO[v.chave] || v.chave, v.n]),
         "Só o Início foi usado.")}
       ${tabelaUso("Instituições mais abertas", ["Instituição", "Notícias"], u.instituicoes.map((i) => [i.chave, i.n]),
@@ -605,20 +626,22 @@ function mapaDeCalor(calor) {
 }
 
 function barrasPorDia(serie) {
-  const max = Math.max(1, ...serie.map((s) => s.equipe + s.publico));
+  const max = Math.max(1, ...serie.map((s) => s.equipe + (s.usuarios || 0) + s.publico));
   const marcar = Math.max(1, Math.ceil(serie.length / 10)); // rótulo de data a cada N barras
   const barras = serie.map((s, i) => {
     const [a, m, d] = s.dia.split("-");
-    const dica = `${d}/${m}: ${s.equipe + s.publico} acesso(s) · equipe ${s.equipe} · visitantes ${s.publico}`;
+    const u = s.usuarios || 0;
+    const dica = `${d}/${m}: ${s.equipe + u + s.publico} acesso(s) · equipe ${s.equipe} · usuários ${u} · visitantes ${s.publico}`;
     return `<div class="barra" data-dica="${esc(dica)}" aria-label="${esc(dica)}">
         <div class="barra-pilha">
           ${s.publico ? `<span class="seg seg-publico" style="height:${(s.publico / max) * 100}%"></span>` : ""}
+          ${u ? `<span class="seg seg-usuarios" style="height:${(u / max) * 100}%"></span>` : ""}
           ${s.equipe ? `<span class="seg seg-equipe" style="height:${(s.equipe / max) * 100}%"></span>` : ""}
         </div>
         <span class="barra-rot">${i % marcar === 0 || i === serie.length - 1 ? `${d}/${m}` : ""}</span>
       </div>`;
   }).join("");
-  return `<div class="barras-legenda"><span><i class="seg-equipe"></i>Equipe (com login)</span><span><i class="seg-publico"></i>Visitantes</span>
+  return `<div class="barras-legenda"><span><i class="seg-equipe"></i>Equipe CINEA</span><span><i class="seg-usuarios"></i>Usuários (conta própria)</span><span><i class="seg-publico"></i>Visitantes</span>
       <span class="meta">máximo: ${max} por dia</span></div>
     <div class="barras" style="--n:${serie.length}">${barras}</div>`;
 }

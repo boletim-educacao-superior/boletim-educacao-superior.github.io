@@ -427,9 +427,16 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 
 /* ------------------------------------------------- painel aberto (visitante) --- */
 #btn-entrar { padding: 8px 18px; }
+.convite-conta { margin-top: 6px; padding: 12px; border-radius: 9px; background: var(--media-fundo); display: flex; flex-direction: column; gap: 8px; }
+.convite-conta p { margin: 0; font-size: .85rem; }
+.convite-conta .btn-sec { background: var(--superficie); font-weight: 600; color: var(--marca); border-color: var(--marca); }
+.selo-usuario { background: var(--baixa-fundo); color: var(--texto-suave); }
+.perfil-topo[data-perfil="usuario"] { background: var(--baixa-fundo); color: var(--texto-suave); }
+i.seg-usuarios, .seg-usuarios { background: var(--barra-usuarios); }
 body:not(.visitante) #btn-entrar { display: none; }
 body.visitante .conta-texto, body.visitante #sigla-topo, body.visitante #botao-engrenagem { display: none; }
 body.visitante .so-equipe { display: none; }
+body.perfil-usuario #btn-coletar { display: none; }  /* coletar é da equipe do CINEA */
 /* Visitante vê as abas da equipe com cadeado: clicar leva à entrada (convite para ter conta) */
 body.visitante .aba-equipe { color: var(--texto-suave); opacity: .8; }
 body.visitante .aba-equipe::before { content: "🔒"; font-size: .8em; margin-right: 2px; }
@@ -444,11 +451,11 @@ body.visitante .cartao-novo .num { font-size: 1.3rem; }
 :root {
   /* Escala sequencial de uma cor (azul da marca), do claro ao escuro: mapa de calor */
   --calor-0: #eef1f5; --calor-1: #d6e3f3; --calor-2: #a9c4e6; --calor-3: #6f9bd2; --calor-4: #3d6fb5; --calor-5: #1f4e8c;
-  --barra-equipe: #1f4e8c; --barra-publico: #9db8de;
+  --barra-equipe: #1f4e8c; --barra-usuarios: #5585c4; --barra-publico: #b9cce8;
 }
 :root[data-theme="dark"] {
   --calor-0: #1f2632; --calor-1: #1f3352; --calor-2: #2a4c7c; --calor-3: #3d68a6; --calor-4: #6292d1; --calor-5: #a8c8f5;
-  --barra-equipe: #8fb3ec; --barra-publico: #3b5579;
+  --barra-equipe: #a8c8f5; --barra-usuarios: #5f8fd0; --barra-publico: #2f4565;
 }
 .uso { background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
 .uso-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }

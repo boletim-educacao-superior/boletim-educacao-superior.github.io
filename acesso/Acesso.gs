@@ -26,8 +26,9 @@ const ADMINS_INICIAIS = [{ email: 'diegoeduardo@pucminas.br', nome: 'Diego Eduar
 const ABAS = {
   // senha = hash (nunca a senha); senha_em = quando foi criada ou trocada
   // visita_anterior = início da visita passada (para "novos desde a sua última visita")
+  // perfil: em branco = equipe do CINEA (cadastrada pelo admin); 'usuario' = criou a própria conta (cadastro aberto).
   Equipe: ['email', 'nome', 'admin', 'cadastrado_por', 'cadastrado_em', 'boasvindas_em', 'senha', 'senha_em', 'ultimo_acesso',
-           'visita_anterior'],
+           'visita_anterior', 'perfil'],
   Registro: ['quando', 'quem', 'acao', 'detalhe'],
   // Marcações da equipe (compartilhadas): notícia sinalizada ou sem relevância, com quem marcou e por quê
   Marcacoes: ['item_id', 'tipo', 'por', 'em', 'motivo', 'titulo', 'link'],
@@ -35,8 +36,15 @@ const ABAS = {
   Lidos: ['email', 'item_id', 'em'],
   // Uso do painel (aberto a qualquer pessoa): um visitante anônimo por navegador; e-mail só de quem entrou.
   // Nenhum dado pessoal de quem não entrou (sem IP, sem nome). tipo: abertura, visao, noticia, busca, csv.
-  Acessos: ['quando', 'visitante', 'email', 'tipo', 'detalhe', 'dispositivo']
+  Acessos: ['quando', 'visitante', 'email', 'tipo', 'detalhe', 'dispositivo'],
+  // Marcações pessoais de quem tem perfil Usuário (só ela vê): tipo sinalizada ou lida.
+  Pessoais: ['email', 'item_id', 'tipo', 'em']
 };
+
+/** Linha nova da Equipe na ordem das colunas (a planilha pode ganhar colunas novas no fim). */
+function linhaEquipe_(dados) {
+  return linha_(ABAS.Equipe.map(function (c) { return dados[c] === undefined ? '' : dados[c]; }));
+}
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 const SESSAO_DIAS = 30;               // sem usar por 30 dias, pede a senha de novo
@@ -85,7 +93,7 @@ function configurar() {
   lerAba_(ss, 'Registro');
   ADMINS_INICIAIS.forEach(function (a) {
     if (equipe.linhas.some(function (p) { return p.email === a.email; })) return;
-    equipe.sh.appendRow(linha_([a.email, a.nome, true, CONTA_SISTEMA, agora_(), '', '', '', '']));
+    equipe.sh.appendRow(linhaEquipe_({ email: a.email, nome: a.nome, admin: true, cadastrado_por: CONTA_SISTEMA, cadastrado_em: agora_() }));
   });
   Logger.log('Pronto. Pasta: ' + pasta.getUrl() + ' · Planilha: ' + ss.getUrl() +
              ' · e-mails que ainda podem sair hoje: ' + MailApp.getRemainingDailyQuota());
@@ -167,6 +175,18 @@ function ehAdmin_(ss, email) {
 }
 function podeEntrar_(ss, email) { return email === CONTA_SISTEMA || !!membro_(ss, email).p; }
 
+/**
+ * Tipo de pessoa: 'admin' (administra), 'equipe' (equipe do CINEA, cadastrada pelo admin: marca para todos)
+ * ou 'usuario' (criou a própria conta: marcações só dela). A conta do sistema é sempre admin.
+ */
+function tipoDe_(ss, email) {
+  if (email === CONTA_SISTEMA) return 'admin';
+  const m = membro_(ss, email).p;
+  if (!m) return '';
+  if (verdadeiro_(m.admin)) return 'admin';
+  return m.perfil === 'usuario' ? 'usuario' : 'equipe';
+}
+
 /** A conta do sistema não está na planilha: guarda a senha dela nas propriedades. */
 function senhaDe_(ss, email) {
   if (email === CONTA_SISTEMA) return { senha: prop_('SENHA_SISTEMA') || '', senha_em: prop_('SENHA_SISTEMA_EM') || '' };
@@ -227,7 +247,7 @@ function limitesDoDia_() {
   let l = null;
   try { l = JSON.parse(props.getProperty(chave) || 'null'); } catch (e) { /* recomeça */ }
   return {
-    dados: l || { codigos: 0, recusas: 0, e: {} },
+    dados: Object.assign({ codigos: 0, recusas: 0, cadastros: 0, e: {} }, l || {}),
     doEmail: function (em) { const d = this.dados; d.e[em] = d.e[em] || { c: 0, f: 0 }; return d.e[em]; },
     salvar: function () {
       Object.keys(props.getProperties()).forEach(function (k) { if (k.indexOf('limites:') === 0 && k !== chave) props.deleteProperty(k); });
@@ -290,6 +310,35 @@ function pedirCodigo_(email) {
     { name: REMETENTE });
   registrar_(ss, 'codigo_enviado', 'Pediu código para criar ou trocar a senha');
   return { ok: true };
+}
+
+// ======================================================================= cadastro aberto --
+
+const CADASTROS_POR_DIA = 15;  // cada cadastro manda um código pela cineaned (cota dividida com os certificados)
+
+/**
+ * Qualquer pessoa cria a própria conta (pedido do Diego, 23/10/2026): entra como 'usuario', com marcações
+ * pessoais. Depois segue o mesmo caminho do primeiro acesso: código por e-mail e senha.
+ */
+function cadastrar_(nome, email) {
+  nome = String(nome || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (nome.length < 3) throw falha_('Digite seu nome.');
+  const ss = planilha_();
+  USUARIO_ATUAL_ = email;
+  if (email === CONTA_SISTEMA) throw falha_('Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".');
+  const m = membro_(ss, email);
+  if (m.p && m.p.senha) throw falha_('Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".');
+  if (!m.p) {
+    const lim = limitesDoDia_();
+    if (lim.dados.cadastros >= CADASTROS_POR_DIA) throw falha_('O limite de cadastros de hoje foi atingido. Tente de novo amanhã.');
+    lim.dados.cadastros++;
+    lim.salvar();
+    m.tab.sh.appendRow(linhaEquipe_({ email: email, nome: nome, admin: false, cadastrado_por: 'autocadastro',
+                                      cadastrado_em: agora_(), perfil: 'usuario' }));
+    registrar_(ss, 'autocadastro', email + ' · ' + nome);
+  }
+  // Já cadastrado sem senha (não terminou da outra vez): só manda um código novo.
+  return pedirCodigo_(email);
 }
 
 /** Confere o código, grava a senha nova e já abre a sessão. */
@@ -409,6 +458,7 @@ function registrarAcesso_(ss) {
 function perfil_(ss, email) {
   const m = membro_(ss, email).p;
   return { email: email, nome: m ? m.nome : 'Conta do sistema', admin: ehAdmin_(ss, email), sistema: email === CONTA_SISTEMA,
+           tipo: tipoDe_(ss, email),
            cadastrado_em: m ? m.cadastrado_em : '', cadastrado_por: m ? m.cadastrado_por : '',
            senha_em: m ? m.senha_em : prop_('SENHA_SISTEMA_EM') || '', ultimo_acesso: m ? m.ultimo_acesso : '',
            visita_anterior: m ? m.visita_anterior : '' };
@@ -436,11 +486,13 @@ function api_equipe_(ss) {
   return lerAba_(ss, 'Equipe').linhas.map(function (p) {
     return { email: p.email, nome: p.nome, admin: verdadeiro_(p.admin), cadastrado_por: p.cadastrado_por,
              cadastrado_em: p.cadastrado_em, boasvindas_em: p.boasvindas_em, tem_senha: !!p.senha,
-             senha_em: p.senha_em, ultimo_acesso: p.ultimo_acesso };
-  }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
+             senha_em: p.senha_em, ultimo_acesso: p.ultimo_acesso, perfil: p.perfil === 'usuario' ? 'usuario' : 'equipe' };
+  }).sort(function (a, b) {  // equipe do CINEA primeiro, depois quem se cadastrou sozinho
+    return (a.perfil === b.perfil ? 0 : a.perfil === 'equipe' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR');
+  });
 }
 
-function api_salvarMembro_(ss, email, nome, admin, boasVindas) {
+function api_salvarMembro_(ss, email, nome, admin, boasVindas, perfil) {
   exigirAdmin_(ss);
   email = emailLimpo_(email);
   nome = String(nome || '').trim().slice(0, 120);
@@ -449,12 +501,15 @@ function api_salvarMembro_(ss, email, nome, admin, boasVindas) {
   const m = membro_(ss, email);
   if (m.p) {
     if (m.p.email === USUARIO_ATUAL_ && verdadeiro_(m.p.admin) && !admin && ultimoAdmin_(m.tab)) throw falha_('Você é o único administrador: cadastre outro antes de tirar o seu.');
-    const antes = m.p.nome + (verdadeiro_(m.p.admin) ? ' (admin)' : '');
+    const rotulo = function (p) { return p.nome + (verdadeiro_(p.admin) ? ' (admin)' : '') + (p.perfil === 'usuario' ? ' (usuário)' : ''); };
+    const antes = rotulo(m.p);
     m.p.nome = nome; m.p.admin = !!admin;
-    salvarCampos_(m.tab, m.p, ['nome', 'admin']);
-    registrar_(ss, 'membro_alterado', email + ': ' + antes + ' → ' + nome + (admin ? ' (admin)' : ''));
+    if (perfil === 'usuario' || perfil === 'equipe') m.p.perfil = perfil === 'usuario' ? 'usuario' : '';
+    if (m.p.perfil === 'usuario') m.p.admin = false;  // administrador é sempre da equipe
+    salvarCampos_(m.tab, m.p, ['nome', 'admin', 'perfil']);
+    registrar_(ss, 'membro_alterado', email + ': ' + antes + ' → ' + rotulo(m.p));
   } else {
-    m.tab.sh.appendRow(linha_([email, nome, !!admin, USUARIO_ATUAL_, agora_(), '', '', '', '']));
+    m.tab.sh.appendRow(linhaEquipe_({ email: email, nome: nome, admin: !!admin, cadastrado_por: USUARIO_ATUAL_, cadastrado_em: agora_() }));
     registrar_(ss, 'membro_cadastrado', email + ' · ' + nome + (admin ? ' (admin)' : ''));
     if (boasVindas) api_enviarBoasVindas_(ss, email);
   }
@@ -549,6 +604,7 @@ function mapaNomes_(ss) {
  * (pedido do Diego em 23/10/2026): o que uma pessoa marca aparece para todos, com o nome de quem marcou.
  */
 function api_marcacoes_(ss) {
+  if (tipoDe_(ss, USUARIO_ATUAL_) === 'usuario') return marcacoesPessoais_(ss);
   const nomes = mapaNomes_(ss);
   const marcas = lerAba_(ss, 'Marcacoes').linhas.map(function (r) {
     return { id: r.item_id, tipo: r.tipo, por: r.por, nome: nomes[r.por] || r.por, em: r.em, motivo: r.motivo };
@@ -570,6 +626,11 @@ function api_marcar_(ss, id, tipo, ativo, motivo, titulo, link) {
   id = String(id || '');
   if (!ID_ITEM_RE.test(id)) throw falha_('Notícia inválida.');
   if (TIPOS_MARCA.indexOf(tipo) < 0) throw falha_('Marcação inválida.');
+  if (tipoDe_(ss, USUARIO_ATUAL_) === 'usuario') {
+    if (tipo !== 'sinalizada') throw falha_('Só a equipe do CINEA marca notícias como sem relevância.');
+    marcarPessoal_(ss, [id], 'sinalizada', ativo);
+    return marcacoesPessoais_(ss).marcas;
+  }
   motivo = String(motivo || '').replace(/\s+/g, ' ').trim().slice(0, 300);
   titulo = String(titulo || '').slice(0, 300);
   link = /^https:\/\//.test(String(link || '')) ? String(link).slice(0, 600) : '';
@@ -593,6 +654,7 @@ function api_marcar_(ss, id, tipo, ativo, motivo, titulo, link) {
 function api_marcarLidos_(ss, ids, lido) {
   ids = (Array.isArray(ids) ? ids : []).map(String).filter(function (i) { return ID_ITEM_RE.test(i); }).slice(0, 1000);
   if (!ids.length) return true;
+  if (tipoDe_(ss, USUARIO_ATUAL_) === 'usuario') { marcarPessoal_(ss, ids, 'lida', lido); return true; }
   return comTrava_(function () {
     const tab = lerAba_(ss, 'Lidos'), jaLidos = {};
     tab.linhas.forEach(function (r) { (jaLidos[r.item_id] = jaLidos[r.item_id] || []).push(r); });
@@ -659,13 +721,17 @@ function api_uso_(ss, dias) {
   exigirAdmin_(ss);
   dias = [7, 30, 90, 180, 365].indexOf(Number(dias)) >= 0 ? Number(dias) : 30;
   const inicio = Utilities.formatDate(new Date(Date.now() - (dias - 1) * DIA_MS), 'America/Sao_Paulo', 'yyyy-MM-dd');
-  const nomes = mapaNomes_(ss);
+  const nomes = mapaNomes_(ss), tipos = {};
+  const pessoas = lerAba_(ss, 'Equipe').linhas;
+  pessoas.forEach(function (p) { tipos[p.email.toLowerCase()] = p.perfil === 'usuario' ? 'usuario' : 'equipe'; });
+  const cadastrosNovos = pessoas.filter(function (p) { return p.perfil === 'usuario' && p.cadastrado_em.slice(0, 10) >= inicio; }).length;
   const linhas = lerAba_(ss, 'Acessos').linhas.filter(function (r) { return r.quando.slice(0, 10) >= inicio; });
 
   const calor = [0, 1, 2, 3, 4, 5, 6].map(function () { return Array(24).fill(0); });  // [dia da semana][hora], 0 = domingo
   const porDia = {}, visitantes = {}, visitantesEquipe = {}, equipe = {}, visoes = {}, instituicoes = {}, noticias = {}, buscas = {};
   const disp = { computador: 0, celular: 0 };
-  let aberturas = 0, aberturasEquipe = 0, csv = 0, noticiasAbertas = 0;
+  let aberturas = 0, aberturasEquipe = 0, aberturasUsuarios = 0, csv = 0, noticiasAbertas = 0;
+  const pessoasUsuarios = {};
   const conta = function (obj, chave, extra) { obj[chave] = obj[chave] || Object.assign({ n: 0 }, extra || {}); obj[chave].n++; return obj[chave]; };
 
   linhas.forEach(function (r) {
@@ -674,12 +740,15 @@ function api_uso_(ss, dias) {
       aberturas++;
       const d = new Date(Number(dia.slice(0, 4)), Number(dia.slice(5, 7)) - 1, Number(dia.slice(8, 10)));
       calor[d.getDay()][hora]++;
-      porDia[dia] = porDia[dia] || { equipe: 0, publico: 0 };
+      porDia[dia] = porDia[dia] || { equipe: 0, usuarios: 0, publico: 0 };
       visitantes[r.visitante] = true;
       disp[r.dispositivo === 'celular' ? 'celular' : 'computador']++;
       if (r.email) {
-        aberturasEquipe++; porDia[dia].equipe++; visitantesEquipe[r.visitante] = true;
-        const e = conta(equipe, r.email, { nome: nomes[r.email] || r.email, ultimo: '' });
+        visitantesEquipe[r.visitante] = true;
+        const ehUsuario = tipos[r.email] === 'usuario';
+        if (ehUsuario) { aberturasUsuarios++; porDia[dia].usuarios++; pessoasUsuarios[r.email] = true; }
+        else { aberturasEquipe++; porDia[dia].equipe++; }
+        const e = conta(equipe, r.email, { nome: nomes[r.email] || r.email, ultimo: '', perfil: ehUsuario ? 'usuario' : 'equipe' });
         if (r.quando > e.ultimo) e.ultimo = r.quando;
       } else porDia[dia].publico++;
     } else if (r.tipo === 'visao') conta(visoes, r.detalhe || 'inicio');
@@ -699,15 +768,49 @@ function api_uso_(ss, dias) {
   const serie = [];
   for (let i = dias - 1; i >= 0; i--) {
     const d = Utilities.formatDate(new Date(Date.now() - i * DIA_MS), 'America/Sao_Paulo', 'yyyy-MM-dd');
-    serie.push({ dia: d, equipe: (porDia[d] || {}).equipe || 0, publico: (porDia[d] || {}).publico || 0 });
+    serie.push({ dia: d, equipe: (porDia[d] || {}).equipe || 0, usuarios: (porDia[d] || {}).usuarios || 0, publico: (porDia[d] || {}).publico || 0 });
   }
   return {
-    dias: dias, aberturas: aberturas, aberturas_equipe: aberturasEquipe, aberturas_publico: aberturas - aberturasEquipe,
+    dias: dias, aberturas: aberturas, aberturas_equipe: aberturasEquipe, aberturas_usuarios: aberturasUsuarios,
+    aberturas_publico: aberturas - aberturasEquipe - aberturasUsuarios,
+    pessoas_usuarios: Object.keys(pessoasUsuarios).length, cadastros_novos: cadastrosNovos,
+    total_usuarios: pessoas.filter(function (p) { return p.perfil === 'usuario'; }).length,
     visitantes: Object.keys(visitantes).length, visitantes_publico: Object.keys(visitantes).length - Object.keys(visitantesEquipe).length,
-    pessoas_equipe: Object.keys(equipe).length, noticias_abertas: noticiasAbertas, csv: csv, dispositivos: disp,
+    pessoas_equipe: Object.keys(equipe).length - Object.keys(pessoasUsuarios).length, noticias_abertas: noticiasAbertas, csv: csv, dispositivos: disp,
     calor: calor, serie: serie, equipe: top(equipe, 50), visoes: top(visoes, 10), instituicoes: top(instituicoes, 10),
     noticias: top(noticias, 10), buscas: top(buscas, 10)
   };
+}
+
+/**
+ * Marcações de quem tem perfil Usuário: as sinalizadas e lidas DELA, mais as "sem relevância" da equipe
+ * (só os ids, para o Início esconder o mesmo que para todos).
+ */
+function marcacoesPessoais_(ss) {
+  const meu = lerAba_(ss, 'Pessoais').linhas.filter(function (r) { return r.email === USUARIO_ATUAL_; });
+  const nome = (membro_(ss, USUARIO_ATUAL_).p || {}).nome || USUARIO_ATUAL_;
+  const marcas = meu.filter(function (r) { return r.tipo === 'sinalizada'; })
+    .map(function (r) { return { id: r.item_id, tipo: 'sinalizada', por: r.email, nome: nome, em: r.em, pessoal: true }; })
+    .concat(publico_().irrelevantes.map(function (id) { return { id: id, tipo: 'irrelevante' }; }));
+  const lidos = meu.filter(function (r) { return r.tipo === 'lida'; })
+    .map(function (r) { return { id: r.item_id, por: r.email, nome: nome, em: r.em }; });
+  return { marcas: marcas, lidos: lidos, pessoal: true };
+}
+
+function marcarPessoal_(ss, ids, tipo, ativo) {
+  return comTrava_(function () {
+    const tab = lerAba_(ss, 'Pessoais'), meus = {};
+    tab.linhas.forEach(function (r) { if (r.email === USUARIO_ATUAL_ && r.tipo === tipo) meus[r.item_id] = r; });
+    if (ativo) {
+      const novas = ids.filter(function (i, k) { return !meus[i] && ids.indexOf(i) === k; })
+        .map(function (i) { return [USUARIO_ATUAL_, i, tipo, agora_()]; });
+      if (novas.length) tab.sh.getRange(tab.sh.getLastRow() + 1, 1, novas.length, 4).setValues(novas);
+    } else {
+      ids.map(function (i) { return meus[i]; }).filter(Boolean)
+        .sort(function (a, b) { return b._linha - a._linha; })
+        .forEach(function (r) { tab.sh.deleteRow(r._linha); });
+    }
+  });
 }
 
 const API_ = {
@@ -745,6 +848,7 @@ function doPost(e) {
 
 function executar_(p) {
   switch (p.acao) {
+    case 'cadastrar': { const email = emailLimpo_(p.email); return comTrava_(function () { return cadastrar_(p.nome, email); }); }
     case 'pedirCodigo': { const email = emailLimpo_(p.email); return comTrava_(function () { return pedirCodigo_(email); }); }
     case 'definirSenha': {
       const email = emailLimpo_(p.email), codigo = String(p.codigo || '').replace(/\D/g, '').slice(0, 6);

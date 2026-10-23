@@ -1,6 +1,12 @@
 # Pendências do Observatório da Educação Superior
 
-## 1. Resumo semanal e alerta de urgentes por e-mail (adiado pelo Diego em 23/10/2026)
+## 1. Preferências e resumo por e-mail (adiado pelo Diego em 23/10/2026)
+
+**Atualização (23/10/2026, noite):** com o cadastro aberto, a ideia do Diego é que **cada pessoa com conta** (equipe ou
+usuário) defina as próprias preferências e escolha receber um resumo **diário, semanal, mensal ou trimestral**
+(mais o alerta imediato de urgentes). O que está abaixo continua valendo como base; a inscrição passa a ser em
+"Meu perfil" com a frequência escolhida. Atenção redobrada com a cota de e-mail: com muitos usuários, a cineaned
+(~100/dia, dividida com os certificados) não dá conta. Avaliar outro remetente antes de abrir para todos.
 
 **Situação hoje:** ninguém recebe notícias por e-mail. O alerta de urgente só abre uma *issue* no GitHub
 (chega por e-mail apenas para quem "observa" o repositório), e o envio por SMTP em `radar/alertas.py`

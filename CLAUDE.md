@@ -57,6 +57,11 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   relevância, sem nomes), `evento` (uso: abertura, visao, noticia, busca, csv; aba `Acessos`, visitante = id aleatório por
   navegador) e `uso` (relatório agregado, só admin). "Última visita" = coluna `visita_anterior` da Equipe (nova visita
   após 30 min). Entrar ou sair recarrega a página. A aba `Acessos` cresce sem limite: se ficar lenta, arquivar linhas antigas.
+- **Cadastro aberto** (pedido do Diego, 23/10/2026; ele escolheu "qualquer e-mail" e "marcações pessoais"): qualquer pessoa
+  cria conta em "Criar minha conta" (ação `cadastrar`, máx. 15/dia por causa da cota da cineaned). Perfis (`tipoDe_`):
+  admin · equipe (cadastrada pelo admin, marca para todos) · usuario (coluna `perfil`='usuario': sinaliza e marca lidas só
+  para si, aba `Pessoais`; não marca sem relevância; não vê "Coletar agora"). Admin promove ("Tornar equipe CINEA") ou rebaixa.
+  Visitante vê as abas da equipe com cadeado (convite para criar conta).
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

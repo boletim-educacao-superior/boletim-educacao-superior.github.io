@@ -26,6 +26,7 @@ window.SimuladorAcesso = (() => {
     eventos.push({ quando: agora(), visitante: "veq", email: "", tipo, detalhe, dispositivo: "computador" }));
   const lidos = new Map();         // id → { por, em } (da equipe)
   const codigos = {}, sessoes = {};
+  const pessoais = [];  // { email, id, tipo, em }: marcações de quem tem perfil Usuário
 
   // O estado sobrevive a recarregar a página (entrar e sair recarregam), enquanto a aba estiver aberta.
   const CHAVE = "radar.simulador";
@@ -38,19 +39,21 @@ window.SimuladorAcesso = (() => {
       eventos.splice(0, eventos.length, ...salvo.eventos);
       salvo.lidos.forEach(([k, v]) => lidos.set(k, v));
       Object.assign(sessoes, salvo.sessoes);
+      pessoais.splice(0, pessoais.length, ...(salvo.pessoais || []));
     }
   } catch { /* começa do zero */ }
   const salvar = () => {
-    try { sessionStorage.setItem(CHAVE, JSON.stringify({ equipe, registro, marcas, eventos, lidos: [...lidos], sessoes })); } catch { /* cheio */ }
+    try { sessionStorage.setItem(CHAVE, JSON.stringify({ equipe, registro, marcas, eventos, lidos: [...lidos], sessoes, pessoais })); } catch { /* cheio */ }
   };
   const quem = (s) => sessoes[s];
   const pessoa = (e) => equipe.find((p) => p.email === String(e).toLowerCase());
   const reg = (q, acao, detalhe = "") => registro.unshift({ quando: agora(), quem: q, acao, detalhe });
-  const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, cadastrado_em: p.cadastrado_em,
+  const tipoDe = (p) => (p.admin ? "admin" : p.perfil === "usuario" ? "usuario" : "equipe");
+  const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, tipo: tipoDe(p), cadastrado_em: p.cadastrado_em,
                            cadastrado_por: "cineaned@gmail.com", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso,
                            // Simulação: a "visita anterior" foi há 3 dias (para o cartão de novidades ter números)
                            visita_anterior: new Date(Date.now() - 3 * 864e5).toLocaleString("sv-SE").slice(0, 19) });
-  const lista = () => equipe.map((p) => ({ ...p, senha: undefined, tem_senha: !!p.senha }));
+  const lista = () => equipe.map((p) => ({ ...p, senha: undefined, tem_senha: !!p.senha, perfil: p.perfil === "usuario" ? "usuario" : "equipe" }));
   const sessaoNova = (p) => { const s = crypto.randomUUID(); sessoes[s] = p.email; return { sessao: s, perfil: perfil(p) }; };
   const falha = (erro) => ({ ok: false, erro });
   const validarSenha = (s) => (s.length < 8 ? "A senha precisa ter pelo menos 8 caracteres." : !/\d/.test(s) || !/[a-z]/i.test(s) ? "Use letras e números na senha." : "");
@@ -94,11 +97,11 @@ window.SimuladorAcesso = (() => {
           p.senha = nova; reg(p.email, "senha_alterada"); return sessaoNova(p);
         },
         equipe: () => { admin(); return lista(); },
-        salvarMembro: (email, nome, adm, boas) => {
+        salvarMembro: (email, nome, adm, boas, perf) => {
           admin(); email = String(email).toLowerCase();
           if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(email)) throw new Error("Digite um e-mail válido.");
           const m = pessoa(email);
-          if (m) { m.nome = nome; m.admin = adm; reg(p.email, "membro_alterado", email); }
+          if (m) { m.nome = nome; m.admin = adm; if (perf) m.perfil = perf === "usuario" ? "usuario" : ""; if (m.perfil === "usuario") m.admin = false; reg(p.email, "membro_alterado", email); }
           else { equipe.push({ email, nome, admin: adm, senha: "", cadastrado_em: agora(), ultimo_acesso: "", boasvindas_em: boas ? agora() : "" }); reg(p.email, "membro_cadastrado", email); }
           return lista();
         },
@@ -122,6 +125,8 @@ window.SimuladorAcesso = (() => {
           const eq = ab.filter((e) => e.email);
           return {
             dias, aberturas: ab.length, aberturas_equipe: eq.length, aberturas_publico: ab.length - eq.length,
+            aberturas_usuarios: 0, pessoas_usuarios: 0, cadastros_novos: equipe.filter((x) => x.perfil === "usuario").length,
+            total_usuarios: equipe.filter((x) => x.perfil === "usuario").length,
             visitantes: new Set(ab.map((e) => e.visitante)).size, visitantes_publico: new Set(ab.filter((e) => !e.email).map((e) => e.visitante)).size,
             pessoas_equipe: new Set(eq.map((e) => e.email)).size, noticias_abertas: ev.filter((e) => e.tipo === "noticia").length,
             csv: ev.filter((e) => e.tipo === "csv").length,
@@ -134,26 +139,54 @@ window.SimuladorAcesso = (() => {
             buscas: top(ev.filter((e) => e.tipo === "busca"), (e) => e.detalhe),
           };
         },
-        marcacoes: () => ({
+        marcacoes: () => (tipoDe(p) === "usuario" ? doUsuario() : {
           marcas: marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por })),
           lidos: [...lidos].map(([id, l]) => ({ id, ...l, nome: (pessoa(l.por) || {}).nome || l.por })),
         }),
         marcar: (id, tipo, ativo, motivo, titulo) => {
+          if (tipoDe(p) === "usuario") {
+            if (tipo !== "sinalizada") throw new Error("Só a equipe do CINEA marca notícias como sem relevância.");
+            pessoal(id, "sinalizada", ativo);
+            return doUsuario().marcas;
+          }
           marcas = marcas.filter((m) => !(m.id === id && (m.tipo === tipo || ativo)));
           if (ativo) marcas.push({ id, tipo, por: p.email, em: agora(), motivo: motivo || "" });
           reg(p.email, ativo ? "item_" + tipo : "item_" + tipo + "_desfeito", titulo);
           return marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por }));
         },
         marcarLidos: (ids, lido) => {
+          if (tipoDe(p) === "usuario") { ids.forEach((i) => pessoal(i, "lida", lido)); return true; }
           ids.forEach((i) => (lido ? (lidos.has(i) || lidos.set(i, { por: p.email, em: agora() })) : lidos.delete(i)));
           return true;
         },
       }[nome];
+      function pessoal(id, t, ativo) {
+        const i = pessoais.findIndex((x) => x.email === p.email && x.id === id && x.tipo === t);
+        if (ativo && i < 0) pessoais.push({ email: p.email, id, tipo: t, em: agora() });
+        if (!ativo && i >= 0) pessoais.splice(i, 1);
+      }
+      function doUsuario() {
+        const meus = pessoais.filter((x) => x.email === p.email);
+        return {
+          marcas: meus.filter((x) => x.tipo === "sinalizada").map((x) => ({ id: x.id, tipo: "sinalizada", por: p.email, nome: p.nome, em: x.em, pessoal: true }))
+            .concat(marcas.filter((m) => m.tipo === "irrelevante").map((m) => ({ id: m.id, tipo: "irrelevante" }))),
+          lidos: meus.filter((x) => x.tipo === "lida").map((x) => ({ id: x.id, por: p.email, nome: p.nome, em: x.em })),
+          pessoal: true,
+        };
+      }
       if (!f) return falha("Ação desconhecida.");
       try { return { ok: true, dados: f(...(args || [])) }; } catch (e) { return falha(e.message); }
     },
   };
 
+  acoes.cadastrar = ({ nome, email }) => {
+    email = String(email || "").toLowerCase();
+    const p = pessoa(email);
+    if (p && p.senha) return falha('Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".');
+    if (String(nome || "").trim().length < 3) return falha("Digite seu nome.");
+    if (!p) { equipe.push({ email, nome: nome.trim(), admin: false, senha: "", perfil: "usuario", cadastrado_em: agora(), ultimo_acesso: "" }); reg(email, "autocadastro", email); }
+    return acoes.pedirCodigo({ email });
+  };
   acoes.publico = () => ({ ok: true, dados: { irrelevantes: marcas.filter((m) => m.tipo === "irrelevante").map((m) => m.id) } });
   acoes.evento = (c) => {
     const sessao = c.sessao && sessoes[c.sessao];

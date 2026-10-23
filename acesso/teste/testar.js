@@ -137,7 +137,7 @@ cenario("Configuração", (a) => {
   a.g.configurar();
   conferir("cria segredo e planilha", !!a.props.SEGREDO && !!a.props.PLANILHA_ID);
   const equipe = a.aba("Equipe");
-  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior", equipe[0]);
+  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior,perfil", equipe[0]);
   conferir("Diego entra como administrador", equipe[1][0] === DIEGO && equipe[1][2] === true);
   const pasta = "1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe"; // PASTA_ID do Acesso.gs
   conferir("planilha vai para a pasta do Radar", a.pastas[a.props.PLANILHA_ID] === pasta, a.pastas);
@@ -339,7 +339,7 @@ cenario("Painel aberto: leitura pública, uso e última visita", (a) => {
 
   r = a.api(adm, "uso", 30);
   const u = r.dados || {};
-  conferir("relatório conta aberturas, equipe e público", r.ok && u.aberturas === 2 && u.aberturas_equipe === 1 && u.aberturas_publico === 1, u);
+  conferir("relatório conta aberturas, equipe e público", r.ok && u.aberturas === 2 && u.aberturas_equipe === 1 && u.aberturas_publico === 1 && u.aberturas_usuarios === 0, u);
   conferir("relatório traz visitantes únicos e dispositivo", u.visitantes === 2 && u.visitantes_publico === 1 && u.dispositivos.celular === 1, u);
   conferir("mapa de calor tem 7 dias x 24 horas e soma as aberturas", u.calor.length === 7 && u.calor.every((d) => d.length === 24)
     && u.calor.flat().reduce((x, y) => x + y, 0) === 2);
@@ -360,6 +360,47 @@ cenario("Painel aberto: leitura pública, uso e última visita", (a) => {
   a.avancar(5);
   const p3 = a.api(ana, "perfil").dados;
   conferir("dentro da mesma visita, a visita anterior não muda", p3.visita_anterior === p2.visita_anterior, [p2, p3]);
+});
+
+cenario("Cadastro aberto: perfil Usuário com marcações pessoais", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  const BIA = "bia.externa@gmail.com", N1 = "0123456789abcdef", N2 = "fedcba9876543210";
+  a.avancar(2);
+  let r = a.chamar({ acao: "cadastrar", nome: "Bia Externa", email: BIA });
+  conferir("qualquer pessoa cria conta e recebe o código", r.ok && /^\d{6}$/.test(a.ultimoCodigo(BIA) || ""), r);
+  const linha = a.aba("Equipe").find((l) => l[0] === BIA);
+  conferir("conta nasce com perfil usuário, sem admin, cadastrada por autocadastro", linha[10] === "usuario" && linha[2] === false && linha[3] === "autocadastro", linha);
+  r = a.chamar({ acao: "definirSenha", email: BIA, codigo: a.ultimoCodigo(BIA), senha: "bia2026senha" });
+  conferir("cria a senha e entra", r.ok && r.dados.perfil.tipo === "usuario" && !r.dados.perfil.admin, r);
+  const bia = r.dados.sessao;
+  a.avancar(2);
+  r = a.chamar({ acao: "cadastrar", nome: "Bia", email: BIA });
+  conferir("cadastrar de novo um e-mail que já tem conta é recusado", !r.ok && /já tem conta/.test(r.erro), r);
+  r = a.chamar({ acao: "cadastrar", nome: "A", email: "x@y.com" });
+  conferir("nome curto demais é recusado", !r.ok && /seu nome/.test(r.erro), r);
+
+  a.api(adm, "marcar", N2, "irrelevante", true, "Fora do escopo", "T2", "https://x.gov.br/2");
+  r = a.api(bia, "marcar", N1, "sinalizada", true, "", "T1", "https://x.gov.br/1");
+  conferir("usuário sinaliza só para si", r.ok && r.dados.some((m) => m.id === N1 && m.pessoal), r);
+  conferir("a sinalização dele não aparece para a equipe", !a.api(adm, "marcacoes").dados.marcas.some((m) => m.id === N1));
+  conferir("usuário recebe as 'sem relevância' da equipe (só o id)", r.dados.some((m) => m.id === N2 && m.tipo === "irrelevante" && !m.nome), r.dados);
+  r = a.api(bia, "marcar", N1, "irrelevante", true, "x", "T1", "https://x.gov.br/1");
+  conferir("usuário não marca sem relevância", !r.ok && /Só a equipe/.test(r.erro), r);
+  a.api(bia, "marcarLidos", [N1], true);
+  conferir("lida do usuário é pessoal", a.api(bia, "marcacoes").dados.lidos.length === 1 && a.api(adm, "marcacoes").dados.lidos.length === 0);
+  conferir("usuário não vê a equipe nem o relatório", !a.api(bia, "equipe").ok && !a.api(bia, "uso", 30).ok);
+
+  r = a.api(adm, "equipe");
+  conferir("admin vê a pessoa com perfil usuário", r.ok && r.dados.find((p) => p.email === BIA).perfil === "usuario", r);
+  r = a.api(adm, "salvarMembro", BIA, "Bia Externa", false, false, "equipe");
+  conferir("admin promove usuário a equipe", r.ok && r.dados.find((p) => p.email === BIA).perfil === "equipe", r);
+  conferir("promovida, passa a marcar para todos", a.api(bia, "marcar", N1, "sinalizada", true, "", "T1", "https://x").ok
+    && a.api(adm, "marcacoes").dados.marcas.some((m) => m.id === N1 && m.por === BIA));
+
+  for (let i = 0; i < 15; i++) { a.avancar(2); a.chamar({ acao: "cadastrar", nome: "Pessoa " + i, email: `p${i}@exemplo.com` }); }
+  r = a.chamar({ acao: "cadastrar", nome: "Mais Uma", email: "extra@exemplo.com" });
+  conferir("limite de cadastros por dia", !r.ok && /limite de cadastros/.test(r.erro), r);
 });
 
 cenario("Troca de senha", (a) => {

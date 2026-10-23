@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023211635"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023213130"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -61,6 +61,14 @@ const VISOES = {
     titulo: "Sem relevância", explica: "Notícias que a equipe marcou como fora do nosso interesse. Os motivos ajudam a ajustar as regras de triagem.",
     filtro: (it) => marca(it) === "irrelevante", semPeriodo: true, semPrioridade: true, comRotina: true,
   },
+};
+
+// Para quem criou a própria conta (perfil Usuário), sinalizadas e lidas são pessoais.
+const EXPLICA_USUARIO = {
+  "sinalizadas": "As notícias que você sinalizou para acompanhar (só você vê).",
+  "nao-lidas": "O que você ainda não abriu nem marcou como lido.",
+  "lidas": "O que você já abriu ou marcou como lido (só você vê).",
+  "sem-relevancia": "Notícias que a equipe do CINEA marcou como fora do escopo do Observatório.",
 };
 
 // ------------------------------------------------------------ armazenamento --
@@ -197,7 +205,7 @@ function irPara(hash) {
   estado.visao = visao;
   marcarMenu(estado.visao);
   $("visao-titulo").textContent = VISOES[estado.visao].titulo;
-  $("visao-explica").textContent = VISOES[estado.visao].explica;
+  $("visao-explica").textContent = ehUsuario() && EXPLICA_USUARIO[estado.visao] || VISOES[estado.visao].explica;
   // Atalhos de prioridade e "novos" só fazem sentido no Início.
   $("pagina-radar").classList.toggle("visao-inicio", estado.visao === "inicio");
   render();
@@ -460,9 +468,9 @@ function montarItem(it) {
   org.title = org.textContent;
   if (!logado()) {
     // Visitante: os botões aparecem com cadeado e explicam que é preciso entrar.
-    const precisa = { "btn-sinalizar": "Para sinalizar, você precisa estar logado.",
+    const precisa = { "btn-sinalizar": "Para sinalizar, você precisa estar logado. Não tem conta? Crie a sua, é grátis.",
                       "btn-irrelevante": "Para marcar como sem relevância, você precisa estar logado.",
-                      "btn-lido": "Para marcar como lida, você precisa estar logado." };
+                      "btn-lido": "Para marcar como lida, você precisa estar logado. Não tem conta? Crie a sua, é grátis." };
     for (const [classe, texto] of Object.entries(precisa)) {
       const b = el.querySelector(`.${classe}`);
       b.classList.add("bloqueada");
@@ -473,6 +481,15 @@ function montarItem(it) {
     return el;
   }
   el.querySelector(".btn-sinalizar").addEventListener("click", () => alternarMarca(it, "sinalizada"));
+  if (ehUsuario()) {
+    const b = el.querySelector(".btn-irrelevante");
+    b.classList.add("bloqueada");
+    b.title = "Só a equipe do CINEA marca notícias como sem relevância (vale para todos).";
+    b.addEventListener("click", () => aviso(b.title));
+    el.querySelector(".btn-lido").addEventListener("click", () => marcarLidos([it.id], !estado.lidos.has(it.id)));
+    pintarItem(el, it);
+    return el;
+  }
   el.querySelector(".btn-irrelevante").addEventListener("click", () =>
     marca(it) === "irrelevante" ? alternarMarca(it, "irrelevante") : pedirMotivo(it));
   el.querySelector(".btn-lido").addEventListener("click", () => marcarLidos([it.id], !estado.lidos.has(it.id)));
@@ -497,15 +514,18 @@ function pintarItem(el, it) {
   s.textContent = m?.tipo === "sinalizada" ? "★ Sinalizada" : "☆ Sinalizar";
   s.setAttribute("aria-pressed", String(m?.tipo === "sinalizada"));
   s.title = m?.tipo === "sinalizada" ? "Tirar a sinalização (para toda a equipe)" : "Sinalizar para a equipe acompanhar";
-  el.querySelector(".btn-irrelevante").textContent = m?.tipo === "irrelevante" ? "↺ Desfazer “sem relevância”" : "Sem relevância";
+  el.querySelector(".btn-irrelevante").textContent = ehUsuario() ? "🔒 Sem relevância"
+    : m?.tipo === "irrelevante" ? "↺ Desfazer “sem relevância”" : "Sem relevância";
   el.querySelector(".btn-lido").textContent = lido ? "Marcar como não lida" : "Marcar como lida";
   const info = el.querySelector(".marca-info");
   info.className = "marca-info" + (m ? ` marca-${m.tipo}` : "");
   const quando = (x) => (x.em ? ` em ${formatarData(String(x.em).slice(0, 10))}` : "");
+  const quem = (x) => (x.por && x.por === Acesso.perfil?.email ? "você" : x.nome || x.por);
   const partes = [];
   if (m) partes.push(m.pendente ? "Salvando…"
-    : `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} por ${m.nome || m.por}${quando(m)}${m.motivo ? ` · “${m.motivo}”` : ""}`);
-  if (lido) { const l = estado.lidos.get(it.id); partes.push(`Lida por ${l.nome || l.por}${quando(l)}`); }
+    : m.tipo === "irrelevante" && !m.por ? "Marcada pela equipe como sem relevância"
+    : `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} por ${quem(m)}${quando(m)}${m.motivo ? ` · “${m.motivo}”` : ""}`);
+  if (lido) { const l = estado.lidos.get(it.id); partes.push(`Lida por ${quem(l)}${quando(l)}`); }
   info.textContent = partes.join(" · ");
 }
 
@@ -525,7 +545,8 @@ async function alternarMarca(it, tipo, motivo = "") {
   repintar(it.id); atualizarContadores();
   try {
     aplicarMarcacoes(await api("marcar", it.id, tipo, ativo, motivo, it.titulo, it.link));
-    aviso(ativo ? (tipo === "sinalizada" ? "Sinalizada para a equipe." : "Marcada como sem relevância.") : "Marcação desfeita.");
+    aviso(ativo ? (tipo === "sinalizada" ? (ehUsuario() ? "Sinalizada para você acompanhar." : "Sinalizada para a equipe.")
+      : "Marcada como sem relevância.") : "Marcação desfeita.");
   } catch (e) {
     antes ? estado.marcas.set(it.id, antes) : estado.marcas.delete(it.id);
     aviso(`Não foi possível salvar: ${e.message}`, true);

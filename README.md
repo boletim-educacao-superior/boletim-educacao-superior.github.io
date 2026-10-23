@@ -21,7 +21,9 @@ entidades da educação superior"* e a preparação dos cursos para avaliações
 
 ## Acesso ao painel
 
-O painel é **aberto**: qualquer pessoa vê as notícias (urgentes e de prioridade alta) sem login.
+O painel é **aberto**: qualquer pessoa vê as notícias (urgentes e de prioridade alta) sem login, e qualquer
+pessoa pode **criar a própria conta** (perfil Usuário: sinalizadas e lidas pessoais). A equipe do CINEA é
+cadastrada pelo administrador e suas marcações valem para todos.
 **Entrar** (canto direito) é para a equipe do CINEA: sinalizar, marcar como sem relevância ou lida (compartilhado
 com todos), ver as abas da equipe e o "novos desde a sua última visita" (calculado pelo registro de acesso).
 Quem cadastra as pessoas é um administrador. A pessoa cadastrada recebe um e-mail de boas-vindas, clica em
