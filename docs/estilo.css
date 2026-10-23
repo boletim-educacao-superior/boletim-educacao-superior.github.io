@@ -430,6 +430,10 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 body:not(.visitante) #btn-entrar { display: none; }
 body.visitante .conta-texto, body.visitante #sigla-topo, body.visitante #botao-engrenagem { display: none; }
 body.visitante .so-equipe { display: none; }
+/* Visitante vê as abas da equipe com cadeado: clicar leva à entrada (convite para ter conta) */
+body.visitante .aba-equipe { color: var(--texto-suave); opacity: .8; }
+body.visitante .aba-equipe::before { content: "🔒"; font-size: .8em; margin-right: 2px; }
+body.visitante .aba-equipe .cont { display: none; }
 .acao.bloqueada { color: var(--texto-suave); border-style: dashed; }
 .acao.bloqueada:hover { color: var(--marca); border-color: var(--marca); }
 .portaria-fechar { display: block; margin: -6px 0 14px; font-size: .88rem; }

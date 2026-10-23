@@ -6,14 +6,14 @@
 <title>Observatório da Educação Superior</title>
 <meta name="description" content="Observatório da Educação Superior (Radar): monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261023211426">
+<link rel="stylesheet" href="estilo.css?v=20261023211635">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261023211426";</script>
+<script>window.RADAR_VERSAO = "20261023211635";</script>
 </head>
 <body class="bloqueado">
 
@@ -98,10 +98,10 @@
   <!-- Menu principal (como as abas do sistema de certificados). Cada item tem um endereço: #inicio, #sinalizadas... -->
   <nav class="menu-principal" aria-label="Seções do Observatório">
     <a href="#inicio" data-visao="inicio">Início</a>
-    <a href="#sinalizadas" data-visao="sinalizadas" class="so-equipe">Sinalizadas <span class="cont" id="c-sinalizadas"></span></a>
-    <a href="#nao-lidas" data-visao="nao-lidas" class="so-equipe">Não lidas <span class="cont" id="c-nao-lidas"></span></a>
-    <a href="#lidas" data-visao="lidas" class="so-equipe">Lidas <span class="cont" id="c-lidas"></span></a>
-    <a href="#sem-relevancia" data-visao="sem-relevancia" class="so-equipe">Sem relevância <span class="cont" id="c-sem-relevancia"></span></a>
+    <a href="#sinalizadas" data-visao="sinalizadas" class="aba-equipe">Sinalizadas <span class="cont" id="c-sinalizadas"></span></a>
+    <a href="#nao-lidas" data-visao="nao-lidas" class="aba-equipe">Não lidas <span class="cont" id="c-nao-lidas"></span></a>
+    <a href="#lidas" data-visao="lidas" class="aba-equipe">Lidas <span class="cont" id="c-lidas"></span></a>
+    <a href="#sem-relevancia" data-visao="sem-relevancia" class="aba-equipe">Sem relevância <span class="cont" id="c-sem-relevancia"></span></a>
     <!-- Na mesma linha do menu, no canto direito (pedido do Diego) -->
     <a id="btn-coletar" class="btn so-equipe" target="_blank" rel="noopener" title="Abre o GitHub para disparar uma coleta agora">Coletar agora ↗</a>
   </nav>
@@ -339,7 +339,7 @@
     a.textContent = "O Observatório não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261023211426"></script>
-<script src="app.js?v=20261023211426"></script>
+<script src="acesso.js?v=20261023211635"></script>
+<script src="app.js?v=20261023211635"></script>
 </body>
 </html>

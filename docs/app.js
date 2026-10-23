@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023211426"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023211635"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -189,8 +189,8 @@ function irPara(hash) {
   }
   let visao = VISOES[nome] ? nome : "inicio";
   if (visao !== "inicio" && !logado()) {  // Sinalizadas, Lidas etc. são da equipe
+    pedirLogin(`"${VISOES[visao].titulo}" é uma área para quem tem conta. Entre para acompanhar as notícias sinalizadas, lidas e sem relevância.`);
     visao = "inicio";
-    pedirLogin("As áreas Sinalizadas, Não lidas, Lidas e Sem relevância são da equipe do CINEA. Entre para ver.");
   }
   if (nome === "admin" && !admin) visao = "inicio";
   if (visao !== estado.visao) estado.pagina = 1;
