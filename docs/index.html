@@ -8,7 +8,55 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
 <link rel="stylesheet" href="estilo.css">
 </head>
-<body>
+<body class="bloqueado">
+
+<!-- Tela de entrada: aparece até a pessoa entrar. O painel só carrega os dados depois. -->
+<section id="portaria" class="portaria" aria-labelledby="portaria-titulo">
+  <div class="portaria-cartao">
+    <div class="portaria-marca">
+      <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--marca)"/><circle cx="16" cy="16" r="8" fill="none" stroke="var(--superficie)" stroke-width="2.5"/><circle cx="16" cy="16" r="2.5" fill="var(--superficie)"/></svg>
+      <div>
+        <h1 id="portaria-titulo">Radar da Educação Superior</h1>
+        <p class="sub">CINEA · NED — PUC Minas</p>
+      </div>
+    </div>
+
+    <!-- Entrar com e-mail e senha -->
+    <form id="form-entrar" class="form-portaria" novalidate>
+      <h2>Entrar</h2>
+      <label>E-mail <input id="entrar-email" type="email" autocomplete="username" required></label>
+      <label>Senha <input id="entrar-senha" type="password" autocomplete="current-password" required></label>
+      <p class="msg" role="alert"></p>
+      <button class="btn btn-largo" type="submit">Entrar</button>
+      <div class="links-portaria">
+        <button type="button" class="link" data-modo="primeiro">Primeiro acesso</button>
+        <button type="button" class="link" data-modo="esqueci">Esqueci a senha</button>
+      </div>
+    </form>
+
+    <!-- Primeiro acesso / esqueci a senha: e-mail → código → senha nova -->
+    <form id="form-codigo" class="form-portaria" novalidate hidden>
+      <h2 id="codigo-titulo">Primeiro acesso</h2>
+      <p id="codigo-explica" class="explica"></p>
+      <label>E-mail <input id="codigo-email" type="email" autocomplete="username" required></label>
+      <div id="codigo-passo2" hidden>
+        <label>Código recebido por e-mail <input id="codigo-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="\d{6}"></label>
+        <label>Senha nova <input id="codigo-senha" type="password" autocomplete="new-password"></label>
+        <label>Repita a senha nova <input id="codigo-senha2" type="password" autocomplete="new-password"></label>
+        <p class="dica">Pelo menos 8 caracteres, com letras e números.</p>
+      </div>
+      <p class="msg" role="alert"></p>
+      <button id="codigo-botao" class="btn btn-largo" type="submit">Enviar código</button>
+      <div class="links-portaria">
+        <button type="button" class="link" data-modo="entrar">← Voltar para entrar</button>
+        <button type="button" id="codigo-reenviar" class="link" hidden>Reenviar código</button>
+      </div>
+    </form>
+
+    <p id="portaria-aviso" class="explica" hidden></p>
+  </div>
+</section>
+
 <header class="topo">
   <div class="topo-inner">
     <div>
@@ -18,6 +66,12 @@
     <div class="topo-acoes">
       <span id="atualizado" class="atualizado">Carregando…</span>
       <a id="btn-coletar" class="btn" target="_blank" rel="noopener" title="Abre o GitHub para disparar uma coleta agora">Coletar agora ↗</a>
+      <div class="usuario">
+        <span id="usuario-nome" class="usuario-nome"></span>
+        <button id="btn-admin" class="link" type="button" hidden>Administrador</button>
+        <button id="btn-senha" class="link" type="button">Alterar senha</button>
+        <button id="btn-sair" class="link" type="button">Sair</button>
+      </div>
     </div>
   </div>
 </header>
@@ -99,6 +153,76 @@
   </li>
 </template>
 
+<!-- Alterar a própria senha -->
+<dialog id="dlg-senha" class="dialogo" aria-labelledby="dlg-senha-titulo">
+  <form id="form-senha" method="dialog" novalidate>
+    <h2 id="dlg-senha-titulo">Alterar senha</h2>
+    <label>Senha atual <input id="senha-atual" type="password" autocomplete="current-password"></label>
+    <label>Senha nova <input id="senha-nova" type="password" autocomplete="new-password"></label>
+    <label>Repita a senha nova <input id="senha-nova2" type="password" autocomplete="new-password"></label>
+    <p class="dica">Pelo menos 8 caracteres, com letras e números. Ao trocar, você sai dos outros navegadores.</p>
+    <p class="msg" role="alert"></p>
+    <div class="dialogo-acoes">
+      <button type="button" class="btn-sec" data-fechar>Cancelar</button>
+      <button type="submit" class="btn">Salvar senha</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Administrador: equipe e registro de atividades -->
+<dialog id="dlg-admin" class="dialogo dialogo-largo" aria-labelledby="dlg-admin-titulo">
+  <div class="dialogo-cab">
+    <h2 id="dlg-admin-titulo">Administrador</h2>
+    <button type="button" class="link" data-fechar>Fechar ✕</button>
+  </div>
+  <div class="abas" role="tablist">
+    <button type="button" role="tab" class="aba" data-aba="equipe" aria-selected="true">Equipe</button>
+    <button type="button" role="tab" class="aba" data-aba="registro" aria-selected="false">Registro de atividades</button>
+  </div>
+
+  <section id="aba-equipe">
+    <form id="form-membro" class="form-membro" novalidate>
+      <h3>Cadastrar pessoa</h3>
+      <div class="linha-membro">
+        <label>Nome <input id="membro-nome" autocomplete="off" maxlength="120"></label>
+        <label>E-mail <input id="membro-email" type="email" autocomplete="off"></label>
+      </div>
+      <div class="linha-membro">
+        <label class="check"><input id="membro-admin" type="checkbox"> Administrador</label>
+        <label class="check"><input id="membro-boasvindas" type="checkbox" checked> Enviar e-mail de boas-vindas</label>
+        <span class="espaco"></span>
+        <button type="submit" class="btn">Cadastrar</button>
+      </div>
+      <p class="msg" role="alert"></p>
+    </form>
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th>Pessoa</th><th>Situação</th><th>Último acesso</th><th></th></tr></thead>
+        <tbody id="equipe-corpo"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="aba-registro" hidden>
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <thead><tr><th>Quando</th><th>Quem</th><th>O quê</th></tr></thead>
+        <tbody id="registro-corpo"></tbody>
+      </table>
+    </div>
+  </section>
+</dialog>
+
+<!-- Confirmação no estilo do sistema (sem confirm() do navegador) -->
+<dialog id="dlg-confirmar" class="dialogo" aria-labelledby="dlg-confirmar-texto">
+  <p id="dlg-confirmar-texto"></p>
+  <div class="dialogo-acoes">
+    <button type="button" class="btn-sec" value="nao" autofocus>Cancelar</button>
+    <button type="button" class="btn btn-perigo" value="sim">Confirmar</button>
+  </div>
+</dialog>
+
+<script src="acesso.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

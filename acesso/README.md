@@ -1,0 +1,65 @@
+# Servidor de acesso do Radar
+
+Controla **quem entra** no painel: equipe, senhas, primeiro acesso, "esqueci a senha" e administradores.
+Roda no Google Apps Script, na conta **cineaned@gmail.com**, igual ao Painel do sistema de certificados.
+
+> A entrada organiza quem usa o Radar, mas **não protege os dados**: eles continuam públicos no
+> repositório do GitHub (decisão de 23/10/2026). Para protegê-los de verdade, o painel e os dados
+> precisariam passar a ser servidos por este Apps Script e o repositório ficar privado.
+
+| | |
+|---|---|
+| Projeto (editor) | https://script.google.com/d/189yujMyAlzHxfUIuC5Tg5yKlBHY0f5-opPBlLs_B-oMBr4PAkQRQeOtK/edit |
+| App da Web (`/exec`) | `https://script.google.com/macros/s/AKfycbxgKFOecHcd4-nfNhmtiZbPWP8F9J4AX2Y5Wjm6iJDDXgfig6tNl6zcC7sb4lSmS-3Q/exec` |
+| Implantação | `AKfycbxgKFOecHcd4-nfNhmtiZbPWP8F9J4AX2Y5Wjm6iJDDXgfig6tNl6zcC7sb4lSmS-3Q` |
+| Planilha | "Radar da Educação Superior - Acesso (não mexer)", no Drive da cineaned, criada por `configurar()` |
+
+## Como funciona
+
+- **Equipe** (aba da planilha): quem pode entrar, nome, administrador, hash da senha, último acesso.
+  A senha nunca é guardada: só um hash (sal próprio + segredo do servidor + HMAC repetido 2.000 vezes).
+- **Primeiro acesso / esqueci a senha:** e-mail → código de 6 dígitos por e-mail (15 min, 5 tentativas)
+  → a pessoa cria a senha → já entra.
+- **Entrada:** e-mail e senha. A mensagem de erro é a mesma para e-mail desconhecido e senha errada.
+  Após 5 erros seguidos, o e-mail fica bloqueado por 15 minutos; após 20 erros no dia, só no dia seguinte.
+- **Sessão:** 30 dias desde o último uso, guardada no navegador e, no servidor, só como hash.
+  Cai na hora se a pessoa sair da equipe, se trocar a senha (em outro navegador) ou se um administrador apagar a senha dela.
+- **Administradores:** cineaned sempre; os demais marcados na Equipe. Cadastram e removem pessoas, dão ou tiram o perfil de
+  administrador, reenviam o e-mail de boas-vindas, apagam a senha de alguém e veem o registro de atividades.
+- **Cota de e-mail:** é a MESMA do sistema de certificados (mesma conta, ~100 por dia). O Radar não envia nada
+  quando restam 30 ou menos (reserva para os certificados) e manda no máximo 20 códigos por dia.
+- **Segredo:** o código está num repositório público, então o segredo fica só nas propriedades do script
+  (`SEGREDO`, criado por `configurar()`). Nunca escreva segredos no `Acesso.gs`.
+
+## Primeira configuração (uma vez, logado como cineaned)
+
+1. Abra o projeto no editor (link acima).
+2. No topo, escolha a função **`configurar`** e clique em **Executar**.
+3. Autorize: *Revisar permissões* › conta cineaned › *Avançado* › *Acessar Radar da Educação Superior - Acesso (não seguro)* › *Permitir*.
+   O Google chama de "não seguro" todo script que não passou por verificação; é o mesmo aviso do sistema de certificados.
+4. No log aparece o link da planilha criada. Diego Eduardo já entra como administrador.
+5. Teste em https://certificacao-cinea.github.io/radar-educacao-superior/ › *Primeiro acesso*.
+
+## Publicar uma alteração
+
+```bash
+cd acesso
+node teste/testar.js
+clasp push --force
+clasp update-deployment AKfycbxgKFOecHcd4-nfNhmtiZbPWP8F9J4AX2Y5Wjm6iJDDXgfig6tNl6zcC7sb4lSmS-3Q --description "o que mudou"
+```
+
+O clasp precisa estar logado na conta cineaned (`clasp show-authorized-user`). Se mudar as permissões no
+`appsscript.json`, rode `configurar` de novo no editor para autorizar.
+
+**Cuidado:** o `clasp create`/`clasp pull` troca o `appsscript.json` pelo padrão do Google (fuso de Nova York, sem
+permissões nem configuração de App da Web). Confira o arquivo antes de fazer `push`.
+
+## Testes
+
+- `node acesso/teste/testar.js`: simula os serviços do Google e confere 51 regras (senhas, códigos, bloqueios,
+  sessões, administração, cota, erros internos).
+- Telas sem o Google: sirva `docs/` (`python -m http.server 8791 --directory docs`) e abra
+  `http://localhost:8791/?acesso=simulado`. O código "enviado por e-mail" aparece no console do navegador.
+  Pessoas do simulador: diegoeduardo@pucminas.br (admin, sem senha: use Primeiro acesso) e
+  ana.teste@pucminas.br (senha `teste2026ok`).

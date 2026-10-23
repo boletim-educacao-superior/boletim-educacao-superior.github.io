@@ -19,6 +19,17 @@ entidades da educação superior"* e a preparação dos cursos para avaliações
 
 ---
 
+## Acesso ao painel
+
+O painel pede **e-mail e senha**. Quem cadastra as pessoas é um administrador (menu *Administrador*, no topo).
+A pessoa cadastrada recebe um e-mail de boas-vindas, clica em **Primeiro acesso**, recebe um código e cria a
+própria senha. "Esqueci a senha" funciona do mesmo jeito.
+
+O servidor de acesso é um Google Apps Script na conta cineaned, com a mesma lógica do sistema de certificados.
+Detalhes, configuração e manutenção em [acesso/README.md](acesso/README.md).
+
+> A entrada organiza **quem usa** o Radar, mas os dados continuam públicos neste repositório.
+
 ## Como funciona
 
 ```
@@ -177,7 +188,8 @@ radar/fontes.py           coleta (Google Notícias e DOU)
 radar/triagem.py          classificação por regras
 radar/alertas.py          alertas (issue do GitHub e SMTP)
 radar/__main__.py         orquestra uma rodada de coleta
-docs/                     painel (index.html, app.js, estilo.css)
+docs/                     painel (index.html, app.js, acesso.js, estilo.css)
+acesso/                   servidor de acesso (Apps Script) e seus testes
 docs/dados/               itens.json e status.json, gerados pela coleta
 .github/workflows/        agendamento no GitHub Actions
 ```
@@ -193,6 +205,7 @@ docs/dados/               itens.json e status.json, gerados pela coleta
   os itens, não só os urgentes, e as regras são ajustáveis.
 - **Lidos e "última visita"** ficam salvos no navegador de cada pessoa, não são
   compartilhados entre a equipe.
+- **A tela de entrada não protege os dados:** `docs/dados/itens.json` e o repositório são públicos.
 - O GitHub **desativa agendamentos** de repositórios públicos sem atividade por
   60 dias. Os commits da própria coleta costumam bastar; se acontecer, reative
   em *Actions › Coleta do Radar › Enable workflow*.

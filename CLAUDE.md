@@ -1,0 +1,39 @@
+# Radar da Educação Superior · CINEA / NED · PUC Minas
+
+Contexto para retomar o trabalho em qualquer sessão. A conta do Claude é compartilhada: **não usar a memória do Claude**,
+o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Documents/certificados-ned/CLAUDE.md`).
+
+## Quem e para quê
+- Diego Eduardo (Tecnologias e Experiências de Aprendizagem do CINEA, NED/Prograd, PUC Minas) é o responsável.
+- Quem usa é o **Hub de Integração e Relacionamento**, que cuida da atividade "Articulação com instituições e entidades da
+  educação superior (MEC, INEP, SEMESP, ABMES, ABED)". O João (gestão) quer a equipe a par de ações, comunicados, notícias e editais.
+- NED = Núcleo de **Educação Digital** (não "de EAD"). O CINEA tem três setores: Hub; Inovação Pedagógica e Formação Continuada;
+  Tecnologias e Experiências de Aprendizagem. Documento de referência: `Downloads/Contextualizacao_CINEA_Setores_e_Atuacao.md`.
+
+## Restrições combinadas (23/10/2026)
+- Script automatizado e **sem custo**, fácil de manter, sem depender de bancos ou sistemas internos.
+- **Não usar o Monday** para isso (o Diego verificou).
+- Entrega numa página web (plano B: e-mail). Coleta sob demanda + automática só para alertar urgentes.
+
+## Onde está cada coisa
+| Parte | Local |
+|---|---|
+| Repositório | https://github.com/certificacao-cinea/radar-educacao-superior (público, org `certificacao-cinea`, escolhida pelo Diego) |
+| Painel | https://certificacao-cinea.github.io/radar-educacao-superior/ (GitHub Pages, pasta `docs/`) |
+| Coleta | GitHub Actions `.github/workflows/coleta.yml` (manual + dias úteis 8h/12h/17h) |
+| Fontes e regras | `config/fontes.toml`, `config/regras.toml` |
+| Acesso (login) | Apps Script na conta cineaned, `acesso/` (ver `acesso/README.md`). Painel: `docs/acesso.js` |
+
+## Acesso (23/10/2026)
+- Pedido do Diego: página de acesso com controle de usuário, cadastro de senha e admin, "usando a lógica da certificação".
+- Decisões dele: **só tela de entrada** (os dados continuam públicos; ele foi avisado de que isso não protege os dados),
+  **senha + código** por e-mail no primeiro acesso e no "esqueci a senha", **equipe própria** (planilha separada da certificação).
+- A cota de e-mail da cineaned é compartilhada com os certificados: o Radar reserva 30 e manda no máximo 20 códigos por dia.
+- `clasp create` sobrescreve o `appsscript.json`: conferir antes do push.
+
+## Lições aprendidas
+- Os portais gov.br do MEC e do CNE bloqueiam robôs (F5). Por isso a coleta usa o RSS do Google Notícias por site.
+- A busca do DOU recusa (403) pedidos sem o cabeçalho `Accept`.
+- A org `certificacao-cinea` bloqueia permissão de escrita *padrão* para workflows; o `permissions:` explícito no YAML funciona.
+- O Google Notícias devolve itens antigos às vezes: descartar os de fora da retenção antes de contar como novos.
+- Atos de rotina do DOU citam "portaria normativa", DCNs etc. na fundamentação: termos críticos não valem para rotina.

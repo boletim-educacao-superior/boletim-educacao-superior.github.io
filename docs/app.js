@@ -298,6 +298,12 @@ function exportarCSV() {
   URL.revokeObjectURL(a.href);
 }
 
-carregar().catch((e) => {
-  $("lista").innerHTML = `<li class="vazio">Não foi possível carregar os dados (${escapar(e.message)}).</li>`;
-});
+// Chamado por acesso.js depois que a pessoa entra (uma vez por página).
+let painelIniciado = false;
+function iniciarPainel() {
+  if (painelIniciado) return;
+  painelIniciado = true;
+  carregar().catch((e) => {
+    $("lista").innerHTML = `<li class="vazio">Não foi possível carregar os dados (${escapar(e.message)}).</li>`;
+  });
+}
