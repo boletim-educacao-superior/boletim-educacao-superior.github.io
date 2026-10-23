@@ -1,9 +1,9 @@
 {
- "ultima_execucao": "2026-10-23T18:35:06+00:00",
- "novos_nesta_execucao": 3,
+ "ultima_execucao": "2026-10-23T19:13:53+00:00",
+ "novos_nesta_execucao": 1,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 207,
+ "total_no_painel": 4642,
  "agenda": {
   "descricao": "Todos os dias, às 4h",
   "horas": [
@@ -31,7 +31,7 @@
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 9
+   "itens": 8
   },
   {
    "fonte": "Google Notícias: CNE",
@@ -43,7 +43,7 @@
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 9
+   "itens": 10
   },
   {
    "fonte": "Google Notícias: SEMESP",
@@ -94,13 +94,25 @@
    "itens": 10
   },
   {
-   "fonte": "DOU: INEP / ENADE / Censo",
+   "fonte": "DOU: ENADE",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 1
+  },
+  {
+   "fonte": "DOU: DCNs",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 1
+  },
+  {
+   "fonte": "DOU: Censo da Educação Superior",
    "instituicao": "DOU",
    "ok": true,
    "itens": 0
   },
   {
-   "fonte": "DOU: DCNs / currículo",
+   "fonte": "DOU: Carga horária a distância",
    "instituicao": "DOU",
    "ok": true,
    "itens": 0
