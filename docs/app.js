@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância") são da equipe e "lida" é de cada pessoa: as duas ficam
 // no servidor de acesso (acesso.js / acesso/Acesso.gs). A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023184215"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023195024"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -29,7 +29,9 @@ const estado = {
   ultimaVisita: null,
   somenteNovos: false,
   visao: "inicio",
+  pagina: 1,
 };
+const POR_PAGINA = 20;
 
 const $ = (id) => document.getElementById(id);
 
@@ -123,7 +125,9 @@ function irPara(hash) {
     abrirPaginaAdmin();
     return;
   }
-  estado.visao = VISOES[nome] ? nome : "inicio";
+  const visao = VISOES[nome] ? nome : "inicio";
+  if (visao !== estado.visao) estado.pagina = 1;
+  estado.visao = visao;
   marcarMenu(estado.visao);
   $("visao-titulo").textContent = VISOES[estado.visao].titulo;
   $("visao-explica").textContent = VISOES[estado.visao].explica;
@@ -175,18 +179,24 @@ function montarFiltros() {
     b.addEventListener("click", () => {
       estado.instituicoes.has(v) ? estado.instituicoes.delete(v) : estado.instituicoes.add(v);
       b.setAttribute("aria-pressed", String(estado.instituicoes.has(v)));
+      estado.pagina = 1;
       render();
     });
     caixa.appendChild(b);
   }
   for (const id of ["f-busca", "f-prioridade", "f-setor", "f-tema", "f-tipo", "f-periodo", "f-rotina"]) {
-    $(id).addEventListener(id === "f-busca" ? "input" : "change", () => { estado.somenteNovos = false; render(); });
+    $(id).addEventListener(id === "f-busca" ? "input" : "change", () => { estado.somenteNovos = false; estado.pagina = 1; render(); });
   }
   document.querySelectorAll("[data-atalho]").forEach((b) =>
     b.addEventListener("click", () => aplicarAtalho(b.dataset.atalho)));
   $("btn-limpar").addEventListener("click", () => aplicarAtalho("limpar"));
   $("btn-csv").addEventListener("click", exportarCSV);
-  $("btn-lertodos").addEventListener("click", () => marcarLidos(filtrar().map((it) => it.id), true));
+  $("btn-lertodos").addEventListener("click", () => marcarLidos(paginaAtual(filtrar()).map((it) => it.id), true));
+  // Botão "Buscar" (e Enter): a busca já filtra enquanto se digita; o botão confirma e leva ao resultado.
+  $("form-busca").addEventListener("submit", () => {
+    estado.somenteNovos = false; estado.pagina = 1; render();
+    $("contagem").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 function aplicarAtalho(nome) {
@@ -197,6 +207,7 @@ function aplicarAtalho(nome) {
   estado.somenteNovos = nome === "novos";
   $("f-prioridade").value = nome === "urgente" ? "urgente" : nome === "alta" ? "alta+" : "";
   $("f-periodo").value = nome === "limpar" ? "30" : "";
+  estado.pagina = 1;
   render();
 }
 
@@ -268,9 +279,14 @@ function render() {
   $("n-alta").textContent = contagemPorPrio("alta");
   $("n-novos").textContent = estado.itens.filter(ehNovo).length;
   $("n-total").textContent = estado.itens.length;
-  $("contagem").textContent = estado.somenteNovos
-    ? `${visiveis.length} item(ns) novo(s) desde sua última visita`
+  const paginas = Math.max(1, Math.ceil(visiveis.length / POR_PAGINA));
+  estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);
+  const ini = (estado.pagina - 1) * POR_PAGINA;
+  const total = estado.somenteNovos ? `${visiveis.length} item(ns) novo(s) desde sua última visita`
     : `${visiveis.length} item(ns) com os filtros atuais`;
+  $("contagem").textContent = visiveis.length > POR_PAGINA
+    ? `${total} · mostrando ${ini + 1}–${Math.min(ini + POR_PAGINA, visiveis.length)}` : total;
+  montarPaginacao(paginas);
 
   const lista = $("lista");
   lista.replaceChildren();
@@ -289,14 +305,36 @@ function render() {
     return;
   }
   const frag = document.createDocumentFragment();
-  for (const it of visiveis.slice(0, 400)) frag.appendChild(montarItem(it));
+  for (const it of paginaAtual(visiveis)) frag.appendChild(montarItem(it));
   lista.appendChild(frag);
-  if (visiveis.length > 400) {
-    const li = document.createElement("li");
-    li.className = "vazio";
-    li.textContent = `Mostrando 400 de ${visiveis.length}. Refine os filtros para ver o restante.`;
-    lista.appendChild(li);
-  }
+}
+
+function paginaAtual(lista) {
+  return lista.slice((estado.pagina - 1) * POR_PAGINA, estado.pagina * POR_PAGINA);
+}
+
+/** « Anterior · 1 … 4 5 6 … 204 · Próxima » — 20 notícias por página. */
+function montarPaginacao(paginas) {
+  const nav = $("paginacao");
+  nav.hidden = paginas <= 1;
+  if (paginas <= 1) { nav.replaceChildren(); return; }
+  const p = estado.pagina;
+  const numeros = [...new Set([1, p - 2, p - 1, p, p + 1, p + 2, paginas])].filter((n) => n >= 1 && n <= paginas).sort((a, b) => a - b);
+  const botao = (rotulo, destino, extra = "") =>
+    `<button type="button" class="pag${extra}" data-pagina="${destino}"${destino === p && !extra ? ' aria-current="page"' : ""}` +
+    `${destino < 1 || destino > paginas ? " disabled" : ""}>${rotulo}</button>`;
+  let html = botao("‹ Anterior", p - 1, " pag-seta");
+  numeros.forEach((n, i) => {
+    if (i && n - numeros[i - 1] > 1) html += '<span class="pag-reticencias">…</span>';
+    html += botao(String(n), n);
+  });
+  html += botao("Próxima ›", p + 1, " pag-seta");
+  nav.innerHTML = html;
+  nav.querySelectorAll("[data-pagina]").forEach((b) => b.addEventListener("click", () => {
+    estado.pagina = Number(b.dataset.pagina);
+    render();
+    $("contagem").scrollIntoView({ block: "start" });
+  }));
 }
 
 function montarItem(it) {
@@ -464,10 +502,14 @@ function mostrarAgenda(ag) {
   if (!ag || !ag.horas?.length) return;
   const el = $("agenda");
   const proxima = proximaColeta(ag);
-  el.textContent = `Coleta automática: ${ag.descricao.charAt(0).toLowerCase()}${ag.descricao.slice(1)}` +
-    (proxima ? ` · próxima: ${proxima}` : "");
+  el.textContent = `Coleta automática: ${ag.descricao.charAt(0).toLowerCase()}${ag.descricao.slice(1)}`;
   el.title = "Horário de Brasília. O GitHub pode atrasar alguns minutos nos horários de pico.";
   el.hidden = false;
+  if (proxima) {
+    $("proxima").textContent = `Próxima atualização: ${proxima}`;
+    $("proxima").title = el.title;
+    $("proxima").hidden = false;
+  }
 }
 
 function proximaColeta(ag) {

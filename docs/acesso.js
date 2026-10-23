@@ -4,7 +4,7 @@
 // Importante: isto organiza QUEM usa o painel. Os dados do Radar continuam públicos no GitHub
 // (decisão de 23/10/2026); a entrada não é uma proteção dos dados.
 
-const VERSAO_ACESSO = "20261023184215"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023195024"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -31,6 +31,25 @@ const ACESSO = {
 const CHAVE_SESSAO = "radar.sessao";
 const Acesso = { sessao: null, perfil: null };
 const $a = (id) => document.getElementById(id);
+
+// ------------------------------------------------------------------ tema --
+// Como no sistema de certificados: abre sempre no claro; quem escolher o escuro, fica com ele neste navegador.
+const ICONE_SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+const ICONE_LUA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const temaAtual = () => (document.documentElement.getAttribute("data-theme") === "dark" ? "escuro" : "claro");
+function aplicarTema(tema, salvar) {
+  document.documentElement.setAttribute("data-theme", tema === "escuro" ? "dark" : "light");
+  if (salvar) { try { localStorage.setItem("radar.tema", tema); } catch { /* modo privado */ } }
+  const rotulo = tema === "escuro" ? "Usar tema claro" : "Usar tema escuro";
+  document.querySelectorAll(".alternar-tema").forEach((b) => {
+    b.innerHTML = tema === "escuro" ? ICONE_SOL : ICONE_LUA;
+    b.title = rotulo; b.setAttribute("aria-label", rotulo);
+  });
+}
+aplicarTema(temaAtual(), false);
+document.addEventListener("click", (e) => {
+  if (e.target.closest?.(".alternar-tema")) aplicarTema(temaAtual() === "escuro" ? "claro" : "escuro", true);
+});
 
 // ------------------------------------------------------------- servidor --
 function lerSessao() { try { return localStorage.getItem(CHAVE_SESSAO); } catch { return null; } }

@@ -62,9 +62,13 @@ button { font: inherit; color: inherit; }
 
 .topo { background: var(--superficie); border-bottom: 1px solid var(--borda); }
 .topo-inner, .conteudo, .rodape { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
-.topo-inner { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; padding-top: 18px; padding-bottom: 18px; }
+/* Topo em duas linhas: título | conta; depois a situação da coleta à esquerda e "Coletar agora" no canto direito */
+.topo-inner {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; row-gap: 10px;
+  align-items: start; padding-top: 18px; padding-bottom: 14px;
+}
 .titulo-bloco { min-width: 0; }
-.topo-acoes { margin-top: 10px; }
+.topo-acoes { grid-column: 1 / -1; justify-content: space-between; align-items: flex-end; }
 h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 .sub { margin: 2px 0 0; color: var(--texto-suave); font-size: .9rem; }
 .topo-acoes { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -387,4 +391,30 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 @media (max-width: 720px) {
   .menu-principal { padding: 0 8px; }
   .menu-principal a { padding: 8px 9px 9px; font-size: .84rem; }
+}
+
+/* ----------------------------------------------------------------- tema --- */
+.alternar-tema svg { width: 18px; height: 18px; }
+.tema-entrada { position: fixed; top: 16px; right: 16px; z-index: 5; }
+
+/* ---------------------------------------------------------------- busca --- */
+.busca { display: flex; gap: 8px; }
+.busca #f-busca { flex: 1; min-width: 0; }
+.btn-buscar { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; }
+
+/* ------------------------------------------------------------ paginação --- */
+.paginacao { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 18px 0 4px; }
+.paginacao[hidden] { display: none; }
+.pag {
+  min-width: 36px; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--borda);
+  background: var(--superficie); color: var(--texto); cursor: pointer; font-size: .88rem; font-variant-numeric: tabular-nums;
+}
+.pag:hover:not(:disabled) { border-color: var(--marca); color: var(--marca); }
+.pag[aria-current="page"] { background: var(--marca); border-color: var(--marca); color: var(--marca-contraste); font-weight: 700; }
+.pag:disabled { opacity: .4; cursor: default; }
+.pag-reticencias { color: var(--texto-suave); padding: 0 2px; }
+
+@media (max-width: 720px) {
+  .topo-acoes { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .pag-seta { flex-basis: calc(50% - 3px); order: 2; }
 }

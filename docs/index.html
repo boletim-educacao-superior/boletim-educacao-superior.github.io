@@ -6,14 +6,20 @@
 <title>Radar da Educação Superior</title>
 <meta name="description" content="Monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261023184215">
+<link rel="stylesheet" href="estilo.css?v=20261023195024">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
-<script>window.RADAR_VERSAO = "20261023184215";</script>
+<script>
+  // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
+  try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
+  catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+</script>
+<script>window.RADAR_VERSAO = "20261023195024";</script>
 </head>
 <body class="bloqueado">
 
 <!-- Tela de entrada: aparece até a pessoa entrar. O painel só carrega os dados depois. -->
 <section id="portaria" class="portaria" aria-labelledby="portaria-titulo">
+  <button type="button" class="tema-entrada botao-redondo alternar-tema" aria-label="Usar tema escuro" title="Usar tema escuro"></button>
   <div class="portaria-cartao">
     <div class="portaria-marca">
       <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--marca)"/><circle cx="16" cy="16" r="8" fill="none" stroke="var(--superficie)" stroke-width="2.5"/><circle cx="16" cy="16" r="2.5" fill="var(--superficie)"/></svg>
@@ -64,13 +70,6 @@
     <div class="titulo-bloco">
       <h1>Radar da Educação Superior</h1>
       <p class="sub">Hub de Integração e Relacionamento · CINEA · NED · Prograd — PUC Minas</p>
-      <div class="topo-acoes">
-        <div class="coleta-info">
-          <span id="atualizado" class="atualizado">Carregando…</span>
-          <span id="agenda" class="agenda" hidden></span>
-        </div>
-        <a id="btn-coletar" class="btn" target="_blank" rel="noopener" title="Abre o GitHub para disparar uma coleta agora">Coletar agora ↗</a>
-      </div>
     </div>
     <!-- Conta, no mesmo molde do sistema de certificados: quem está conectado, sigla e engrenagem -->
       <div class="conta">
@@ -82,6 +81,16 @@
         <button type="button" class="sigla" id="sigla-topo" title="Meu perfil" aria-label="Meu perfil"></button>
         <button type="button" class="botao-redondo" id="botao-engrenagem" aria-label="Meu perfil, senha e administração"
           title="Meu perfil, senha e administração" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        <button type="button" class="botao-redondo alternar-tema" aria-label="Usar tema escuro" title="Usar tema escuro"></button>
+    </div>
+    <!-- Segunda linha: situação da coleta à esquerda, "Coletar agora" no canto direito, alinhado com a página -->
+    <div class="topo-acoes">
+      <div class="coleta-info">
+        <span id="atualizado" class="atualizado">Carregando…</span>
+        <span id="agenda" class="agenda" hidden></span>
+        <span id="proxima" class="agenda" hidden></span>
+      </div>
+      <a id="btn-coletar" class="btn" target="_blank" rel="noopener" title="Abre o GitHub para disparar uma coleta agora">Coletar agora ↗</a>
     </div>
   </div>
   <!-- Menu principal (como as abas do sistema de certificados). Cada item tem um endereço: #inicio, #sinalizadas... -->
@@ -108,7 +117,10 @@
   </section>
 
   <section class="filtros" aria-label="Filtros">
-    <input id="f-busca" type="search" placeholder="Buscar no título, resumo ou órgão…" aria-label="Buscar">
+    <form id="form-busca" class="busca" role="search" onsubmit="return false">
+      <input id="f-busca" type="search" placeholder="Buscar no título, resumo ou órgão…" aria-label="Buscar notícias">
+      <button type="submit" class="btn btn-buscar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> Buscar</button>
+    </form>
     <div class="linha-filtros">
       <label>Prioridade
         <select id="f-prioridade">
@@ -138,12 +150,13 @@
       <span class="espaco"></span>
       <button id="btn-limpar" class="link">Limpar filtros</button>
       <button id="btn-csv" class="link">Exportar CSV</button>
-      <button id="btn-lertodos" class="link">Marcar visíveis como lidos</button>
+      <button id="btn-lertodos" class="link">Marcar esta página como lida</button>
     </div>
   </section>
 
   <p id="contagem" class="contagem" aria-live="polite"></p>
   <ol id="lista" class="lista"></ol>
+  <nav id="paginacao" class="paginacao" aria-label="Páginas de notícias" hidden></nav>
 
   <details class="status-fontes">
     <summary>Situação das fontes na última coleta <span id="status-resumo"></span></summary>
@@ -305,7 +318,7 @@
     a.textContent = "O Radar não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261023184215"></script>
-<script src="app.js?v=20261023184215"></script>
+<script src="acesso.js?v=20261023195024"></script>
+<script src="app.js?v=20261023195024"></script>
 </body>
 </html>

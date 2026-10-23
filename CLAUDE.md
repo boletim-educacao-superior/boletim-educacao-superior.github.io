@@ -43,6 +43,9 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   `after:`/`before:` (máx. ~100 por busca: períodos de 15 dias, divididos se lotar); DOU aceita período `personalizado`
   mas **não pagina** (máx. 20): semanas, divididas até dia a dia. `manter_desde = "2026-01-01"` segura o histórico.
   Texto integral do DOU fica em `dados/textos_dou.json` (fora de docs/, o painel não baixa).
+- Topo (pedido do Diego, 23/10/2026): título | conta + engrenagem + tema; segunda linha com Última coleta, Coleta automática e
+  Próxima atualização (cada uma numa linha) e "Coletar agora" alinhado à direita da página. Tema como nos certificados: abre
+  sempre claro, escuro só para quem escolhe (`radar.tema` no navegador). Busca com botão; lista com 20 notícias por página.
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).
