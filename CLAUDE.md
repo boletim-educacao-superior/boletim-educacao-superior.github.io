@@ -22,6 +22,7 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 | Painel | https://certificacao-cinea.github.io/radar-educacao-superior/ (GitHub Pages, pasta `docs/`) |
 | Coleta | GitHub Actions `.github/workflows/coleta.yml` (manual + dias úteis 8h/12h/17h) |
 | Fontes e regras | `config/fontes.toml`, `config/regras.toml` |
+| Pasta no Drive (cineaned) | **Radar da Educação Superior**, `1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe`: script de acesso e planilha da equipe (pedido do Diego: centralizar tudo do Radar) |
 | Acesso (login) | Apps Script na conta cineaned, `acesso/` (ver `acesso/README.md`). Painel: `docs/acesso.js` |
 
 ## Acesso (23/10/2026)
@@ -30,6 +31,8 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   **senha + código** por e-mail no primeiro acesso e no "esqueci a senha", **equipe própria** (planilha separada da certificação).
 - A cota de e-mail da cineaned é compartilhada com os certificados: o Radar reserva 30 e manda no máximo 20 códigos por dia.
 - `clasp create` sobrescreve o `appsscript.json`: conferir antes do push.
+- O token do clasp só tem `drive.file`: ele cria pastas, mas não move o script. Quem move é o `configurar()` (escopo `drive`).
+- Para saber se o `configurar()` rodou: a planilha aparece na pasta; enquanto a cineaned não autorizar, o `/exec` responde "Acesso negado".
 
 ## Lições aprendidas
 - Os portais gov.br do MEC e do CNE bloqueiam robôs (F5). Por isso a coleta usa o RSS do Google Notícias por site.

@@ -12,7 +12,8 @@ Roda no Google Apps Script, na conta **cineaned@gmail.com**, igual ao Painel do 
 | Projeto (editor) | https://script.google.com/d/189yujMyAlzHxfUIuC5Tg5yKlBHY0f5-opPBlLs_B-oMBr4PAkQRQeOtK/edit |
 | App da Web (`/exec`) | `https://script.google.com/macros/s/AKfycbxgKFOecHcd4-nfNhmtiZbPWP8F9J4AX2Y5Wjm6iJDDXgfig6tNl6zcC7sb4lSmS-3Q/exec` |
 | Implantação | `AKfycbxgKFOecHcd4-nfNhmtiZbPWP8F9J4AX2Y5Wjm6iJDDXgfig6tNl6zcC7sb4lSmS-3Q` |
-| Planilha | "Radar da Educação Superior - Acesso (não mexer)", no Drive da cineaned, criada por `configurar()` |
+| Pasta no Drive | **Radar da Educação Superior** (cineaned): https://drive.google.com/drive/folders/1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe. Tudo do Radar no Google fica aqui (`PASTA_ID` no `Acesso.gs`) |
+| Planilha | "Radar da Educação Superior - Acesso (não mexer)", criada por `configurar()` dentro da pasta |
 
 ## Como funciona
 
@@ -37,7 +38,9 @@ Roda no Google Apps Script, na conta **cineaned@gmail.com**, igual ao Painel do 
 2. No topo, escolha a função **`configurar`** e clique em **Executar**.
 3. Autorize: *Revisar permissões* › conta cineaned › *Avançado* › *Acessar Radar da Educação Superior - Acesso (não seguro)* › *Permitir*.
    O Google chama de "não seguro" todo script que não passou por verificação; é o mesmo aviso do sistema de certificados.
-4. No log aparece o link da planilha criada. Diego Eduardo já entra como administrador.
+4. No *Registro de execução* aparece "Pronto. Pasta: … · Planilha: …". O `configurar()` também move o próprio script
+   para a pasta do Radar. Diego Eduardo já entra como administrador.
+   Se a execução terminar sem a janela de autorização e sem esse "Pronto", a função escolhida não era a `configurar`.
 5. Teste em https://certificacao-cinea.github.io/radar-educacao-superior/ › *Primeiro acesso*.
 
 ## Publicar uma alteração

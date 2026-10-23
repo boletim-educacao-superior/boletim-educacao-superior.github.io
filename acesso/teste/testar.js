@@ -8,7 +8,7 @@ const crypto = require("crypto");
 
 // ------------------------------------------------------------ simulador --
 function novoAmbiente() {
-  const props = {}, cache = {}, emails = [], planilhas = {};
+  const props = {}, cache = {}, emails = [], planilhas = {}, pastas = {};
   let relogio = Date.parse("2026-10-23T12:00:00Z");
 
   const toBytes = (v) => (Array.isArray(v) ? Buffer.from(v.map((b) => b & 255)) : Buffer.from(String(v), "utf8"));
@@ -87,13 +87,22 @@ function novoAmbiente() {
       createTextOutput: (t) => ({ texto: t, setMimeType() { return this; } }),
     },
     Logger: { log: () => {} },
+    // Drive: cada arquivo guarda em que pasta está; moveTo troca a pasta.
+    DriveApp: {
+      getFolderById: (id) => ({ getId: () => id, getUrl: () => "https://drive.google.com/" + id }),
+      getFileById: (id) => ({
+        getParents: () => { const p = pastas[id]; let lido = false; return { hasNext: () => !!p && !lido, next: () => { lido = true; return { getId: () => p }; } }; },
+        moveTo: (pasta) => { pastas[id] = pasta.getId(); },
+      }),
+    },
+    ScriptApp: { getScriptId: () => "script-radar" },
   };
   vm.createContext(g);
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "Acesso.gs"), "utf8"), g);
 
   const chamar = (corpo) => JSON.parse(g.doPost({ postData: { contents: JSON.stringify(corpo) } }).texto);
   return {
-    g, props, emails, planilhas,
+    g, props, emails, planilhas, pastas,
     chamar,
     avancar: (min) => { relogio += min * 60e3; },
     ultimoCodigo: (para) => { const e = emails.filter((x) => x.para === para).pop(); return e && (e.assunto.match(/(\d{6})/) || [])[1]; },
@@ -127,6 +136,9 @@ cenario("Configuração", (a) => {
   const equipe = a.aba("Equipe");
   conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso", equipe[0]);
   conferir("Diego entra como administrador", equipe[1][0] === DIEGO && equipe[1][2] === true);
+  const pasta = "1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe"; // PASTA_ID do Acesso.gs
+  conferir("planilha vai para a pasta do Radar", a.pastas[a.props.PLANILHA_ID] === pasta, a.pastas);
+  conferir("script vai para a pasta do Radar", a.pastas["script-radar"] === pasta, a.pastas);
   a.g.configurar();
   conferir("rodar de novo não duplica", a.aba("Equipe").length === 2);
 });

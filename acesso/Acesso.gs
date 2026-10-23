@@ -15,6 +15,8 @@
 const CONTA_SISTEMA = 'cineaned@gmail.com';   // dona do script: sempre administradora
 const ENDERECO_PAINEL = 'https://certificacao-cinea.github.io/radar-educacao-superior/';
 const NOME_PLANILHA = 'Radar da Educação Superior - Acesso (não mexer)';
+// Pasta "Radar da Educação Superior" no Drive da cineaned: tudo do Radar no Google fica nela (script e planilha).
+const PASTA_ID = '1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe';
 // Cadastrados como administradores na primeira execução de configurar().
 const ADMINS_INICIAIS = [{ email: 'diegoeduardo@pucminas.br', nome: 'Diego Eduardo' }];
 
@@ -49,7 +51,7 @@ function falha_(mensagem) { const e = new Error(mensagem); e.paraUsuario = true;
 
 /**
  * Rodar UMA vez no editor, logado como cineaned: cria a planilha, o segredo e os administradores iniciais,
- * e autoriza o envio de e-mail. Pode rodar de novo sem estragar nada.
+ * guarda o script e a planilha na pasta do Radar e autoriza o envio de e-mail. Pode rodar de novo sem estragar nada.
  */
 function configurar() {
   const props = PropertiesService.getScriptProperties();
@@ -61,6 +63,11 @@ function configurar() {
     props.setProperty('PLANILHA_ID', id);
     ss.getSheets()[0].setName('Equipe');
   }
+  const pasta = DriveApp.getFolderById(PASTA_ID);
+  [id, ScriptApp.getScriptId()].forEach(function (arquivo) {
+    const f = DriveApp.getFileById(arquivo);
+    if (!f.getParents().hasNext() || f.getParents().next().getId() !== PASTA_ID) f.moveTo(pasta);
+  });
   const ss = planilha_();
   const equipe = lerAba_(ss, 'Equipe');
   lerAba_(ss, 'Registro');
@@ -68,7 +75,8 @@ function configurar() {
     if (equipe.linhas.some(function (p) { return p.email === a.email; })) return;
     equipe.sh.appendRow(linha_([a.email, a.nome, true, CONTA_SISTEMA, agora_(), '', '', '', '']));
   });
-  Logger.log('Pronto. Planilha: ' + ss.getUrl() + ' · e-mails que ainda podem sair hoje: ' + MailApp.getRemainingDailyQuota());
+  Logger.log('Pronto. Pasta: ' + pasta.getUrl() + ' · Planilha: ' + ss.getUrl() +
+             ' · e-mails que ainda podem sair hoje: ' + MailApp.getRemainingDailyQuota());
 }
 
 function prop_(k) { return PropertiesService.getScriptProperties().getProperty(k); }
