@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261023213130"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023213545"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -405,7 +405,7 @@ $a("form-senha").addEventListener("submit", async (ev) => {
 
 // ------------------------------------------------------- administrador --
 const ROTULO_ACAO = {
-  entrada: "Entrou", acesso: "Abriu o Observatório", entrada_recusada: "Tentativa de quem não é da equipe",
+  entrada: "Entrou", acesso: "Abriu o Boletim", entrada_recusada: "Tentativa de quem não é da equipe",
   senha_errada: "Senha errada", senha_criada: "Criou a senha", senha_redefinida: "Trocou a senha (código)",
   senha_alterada: "Trocou a senha", senha_apagada: "Senha apagada pelo administrador", codigo_enviado: "Pediu código",
   membro_cadastrado: "Cadastrou pessoa", membro_alterado: "Alterou pessoa", membro_removido: "Removeu pessoa",
@@ -489,7 +489,7 @@ async function carregarEquipe(lista) {
 async function acaoMembro(botao, lista) {
   const email = botao.closest("tr").dataset.email, p = lista.find((x) => x.email === email), form = $a("form-membro");
   const perguntas = {
-    remover: [`Remover ${p.nome} do Observatório? A pessoa perde o acesso na hora.`, "Remover"],
+    remover: [`Remover ${p.nome} do Boletim? A pessoa perde o acesso na hora.`, "Remover"],
     apagarSenha: [`Apagar a senha de ${p.nome}? A pessoa sai de todos os navegadores e precisa fazer o "Primeiro acesso" de novo.`, "Apagar senha"],
   };
   const acao = botao.dataset.acao;
@@ -533,7 +533,7 @@ document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
     $a("form-entrar").hidden = true;
     const aviso = $a("portaria-aviso");
     aviso.hidden = false;
-    aviso.textContent = "O acesso ao Observatório ainda não foi configurado. Fale com o administrador do sistema.";
+    aviso.textContent = "O acesso ao Boletim ainda não foi configurado. Fale com o administrador do sistema.";
     return;
   }
   const s = lerSessao();

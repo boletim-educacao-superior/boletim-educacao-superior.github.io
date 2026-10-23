@@ -1,4 +1,4 @@
-# Observatório da Educação Superior · Radar da Educação Superior
+# Boletim da Educação Superior · Radar da Educação Superior
 
 Monitoramento automático de comunicados, notícias, editais e atos oficiais de
 **MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial

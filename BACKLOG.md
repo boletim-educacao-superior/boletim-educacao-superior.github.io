@@ -1,4 +1,4 @@
-# Pendências do Observatório da Educação Superior
+# Pendências do Boletim da Educação Superior
 
 ## 1. Preferências e resumo por e-mail (adiado pelo Diego em 23/10/2026)
 
@@ -20,7 +20,7 @@ nunca foi configurado. O Diego vai testar o sistema como está antes de decidir.
   e as marcações da equipe (abas `Marcacoes` e `Lidos`).
 - **Conteúdo do resumo:** urgentes da semana, sinalizadas pela equipe (com quem sinalizou), prioridade alta,
   contagem por instituição e link para o painel; rodapé explicando como parar de receber.
-  Assunto: "Observatório da Educação Superior · Resumo da semana (dd a dd/mm)".
+  Assunto: "Boletim da Educação Superior · Resumo da semana (dd a dd/mm)".
 - **Alerta imediato:** curto, só os urgentes novos, logo depois da coleta das 4h.
 - Com o alerta por e-mail funcionando, desligar a issue no GitHub (`ALERTA_GITHUB=0`).
 

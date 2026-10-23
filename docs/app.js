@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023213130"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023213545"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -68,7 +68,7 @@ const EXPLICA_USUARIO = {
   "sinalizadas": "As notícias que você sinalizou para acompanhar (só você vê).",
   "nao-lidas": "O que você ainda não abriu nem marcou como lido.",
   "lidas": "O que você já abriu ou marcou como lido (só você vê).",
-  "sem-relevancia": "Notícias que a equipe do CINEA marcou como fora do escopo do Observatório.",
+  "sem-relevancia": "Notícias que a equipe do CINEA marcou como fora do escopo do Boletim.",
 };
 
 // ------------------------------------------------------------ armazenamento --

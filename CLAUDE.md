@@ -1,6 +1,7 @@
-# Observatório da Educação Superior (Radar da Educação Superior) · CINEA / NED · PUC Minas
+# Boletim da Educação Superior (Radar da Educação Superior) · CINEA / NED · PUC Minas
 
-Nome trocado em 23/10/2026 a pedido do Diego: título "Observatório da Educação Superior", com "Radar da Educação Superior"
+Nome trocado em 23/10/2026 a pedido do Diego: primeiro "Observatório", depois (mesmo dia) **"Boletim da Educação Superior"**
+(ele achou "Observatório" estranho; queria algo de notícias e informes), com "Radar da Educação Superior"
 como subtítulo. O endereço (…/radar-educacao-superior/) e os nomes internos (pasta, planilha, código) continuam "Radar".
 Desde a mesma data, "Lida" também é compartilhada pela equipe (como Sinalizada e Sem relevância).
 

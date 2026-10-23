@@ -15,8 +15,8 @@
 const CONTA_SISTEMA = 'cineaned@gmail.com';   // dona do script: sempre administradora
 const ENDERECO_PAINEL = 'https://certificacao-cinea.github.io/radar-educacao-superior/';
 // Nome que as pessoas veem (o endereço continua "radar-educacao-superior" para não quebrar links já enviados).
-const NOME_SISTEMA = 'Observatório da Educação Superior';
-const REMETENTE = 'Observatório · CINEA | PUC Minas';
+const NOME_SISTEMA = 'Boletim da Educação Superior';
+const REMETENTE = 'Boletim · CINEA | PUC Minas';
 const NOME_PLANILHA = 'Radar da Educação Superior - Acesso (não mexer)';
 // Pasta "Radar da Educação Superior" no Drive da cineaned: tudo do Radar no Google fica nela (script e planilha).
 const PASTA_ID = '1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe';
@@ -290,7 +290,7 @@ function pedirCodigo_(email) {
   if (!podeEntrar_(ss, email)) {
     if (lim.dados.recusas++ < RECUSAS_REGISTRADAS_DIA) registrar_(ss, 'entrada_recusada', 'Pediu código, mas o e-mail não está na equipe');
     lim.salvar();
-    throw falha_('Este e-mail não está cadastrado no Observatório. Confira se digitou certo ou peça acesso a um administrador.');
+    throw falha_('Este e-mail não está cadastrado no Boletim. Confira se digitou certo ou peça acesso a um administrador.');
   }
   cache.put('codigo-recente:' + email, '1', 60);
   meu.c++;
@@ -360,7 +360,7 @@ function definirSenha_(email, codigo, senha) {
   cache.remove(chave);
   const ss = planilha_();
   USUARIO_ATUAL_ = email;
-  if (!podeEntrar_(ss, email)) throw falha_('Este e-mail não está mais cadastrado no Observatório.');
+  if (!podeEntrar_(ss, email)) throw falha_('Este e-mail não está mais cadastrado no Boletim.');
   const tinha = !!(senhaDe_(ss, email) || {}).senha;
   const hash = gravarSenha_(ss, email, hashSenha_(senha));
   cache.remove('senha-erros:' + email);
@@ -443,7 +443,7 @@ function registrarAcesso_(ss) {
     const cache = CacheService.getScriptCache(), chave = 'acesso:' + USUARIO_ATUAL_;
     if (cache.get(chave)) return;
     cache.put(chave, '1', 30 * 60);
-    registrar_(ss, 'acesso', 'Abriu o Observatório');
+    registrar_(ss, 'acesso', 'Abriu o Boletim');
     const m = membro_(ss, USUARIO_ATUAL_);
     // Visita nova (mais de 30 min sem usar): o último acesso vira a "visita anterior", base do "novos desde a sua última visita".
     if (m.p) {

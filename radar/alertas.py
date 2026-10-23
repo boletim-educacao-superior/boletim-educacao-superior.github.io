@@ -14,7 +14,7 @@ from email.message import EmailMessage
 
 
 def _corpo(urgentes, url_painel):
-    linhas = [f"O Observatório da Educação Superior (Radar) encontrou {len(urgentes)} item(ns) urgente(s):", ""]
+    linhas = [f"O Boletim da Educação Superior (Radar) encontrou {len(urgentes)} item(ns) urgente(s):", ""]
     for it in urgentes:
         linhas.append(f"- [{it['instituicao']}] {it['titulo']}")
         linhas.append(f"  Motivo: {it['motivo_urgencia']} · Data: {it['data']}")
@@ -66,7 +66,7 @@ def alertar_email(urgentes, assunto, url_painel):
 def enviar(urgentes, hoje):
     if not urgentes:
         return []
-    assunto = f"Observatório da Educação Superior: {len(urgentes)} item(ns) urgente(s) em {hoje}"
+    assunto = f"Boletim da Educação Superior: {len(urgentes)} item(ns) urgente(s) em {hoje}"
     url_painel = os.environ.get("URL_PAINEL", "")
     enviados = []
     for nome, func in (("github", alertar_github), ("email", alertar_email)):
