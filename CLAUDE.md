@@ -30,6 +30,10 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - Decisões dele: **só tela de entrada** (os dados continuam públicos; ele foi avisado de que isso não protege os dados),
   **senha + código** por e-mail no primeiro acesso e no "esqueci a senha", **equipe própria** (planilha separada da certificação).
 - A cota de e-mail da cineaned é compartilhada com os certificados: o Radar reserva 30 e manda no máximo 20 códigos por dia.
+- Topo depois de entrar (pedido do Diego, "mesma lógica do certificado"): "Conectado como" + nome (abre Meu perfil) · sair
+  + etiqueta do perfil, sigla do nome num círculo e engrenagem com Meu perfil, Alterar senha e, só para admin, Equipe e Registro.
+  No celular ficam só a sigla e a engrenagem. Meu perfil troca só o próprio nome (`salvarMeuNome`).
+- Hash da senha: 500 repetições (com 2000 a entrada demorava; cada hash guarda o próprio número, então os antigos valem).
 - `clasp create` sobrescreve o `appsscript.json`: conferir antes do push.
 - O token do clasp só tem `drive.file`: ele cria pastas, mas não move o script. Quem move é o `configurar()` (escopo `drive`).
 - Para saber se o `configurar()` rodou: a planilha aparece na pasta; enquanto a cineaned não autorizar, o `/exec` responde "Acesso negado".
