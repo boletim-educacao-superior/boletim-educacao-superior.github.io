@@ -21,9 +21,15 @@ entidades da educação superior"* e a preparação dos cursos para avaliações
 
 ## Acesso ao painel
 
-O painel pede **e-mail e senha**. Quem cadastra as pessoas é um administrador (menu *Administrador*, no topo).
-A pessoa cadastrada recebe um e-mail de boas-vindas, clica em **Primeiro acesso**, recebe um código e cria a
-própria senha. "Esqueci a senha" funciona do mesmo jeito.
+O painel é **aberto**: qualquer pessoa vê as notícias (urgentes e de prioridade alta) sem login.
+**Entrar** (canto direito) é para a equipe do CINEA: sinalizar, marcar como sem relevância ou lida (compartilhado
+com todos), ver as abas da equipe e o "novos desde a sua última visita" (calculado pelo registro de acesso).
+Quem cadastra as pessoas é um administrador. A pessoa cadastrada recebe um e-mail de boas-vindas, clica em
+**Primeiro acesso**, recebe um código e cria a própria senha. "Esqueci a senha" funciona do mesmo jeito.
+
+Os administradores têm o **Uso da plataforma** (engrenagem › Uso da plataforma): acessos, mapa de calor por
+dia da semana e hora, equipe x visitantes, celular x computador, o que mais se abre e busca. Visitantes são
+contados por navegador (um número aleatório, sem nenhum dado pessoal).
 
 O servidor de acesso é um Google Apps Script na conta cineaned, com a mesma lógica do sistema de certificados.
 Detalhes, configuração e manutenção em [acesso/README.md](acesso/README.md).

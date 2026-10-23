@@ -3,9 +3,13 @@
 Controla **quem entra** no painel: equipe, senhas, primeiro acesso, "esqueci a senha" e administradores.
 Roda no Google Apps Script, na conta **cineaned@gmail.com**, igual ao Painel do sistema de certificados.
 
-> A entrada organiza quem usa o Radar, mas **não protege os dados**: eles continuam públicos no
-> repositório do GitHub (decisão de 23/10/2026). Para protegê-los de verdade, o painel e os dados
-> precisariam passar a ser servidos por este Apps Script e o repositório ficar privado.
+> O painel é **aberto** (decisão de 23/10/2026): qualquer pessoa vê as notícias. A entrada serve para a equipe
+> marcar notícias (compartilhado), ver as áreas da equipe e administrar. Os dados são públicos no GitHub.
+
+Ações públicas (sem sessão): `publico` (ids marcados como sem relevância, sem nomes; cache de 60 s) e `evento`
+(registro de uso na aba `Acessos`, com limite por navegador e por minuto; nunca devolve erro). O relatório
+`uso` (só administradores) agrega essa aba: acessos por dia, mapa de calor (dia da semana × hora), equipe x
+visitantes, dispositivos, seções, notícias, instituições e buscas.
 
 | | |
 |---|---|

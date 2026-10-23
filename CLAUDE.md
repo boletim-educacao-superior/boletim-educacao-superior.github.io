@@ -52,6 +52,11 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   sempre claro, escuro só para quem escolhe (`radar.tema` no navegador). Busca com botão; lista com 20 notícias por página.
 - Painel mostra só **urgente e alta** (`PRIORIDADE_MINIMA` em app.js; pedido do Diego, 23/10/2026). Média e baixa ficam nos
   dados e reaparecem se a triagem subir a prioridade. "Coletar agora" fica na linha do menu, à direita.
+- **Painel aberto** (pedido do Diego, 23/10/2026): sem login vê o Início (urgente/alta); ações (sinalizar, sem relevância,
+  lida), abas da equipe, "novos desde a sua última visita" e "Coletar agora" pedem login. Servidor: `publico` (só ids sem
+  relevância, sem nomes), `evento` (uso: abertura, visao, noticia, busca, csv; aba `Acessos`, visitante = id aleatório por
+  navegador) e `uso` (relatório agregado, só admin). "Última visita" = coluna `visita_anterior` da Equipe (nova visita
+  após 30 min). Entrar ou sair recarrega a página. A aba `Acessos` cresce sem limite: se ficar lenta, arquivar linhas antigas.
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

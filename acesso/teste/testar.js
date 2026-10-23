@@ -54,7 +54,10 @@ function novoAmbiente() {
       newBlob: (s) => ({ getBytes: () => toSigned(Buffer.from(String(s), "utf8")) }),
       computeHmacSha256Signature: (valor, chave) => toSigned(crypto.createHmac("sha256", toBytes(chave)).update(toBytes(valor)).digest()),
       base64EncodeWebSafe: (b) => toBytes(b).toString("base64").replace(/\+/g, "-").replace(/\//g, "_"),
-      formatDate: (d) => new Date(d.getTime() - 3 * 3600e3).toISOString().replace("T", " ").slice(0, 19),
+      formatDate: (d, fuso, formato) => {
+        const t = new Date(d.getTime() - 3 * 3600e3).toISOString().replace("T", " ").slice(0, 19);
+        return formato === "yyyy-MM-dd" ? t.slice(0, 10) : t;
+      },
     },
     PropertiesService: {
       getScriptProperties: () => ({
@@ -134,7 +137,7 @@ cenario("Configuração", (a) => {
   a.g.configurar();
   conferir("cria segredo e planilha", !!a.props.SEGREDO && !!a.props.PLANILHA_ID);
   const equipe = a.aba("Equipe");
-  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso", equipe[0]);
+  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior", equipe[0]);
   conferir("Diego entra como administrador", equipe[1][0] === DIEGO && equipe[1][2] === true);
   const pasta = "1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe"; // PASTA_ID do Acesso.gs
   conferir("planilha vai para a pasta do Radar", a.pastas[a.props.PLANILHA_ID] === pasta, a.pastas);
@@ -308,6 +311,55 @@ cenario("Marcações: sinalizada, sem relevância e lidas", (a) => {
   conferir("voltar para não lida entra no registro", a.api(adm, "registro").dados.some((x) => x.acao === "item_nao_lida"));
   const acoes = a.api(adm, "registro").dados.map((x) => x.acao);
   conferir("sinalizar e desfazer entram no registro", ["item_sinalizada", "item_irrelevante", "item_irrelevante_desfeito"].every((x) => acoes.includes(x)), acoes);
+});
+
+cenario("Painel aberto: leitura pública, uso e última visita", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  const N1 = "0123456789abcdef", N2 = "fedcba9876543210";
+  a.api(adm, "marcar", N1, "irrelevante", true, "Ato de outra IES", "T1", "https://x.gov.br/1");
+  a.api(adm, "marcar", N2, "sinalizada", true, "", "T2", "https://x.gov.br/2");
+  let r = a.chamar({ acao: "publico" });
+  conferir("visitante vê só os ids sem relevância, sem nomes", r.ok && JSON.stringify(r.dados) === JSON.stringify({ irrelevantes: [N1] }), r);
+  a.api(adm, "marcar", N1, "irrelevante", false);
+  r = a.chamar({ acao: "publico" });
+  conferir("desmarcar atualiza o que o visitante vê na hora", r.ok && r.dados.irrelevantes.length === 0, r);
+
+  const V1 = "visitante0001", V2 = "visitante0002";
+  conferir("evento de visitante é registrado", a.chamar({ acao: "evento", visitante: V1, tipo: "abertura", detalhe: "inicio", dispositivo: "celular" }).dados === true);
+  a.chamar({ acao: "evento", visitante: V1, tipo: "noticia", detalhe: "MEC|urgente|Portaria X" });
+  a.chamar({ acao: "evento", visitante: V2, tipo: "abertura", sessao: adm, detalhe: "inicio" });
+  a.chamar({ acao: "evento", visitante: V2, tipo: "busca", detalhe: "  Marco   Regulatório " });
+  conferir("evento inválido é ignorado sem erro", a.chamar({ acao: "evento", visitante: "x", tipo: "abertura" }).dados === false
+    && a.chamar({ acao: "evento", visitante: V1, tipo: "apagarTudo" }).dados === false);
+  conferir("evento com fórmula vira texto", a.chamar({ acao: "evento", visitante: V1, tipo: "busca", detalhe: "=IMPORTXML(1)" }).ok
+    && a.aba("Acessos").some((l) => l[4] === "'=IMPORTXML(1)"));
+  const linhaEquipe = a.aba("Acessos").find((l) => l[1] === V2 && l[3] === "abertura");
+  conferir("evento com sessão guarda o e-mail; sem sessão, não", linhaEquipe[2] === DIEGO && a.aba("Acessos").find((l) => l[1] === V1)[2] === "");
+
+  r = a.api(adm, "uso", 30);
+  const u = r.dados || {};
+  conferir("relatório conta aberturas, equipe e público", r.ok && u.aberturas === 2 && u.aberturas_equipe === 1 && u.aberturas_publico === 1, u);
+  conferir("relatório traz visitantes únicos e dispositivo", u.visitantes === 2 && u.visitantes_publico === 1 && u.dispositivos.celular === 1, u);
+  conferir("mapa de calor tem 7 dias x 24 horas e soma as aberturas", u.calor.length === 7 && u.calor.every((d) => d.length === 24)
+    && u.calor.flat().reduce((x, y) => x + y, 0) === 2);
+  conferir("série diária com 30 dias", u.serie.length === 30 && u.serie.at(-1).equipe === 1 && u.serie.at(-1).publico === 1, u.serie.at(-1));
+  conferir("top de instituições, notícias e buscas", u.instituicoes[0].chave === "MEC" && u.noticias[0].chave === "Portaria X"
+    && u.buscas.some((b) => b.chave === "marco regulatório"), u);
+  conferir("quem da equipe usa, com nome", u.equipe.length === 1 && u.equipe[0].nome === "Diego Eduardo");
+  a.api(adm, "salvarMembro", ANA, "Ana Teste", false, false);
+  const ana = primeiroAcesso(a, ANA, "outra2026senha").dados.sessao;
+  conferir("relatório de uso é só para administradores", !a.api(ana, "uso", 30).ok);
+
+  // última visita: a segunda visita (mais de 30 min depois) mostra quando foi a primeira
+  let p1 = a.api(ana, "perfil").dados;
+  conferir("primeira visita não tem visita anterior", p1.visita_anterior === "", p1);
+  a.avancar(45);
+  const p2 = a.api(ana, "perfil").dados;
+  conferir("depois de 30 min, a visita anterior é o acesso passado", p2.visita_anterior === p1.ultimo_acesso && p2.ultimo_acesso > p1.ultimo_acesso, [p1, p2]);
+  a.avancar(5);
+  const p3 = a.api(ana, "perfil").dados;
+  conferir("dentro da mesma visita, a visita anterior não muda", p3.visita_anterior === p2.visita_anterior, [p2, p3]);
 });
 
 cenario("Troca de senha", (a) => {

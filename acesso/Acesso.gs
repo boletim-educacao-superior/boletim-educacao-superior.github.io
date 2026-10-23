@@ -25,12 +25,17 @@ const ADMINS_INICIAIS = [{ email: 'diegoeduardo@pucminas.br', nome: 'Diego Eduar
 
 const ABAS = {
   // senha = hash (nunca a senha); senha_em = quando foi criada ou trocada
-  Equipe: ['email', 'nome', 'admin', 'cadastrado_por', 'cadastrado_em', 'boasvindas_em', 'senha', 'senha_em', 'ultimo_acesso'],
+  // visita_anterior = início da visita passada (para "novos desde a sua última visita")
+  Equipe: ['email', 'nome', 'admin', 'cadastrado_por', 'cadastrado_em', 'boasvindas_em', 'senha', 'senha_em', 'ultimo_acesso',
+           'visita_anterior'],
   Registro: ['quando', 'quem', 'acao', 'detalhe'],
   // Marcações da equipe (compartilhadas): notícia sinalizada ou sem relevância, com quem marcou e por quê
   Marcacoes: ['item_id', 'tipo', 'por', 'em', 'motivo', 'titulo', 'link'],
   // Notícias lidas pela equipe (compartilhado): quem leu primeiro e quando. Uma linha por notícia.
-  Lidos: ['email', 'item_id', 'em']
+  Lidos: ['email', 'item_id', 'em'],
+  // Uso do painel (aberto a qualquer pessoa): um visitante anônimo por navegador; e-mail só de quem entrou.
+  // Nenhum dado pessoal de quem não entrou (sem IP, sem nome). tipo: abertura, visao, noticia, busca, csv.
+  Acessos: ['quando', 'visitante', 'email', 'tipo', 'detalhe', 'dispositivo']
 };
 
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -391,7 +396,11 @@ function registrarAcesso_(ss) {
     cache.put(chave, '1', 30 * 60);
     registrar_(ss, 'acesso', 'Abriu o Observatório');
     const m = membro_(ss, USUARIO_ATUAL_);
-    if (m.p) { m.p.ultimo_acesso = agora_(); salvarCampos_(m.tab, m.p, ['ultimo_acesso']); }
+    // Visita nova (mais de 30 min sem usar): o último acesso vira a "visita anterior", base do "novos desde a sua última visita".
+    if (m.p) {
+      m.p.visita_anterior = m.p.ultimo_acesso; m.p.ultimo_acesso = agora_();
+      salvarCampos_(m.tab, m.p, ['visita_anterior', 'ultimo_acesso']);
+    }
   } catch (e) { /* auxiliar */ }
 }
 
@@ -401,7 +410,8 @@ function perfil_(ss, email) {
   const m = membro_(ss, email).p;
   return { email: email, nome: m ? m.nome : 'Conta do sistema', admin: ehAdmin_(ss, email), sistema: email === CONTA_SISTEMA,
            cadastrado_em: m ? m.cadastrado_em : '', cadastrado_por: m ? m.cadastrado_por : '',
-           senha_em: m ? m.senha_em : prop_('SENHA_SISTEMA_EM') || '', ultimo_acesso: m ? m.ultimo_acesso : '' };
+           senha_em: m ? m.senha_em : prop_('SENHA_SISTEMA_EM') || '', ultimo_acesso: m ? m.ultimo_acesso : '',
+           visita_anterior: m ? m.visita_anterior : '' };
 }
 
 function exigirAdmin_(ss) {
@@ -570,6 +580,7 @@ function api_marcar_(ss, id, tipo, ativo, motivo, titulo, link) {
       .sort(function (a, b) { return b._linha - a._linha; })
       .forEach(function (r) { tab.sh.deleteRow(r._linha); });
     if (ativo) tab.sh.appendRow(linha_([id, tipo, USUARIO_ATUAL_, agora_(), motivo, titulo, link]));
+    CacheService.getScriptCache().remove('publico');  // visitantes passam a ver a mudança na hora
     registrar_(ss, ativo ? 'item_' + tipo : 'item_' + tipo + '_desfeito', titulo + (motivo ? ' · ' + motivo : ''));
     return api_marcacoes_(ss).marcas;
   });
@@ -599,11 +610,111 @@ function api_marcarLidos_(ss, ids, lido) {
   });
 }
 
+// ======================================================================= painel aberto e uso --
+
+/**
+ * O que um visitante sem login precisa: só os ids marcados como sem relevância (para o Início esconder
+ * o mesmo que a equipe esconde). Sem nomes de quem marcou. Guardado 60 s no cache.
+ */
+function publico_() {
+  const cache = CacheService.getScriptCache(), guardado = cache.get('publico');
+  if (guardado) return JSON.parse(guardado);
+  const irrelevantes = lerAba_(planilha_(), 'Marcacoes').linhas
+    .filter(function (r) { return r.tipo === 'irrelevante'; }).map(function (r) { return r.item_id; });
+  const r = { irrelevantes: irrelevantes };
+  cache.put('publico', JSON.stringify(r), 60);
+  return r;
+}
+
+const TIPOS_EVENTO = ['abertura', 'visao', 'noticia', 'busca', 'csv'];
+const VISITANTE_RE = /^[a-z0-9]{10,40}$/;
+const EVENTOS_POR_VISITANTE_HORA = 200;
+const EVENTOS_POR_MINUTO = 300;
+
+/** Registra um evento de uso do painel. Nunca falha para quem está usando: no pior caso, não registra. */
+function evento_(p) {
+  const visitante = String(p.visitante || '');
+  const tipo = String(p.tipo || '');
+  if (!VISITANTE_RE.test(visitante) || TIPOS_EVENTO.indexOf(tipo) < 0) return false;
+  const cache = CacheService.getScriptCache();
+  const kV = 'ev:' + visitante, nV = parseInt(cache.get(kV), 10) || 0;
+  const kM = 'ev-min:' + Math.floor(Date.now() / 60000), nM = parseInt(cache.get(kM), 10) || 0;
+  if (nV >= EVENTOS_POR_VISITANTE_HORA || nM >= EVENTOS_POR_MINUTO) return false;
+  cache.put(kV, String(nV + 1), 60 * 60);
+  cache.put(kM, String(nM + 1), 120);
+  const ss = planilha_();
+  let email = '';
+  if (p.sessao) { try { email = validarSessao_(ss, String(p.sessao)); } catch (e) { /* sessão vencida: conta como visitante */ } }
+  const detalhe = String(p.detalhe || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  const dispositivo = p.dispositivo === 'celular' ? 'celular' : 'computador';
+  lerAba_(ss, 'Acessos').sh.appendRow(linha_([agora_(), visitante, email, tipo, detalhe, dispositivo]));
+  return true;
+}
+
+/**
+ * Relatório de uso para os administradores (página Administrador): visitas por dia e por hora da semana,
+ * equipe x público, quem da equipe usa, o que é mais aberto e buscado. Agregado aqui, para não mandar linhas cruas.
+ */
+function api_uso_(ss, dias) {
+  exigirAdmin_(ss);
+  dias = [7, 30, 90, 180, 365].indexOf(Number(dias)) >= 0 ? Number(dias) : 30;
+  const inicio = Utilities.formatDate(new Date(Date.now() - (dias - 1) * DIA_MS), 'America/Sao_Paulo', 'yyyy-MM-dd');
+  const nomes = mapaNomes_(ss);
+  const linhas = lerAba_(ss, 'Acessos').linhas.filter(function (r) { return r.quando.slice(0, 10) >= inicio; });
+
+  const calor = [0, 1, 2, 3, 4, 5, 6].map(function () { return Array(24).fill(0); });  // [dia da semana][hora], 0 = domingo
+  const porDia = {}, visitantes = {}, visitantesEquipe = {}, equipe = {}, visoes = {}, instituicoes = {}, noticias = {}, buscas = {};
+  const disp = { computador: 0, celular: 0 };
+  let aberturas = 0, aberturasEquipe = 0, csv = 0, noticiasAbertas = 0;
+  const conta = function (obj, chave, extra) { obj[chave] = obj[chave] || Object.assign({ n: 0 }, extra || {}); obj[chave].n++; return obj[chave]; };
+
+  linhas.forEach(function (r) {
+    const dia = r.quando.slice(0, 10), hora = parseInt(r.quando.slice(11, 13), 10);
+    if (r.tipo === 'abertura') {
+      aberturas++;
+      const d = new Date(Number(dia.slice(0, 4)), Number(dia.slice(5, 7)) - 1, Number(dia.slice(8, 10)));
+      calor[d.getDay()][hora]++;
+      porDia[dia] = porDia[dia] || { equipe: 0, publico: 0 };
+      visitantes[r.visitante] = true;
+      disp[r.dispositivo === 'celular' ? 'celular' : 'computador']++;
+      if (r.email) {
+        aberturasEquipe++; porDia[dia].equipe++; visitantesEquipe[r.visitante] = true;
+        const e = conta(equipe, r.email, { nome: nomes[r.email] || r.email, ultimo: '' });
+        if (r.quando > e.ultimo) e.ultimo = r.quando;
+      } else porDia[dia].publico++;
+    } else if (r.tipo === 'visao') conta(visoes, r.detalhe || 'inicio');
+    else if (r.tipo === 'noticia') {
+      noticiasAbertas++;
+      const partes = r.detalhe.split('|');  // instituição|prioridade|título
+      conta(instituicoes, partes[0] || '?');
+      conta(noticias, partes.slice(2).join('|') || '?', { instituicao: partes[0] || '' });
+    } else if (r.tipo === 'busca' && r.detalhe) conta(buscas, r.detalhe.toLowerCase());
+    else if (r.tipo === 'csv') csv++;
+  });
+
+  const top = function (obj, n) {
+    return Object.keys(obj).map(function (k) { return Object.assign({ chave: k }, obj[k]); })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, n);
+  };
+  const serie = [];
+  for (let i = dias - 1; i >= 0; i--) {
+    const d = Utilities.formatDate(new Date(Date.now() - i * DIA_MS), 'America/Sao_Paulo', 'yyyy-MM-dd');
+    serie.push({ dia: d, equipe: (porDia[d] || {}).equipe || 0, publico: (porDia[d] || {}).publico || 0 });
+  }
+  return {
+    dias: dias, aberturas: aberturas, aberturas_equipe: aberturasEquipe, aberturas_publico: aberturas - aberturasEquipe,
+    visitantes: Object.keys(visitantes).length, visitantes_publico: Object.keys(visitantes).length - Object.keys(visitantesEquipe).length,
+    pessoas_equipe: Object.keys(equipe).length, noticias_abertas: noticiasAbertas, csv: csv, dispositivos: disp,
+    calor: calor, serie: serie, equipe: top(equipe, 50), visoes: top(visoes, 10), instituicoes: top(instituicoes, 10),
+    noticias: top(noticias, 10), buscas: top(buscas, 10)
+  };
+}
+
 const API_ = {
   marcacoes: api_marcacoes_, marcar: api_marcar_, marcarLidos: api_marcarLidos_,
   perfil: api_perfil_, salvarMeuNome: api_salvarMeuNome_, alterarSenha: api_alterarSenha_, equipe: api_equipe_, salvarMembro: api_salvarMembro_,
   removerMembro: api_removerMembro_, apagarSenha: api_apagarSenha_, enviarBoasVindas: api_enviarBoasVindas_,
-  registro: api_registro_
+  registro: api_registro_, uso: api_uso_
 };
 
 // ======================================================================== porta de entrada --
@@ -640,6 +751,10 @@ function executar_(p) {
       return comTrava_(function () { return definirSenha_(email, codigo, p.senha); });
     }
     case 'entrar': { const email = emailLimpo_(p.email); return comTrava_(function () { return entrar_(email, p.senha); }); }
+    case 'publico':  // painel aberto: o que um visitante sem login pode ver
+      return publico_();
+    case 'evento':   // uso do painel (equipe e visitantes); nunca devolve erro para a tela
+      try { return evento_(p); } catch (e) { console.error(e); return false; }
     case 'sair':
       if (p.sessao) PropertiesService.getScriptProperties().deleteProperty('sessao:' + hmac_(p.sessao));
       return true;

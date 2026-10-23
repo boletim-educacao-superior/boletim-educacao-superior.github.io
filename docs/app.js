@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023210029"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023211426"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -79,23 +79,38 @@ async function carregar() {
   const [itens, status, marcacoes] = await Promise.all([
     fetch("dados/itens.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])),
     fetch("dados/status.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    api("marcacoes").catch(() => ({ marcas: [], lidos: [] })),
+    lerMarcacoes().catch(() => ({ marcas: [], lidos: [] })),
   ]);
   // Só urgentes e alta prioridade aparecem (pedido do Diego, 23/10/2026). Baixa e média continuam nos dados:
   // se as regras de triagem mudarem e um item subir de prioridade, ele passa a aparecer sozinho.
   estado.itens = itens.filter((it) => PRIORIDADES[it.prioridade] <= PRIORIDADES[PRIORIDADE_MINIMA]);
   aplicarMarcacoes(marcacoes.marcas);
   aplicarLidos(marcacoes.lidos);
-  migrarLidosDoNavegador();
-  estado.ultimaVisita = lerLocal("radar.ultimaVisita", null);
-  // A "última visita" só avança na próxima abertura, para os novos continuarem destacados agora.
-  gravarLocal("radar.ultimaVisita", new Date().toISOString());
+  if (logado()) migrarLidosDoNavegador();
+  // "Novos desde a sua última visita" vem do registro de acesso de quem entrou (servidor), não do navegador.
+  // Visitante sem login não tem esse registro: o cartão pede para entrar.
+  estado.ultimaVisita = logado() && Acesso.perfil.visita_anterior ? brasiliaParaData(Acesso.perfil.visita_anterior) : null;
 
   montarFiltros();
   restaurarFiltros();
   mostrarStatus(status);
   configurarBotaoColeta();
   irPara(location.hash);
+  registrarEvento("abertura", estado.visao);
+}
+
+const logado = () => !!Acesso.perfil;
+/** "2026-10-23 14:05:00" (horário de Brasília, como o servidor grava) → Date. */
+function brasiliaParaData(t) {
+  const d = new Date(String(t).replace(" ", "T") + "-03:00");
+  return isNaN(d) ? null : d;
+}
+
+/** Marcações: a equipe vê tudo (com nomes); o visitante só o que está "sem relevância", para o Início esconder igual. */
+async function lerMarcacoes() {
+  if (logado()) return api("marcacoes");
+  const r = await servidor("publico");
+  return { marcas: r.irrelevantes.map((id) => ({ id, tipo: "irrelevante" })), lidos: [] };
 }
 
 function aplicarMarcacoes(lista) {
@@ -113,7 +128,7 @@ let ultimaFoto = "";
 async function atualizarMarcacoes() {
   if (!painelIniciado || document.hidden || fila.lidas.size || fila.naoLidas.size || [...estado.marcas.values()].some((m) => m.pendente)) return;
   try {
-    const r = await api("marcacoes");
+    const r = await lerMarcacoes();
     const foto = JSON.stringify(r);
     if (foto === ultimaFoto) return;
     ultimaFoto = foto;
@@ -136,7 +151,28 @@ function migrarLidosDoNavegador() {
 }
 
 function ehNovo(it) {
-  return estado.ultimaVisita ? it.visto_em > estado.ultimaVisita : false;
+  return estado.ultimaVisita ? new Date(it.visto_em) > estado.ultimaVisita : false;
+}
+
+// ---------------------------------------------------------------- uso do painel --
+// Cada navegador ganha um número aleatório (sem nenhum dado pessoal); quem entrou é identificado pela sessão.
+// O servidor junta tudo no relatório "Uso da plataforma" dos administradores.
+function idVisitante() {
+  let v = lerLocal("radar.visitante", null);
+  if (!/^[a-z0-9]{10,40}$/.test(v || "")) {
+    v = (crypto.randomUUID ? crypto.randomUUID() : `${Math.random()}${Date.now()}`).replace(/[^a-z0-9]/g, "").slice(0, 32);
+    gravarLocal("radar.visitante", v);
+  }
+  return v;
+}
+function registrarEvento(tipo, detalhe = "") {
+  const url = urlServidor();
+  if (!url) return;
+  const corpo = { acao: "evento", visitante: idVisitante(), tipo, detalhe: String(detalhe).slice(0, 140),
+                  dispositivo: innerWidth < 720 ? "celular" : "computador", sessao: Acesso.sessao || "" };
+  if (url === "simulado") { window.SimuladorAcesso?.chamar(corpo); return; }
+  // keepalive: o registro sai mesmo se a pessoa abrir a notícia e fechar a aba em seguida.
+  fetch(url, { method: "POST", body: JSON.stringify(corpo), keepalive: true }).catch(() => {});
 }
 
 // ------------------------------------------------------------------ páginas --
@@ -151,7 +187,12 @@ function irPara(hash) {
     abrirPaginaAdmin();
     return;
   }
-  const visao = VISOES[nome] ? nome : "inicio";
+  let visao = VISOES[nome] ? nome : "inicio";
+  if (visao !== "inicio" && !logado()) {  // Sinalizadas, Lidas etc. são da equipe
+    visao = "inicio";
+    pedirLogin("As áreas Sinalizadas, Não lidas, Lidas e Sem relevância são da equipe do CINEA. Entre para ver.");
+  }
+  if (nome === "admin" && !admin) visao = "inicio";
   if (visao !== estado.visao) estado.pagina = 1;
   estado.visao = visao;
   marcarMenu(estado.visao);
@@ -161,7 +202,12 @@ function irPara(hash) {
   $("pagina-radar").classList.toggle("visao-inicio", estado.visao === "inicio");
   render();
 }
-window.addEventListener("hashchange", () => { if (painelIniciado) { irPara(location.hash); window.scrollTo(0, 0); } });
+window.addEventListener("hashchange", () => {
+  if (!painelIniciado) return;
+  irPara(location.hash);
+  window.scrollTo(0, 0);
+  registrarEvento("visao", String(location.hash || "#inicio").slice(1));
+});
 
 function marcarMenu(visao) {
   document.querySelectorAll(".menu-principal [data-visao]").forEach((a) => {
@@ -218,8 +264,14 @@ function montarFiltros() {
   $("btn-limpar").addEventListener("click", () => aplicarAtalho("limpar"));
   $("btn-csv").addEventListener("click", exportarCSV);
   $("btn-lertodos").addEventListener("click", () => marcarLidos(paginaAtual(filtrar()).map((it) => it.id), true));
+  // Visitante: o cartão de novidades leva à entrada (não há registro de visita sem login).
+  if (!logado()) {
+    $("n-novos-rot").textContent = "Entre para ver o que é novo desde a sua última visita";
+    $("n-novos").textContent = "🔒";
+  }
   // Botão "Buscar" (e Enter): a busca já filtra enquanto se digita; o botão confirma e leva ao resultado.
   $("form-busca").addEventListener("submit", () => {
+    if ($("f-busca").value.trim()) registrarEvento("busca", $("f-busca").value.trim().slice(0, 80));
     estado.somenteNovos = false; estado.pagina = 1; render();
     $("contagem").scrollIntoView({ behavior: "smooth", block: "start" });
   });
@@ -230,6 +282,10 @@ function aplicarAtalho(nome) {
   $("f-rotina").checked = true;
   estado.instituicoes.clear();
   document.querySelectorAll(".chip[data-valor]").forEach((c) => c.setAttribute("aria-pressed", "false"));
+  if (nome === "novos" && !logado()) {
+    pedirLogin("Para ver o que é novo desde a sua última visita, entre com seu usuário: a última visita é registrada no login.");
+    return;
+  }
   estado.somenteNovos = nome === "novos";
   $("f-prioridade").value = nome === "urgente" ? "urgente" : "alta+";
   $("f-periodo").value = nome === "limpar" ? "30" : "";
@@ -306,7 +362,12 @@ function render() {
   const contagemPorPrio = (p) => estado.itens.filter((it) => it.prioridade === p && marca(it) !== "irrelevante").length;
   $("n-urgente").textContent = contagemPorPrio("urgente");
   $("n-alta").textContent = contagemPorPrio("alta");
-  $("n-novos").textContent = estado.itens.filter(ehNovo).length;
+  if (logado()) {
+    $("n-novos").textContent = estado.itens.filter(ehNovo).length;
+    $("n-novos-rot").textContent = estado.ultimaVisita
+      ? `Novos desde sua última visita (${estado.ultimaVisita.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })})`
+      : "Novos desde sua última visita (esta é a primeira)";
+  }
   $("n-total").textContent = estado.itens.length;
   const paginas = Math.max(1, Math.ceil(visiveis.length / POR_PAGINA));
   estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);
@@ -378,7 +439,10 @@ function montarItem(it) {
   t.textContent = formatarData(it.data); t.dateTime = it.data;
   const a = el.querySelector(".item-titulo a");
   a.href = it.link; a.textContent = it.titulo;
-  a.addEventListener("click", () => { if (!estado.lidos.has(it.id)) marcarLidos([it.id], true); });
+  a.addEventListener("click", () => {
+    registrarEvento("noticia", `${it.instituicao}|${it.prioridade}|${it.titulo.slice(0, 100)}`);
+    if (logado() && !estado.lidos.has(it.id)) marcarLidos([it.id], true);
+  });
   el.querySelector(".motivo").textContent = it.motivo_urgencia ? `⚑ ${it.motivo_urgencia}` : "";
   el.querySelector(".item-resumo").textContent = it.resumo ? it.resumo.slice(0, 320) + (it.resumo.length > 320 ? "…" : "") : "";
   const setores = el.querySelector(".setores");
@@ -394,6 +458,20 @@ function montarItem(it) {
   const org = el.querySelector(".orgao");
   org.textContent = [it.fonte, it.orgao].filter(Boolean).join(" · ");
   org.title = org.textContent;
+  if (!logado()) {
+    // Visitante: os botões aparecem com cadeado e explicam que é preciso entrar.
+    const precisa = { "btn-sinalizar": "Para sinalizar, você precisa estar logado.",
+                      "btn-irrelevante": "Para marcar como sem relevância, você precisa estar logado.",
+                      "btn-lido": "Para marcar como lida, você precisa estar logado." };
+    for (const [classe, texto] of Object.entries(precisa)) {
+      const b = el.querySelector(`.${classe}`);
+      b.classList.add("bloqueada");
+      b.title = texto;
+      b.addEventListener("click", () => pedirLogin(texto));
+    }
+    pintarItem(el, it);
+    return el;
+  }
   el.querySelector(".btn-sinalizar").addEventListener("click", () => alternarMarca(it, "sinalizada"));
   el.querySelector(".btn-irrelevante").addEventListener("click", () =>
     marca(it) === "irrelevante" ? alternarMarca(it, "irrelevante") : pedirMotivo(it));
@@ -409,6 +487,13 @@ function pintarItem(el, it) {
   el.classList.toggle("sinalizada", m?.tipo === "sinalizada");
   el.classList.toggle("irrelevante", m?.tipo === "irrelevante");
   const s = el.querySelector(".btn-sinalizar");
+  if (!logado()) {  // visitante: rótulos fixos com cadeado; nada de nomes da equipe
+    s.textContent = "🔒 Sinalizar";
+    el.querySelector(".btn-irrelevante").textContent = "🔒 Sem relevância";
+    el.querySelector(".btn-lido").textContent = "🔒 Marcar como lida";
+    el.querySelector(".marca-info").textContent = "";
+    return;
+  }
   s.textContent = m?.tipo === "sinalizada" ? "★ Sinalizada" : "☆ Sinalizar";
   s.setAttribute("aria-pressed", String(m?.tipo === "sinalizada"));
   s.title = m?.tipo === "sinalizada" ? "Tirar a sinalização (para toda a equipe)" : "Sinalizar para a equipe acompanhar";
@@ -574,6 +659,7 @@ function escapar(s) {
 }
 
 function exportarCSV() {
+  registrarEvento("csv", estado.visao);
   const cols = ["data", "prioridade", "instituicao", "tipo", "titulo", "setores", "temas", "motivo_urgencia", "marcacao", "orgao", "link"];
   const linhas = [cols.join(";")];
   for (const it of filtrar()) {

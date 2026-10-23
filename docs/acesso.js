@@ -1,10 +1,10 @@
 // Entrada no Radar: e-mail e senha, primeiro acesso / esqueci a senha (código por e-mail),
 // troca de senha e área do administrador. Conversa com o servidor de acesso (acesso/Acesso.gs, Apps Script).
 //
-// Importante: isto organiza QUEM usa o painel. Os dados do Radar continuam públicos no GitHub
-// (decisão de 23/10/2026); a entrada não é uma proteção dos dados.
+// O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
+// do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261023210029"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023211426"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -110,7 +110,27 @@ const api = (nome, ...args) => servidor("api", { nome, sessao: Acesso.sessao, ar
 function mostrarPortaria(modo = "entrar") {
   document.body.classList.add("bloqueado");
   $a("portaria").hidden = false;
+  // Com o painel aberto ao público, a tela de entrada pode ser fechada para voltar às notícias.
+  $a("portaria-fechar").hidden = !painelIniciado;
   trocarModo(modo);
+}
+function fecharPortaria() {
+  $a("portaria").hidden = true;
+  document.body.classList.remove("bloqueado");
+}
+
+/** Leva à tela de entrada explicando o motivo ("Para sinalizar, você precisa estar logado."). */
+function pedirLogin(motivo) {
+  mostrarPortaria("entrar");
+  if (motivo) msg($a("form-entrar"), motivo, "info");
+}
+
+/** Visitante sem login: vê as notícias; ações e áreas da equipe pedem login. */
+function abrirPublico() {
+  Acesso.perfil = null;
+  document.body.classList.add("visitante");
+  fecharPortaria();
+  iniciarPainel();
 }
 
 function trocarModo(modo) {
@@ -145,6 +165,8 @@ async function ocupado(botao, fn, espera = "Aguarde…") {
 
 function entrou(dados) {
   gravarSessao(dados.sessao);
+  // Recarrega para trazer as marcações da equipe e as áreas de quem entrou (o painel já pode estar aberto como visitante).
+  if (painelIniciado) { location.reload(); return; }
   mostrarPerfil(dados.perfil);
 }
 
@@ -167,17 +189,22 @@ function preencherConta(perfil) {
 
 function mostrarPerfil(perfil) {
   preencherConta(perfil);
-  $a("portaria").hidden = true;
-  document.body.classList.remove("bloqueado");
+  document.body.classList.remove("visitante");
+  fecharPortaria();
   iniciarPainel();
 }
 
 function sessaoCaiu() {
   gravarSessao(null);
   document.querySelectorAll("dialog[open]").forEach((d) => d.close());
-  mostrarPortaria("entrar");
-  msg($a("form-entrar"), "Sua sessão terminou. Entre de novo.", "info");
+  // Volta a ser visitante: continua vendo as notícias e pode entrar de novo.
+  if (painelIniciado) { location.reload(); return; }
+  abrirPublico();
 }
+
+$a("btn-entrar").addEventListener("click", () => pedirLogin(""));
+$a("portaria-fechar").addEventListener("click", fecharPortaria);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$a("portaria").hidden && painelIniciado) fecharPortaria(); });
 
 // ------------------------------------------------------- entrar / código --
 $a("form-entrar").addEventListener("submit", async (ev) => {
@@ -320,7 +347,8 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
   const p = Acesso.perfil || {};
   const itens = [
     ["perfil", "Meu perfil"], ["senha", "Alterar senha"],
-    p.admin && ["hr"], p.admin && ["admin", "Administrador"], p.admin && ["registro", "Registro de atividades"],
+    p.admin && ["hr"], p.admin && ["admin", "Administrador"], p.admin && ["uso", "Uso da plataforma"],
+    p.admin && ["registro", "Registro de atividades"],
     ["hr"], ["sair", "Sair"],
   ].filter(Boolean);
   const m = document.createElement("div");
@@ -337,7 +365,7 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
     const b = e.target.closest("[data-ir]");
     if (!b) return;
     fecharMenu();
-    ({ perfil: abrirPerfil, senha: abrirSenha, admin: () => irParaAdmin(false), registro: () => irParaAdmin(true), sair })[b.dataset.ir]();
+    ({ perfil: abrirPerfil, senha: abrirSenha, admin: () => irParaAdmin(""), uso: () => irParaAdmin("uso"), registro: () => irParaAdmin("registro"), sair })[b.dataset.ir]();
   };
   m.onkeydown = (e) => {
     const bs = [...m.querySelectorAll("button")], i = bs.indexOf(document.activeElement);
@@ -385,19 +413,22 @@ function esc(s) {
 }
 
 // Página do Administrador (endereço #admin). app.js chama abrirPaginaAdmin() quando o endereço muda.
-function irParaAdmin(registro) {
-  if (registro) $a("sanfona-registro").open = true;
-  if (location.hash === "#admin") abrirPaginaAdmin(registro);
-  else { irParaRegistro = registro; location.hash = "#admin"; }
+// destino: "" (topo), "uso" (Uso da plataforma) ou "registro" (Registro de atividades).
+function irParaAdmin(destino) {
+  if (destino === "registro") $a("sanfona-registro").open = true;
+  if (location.hash === "#admin") abrirPaginaAdmin(destino);
+  else { irParaSecao = destino; location.hash = "#admin"; }
 }
-let irParaRegistro = false;
+let irParaSecao = "";
 
-function abrirPaginaAdmin(registro = irParaRegistro) {
-  irParaRegistro = false;
+function abrirPaginaAdmin(destino = irParaSecao) {
+  irParaSecao = "";
   limparMsgs();
+  carregarUso();
   carregarEquipe();
   if ($a("sanfona-registro").open) carregarRegistro();
-  if (registro) setTimeout(() => $a("sanfona-registro").scrollIntoView({ block: "start" }), 0);
+  const alvo = { uso: "secao-uso", registro: "sanfona-registro" }[destino];
+  if (alvo) setTimeout(() => $a(alvo).scrollIntoView({ block: "start" }), 0);
   else window.scrollTo(0, 0);
 }
 $a("sanfona-registro").addEventListener("toggle", () => { if ($a("sanfona-registro").open) carregarRegistro(); });
@@ -488,10 +519,135 @@ document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
     return;
   }
   const s = lerSessao();
-  if (!s) return mostrarPortaria("entrar");
+  if (!s) return abrirPublico();
   Acesso.sessao = s;
   try { mostrarPerfil(await api("perfil")); }
   catch (e) {
-    if (Acesso.sessao) { mostrarPortaria("entrar"); msg($a("form-entrar"), e.message); }
+    // Sessão vencida ou servidor fora do ar: segue como visitante (as notícias continuam visíveis).
+    if (Acesso.sessao) gravarSessao(null);
+    abrirPublico();
+    aviso("Sua sessão terminou: você está vendo o painel como visitante. Use \"Entrar\" para marcar notícias.");
   }
 });
+
+// ------------------------------------------------------- uso da plataforma --
+// Relatório dos administradores: mapa de calor (dia da semana × hora), acessos por dia (equipe e visitantes)
+// e o que mais se abre e busca. Escala de uma cor só (claro → escuro) no mapa; legenda e números sempre visíveis.
+const DIAS_SEMANA = [["Seg", 1], ["Ter", 2], ["Qua", 3], ["Qui", 4], ["Sex", 5], ["Sáb", 6], ["Dom", 0]];
+const NOME_DIA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+const NOME_VISAO = { inicio: "Início", sinalizadas: "Sinalizadas", "nao-lidas": "Não lidas", lidas: "Lidas",
+                     "sem-relevancia": "Sem relevância", admin: "Administrador" };
+
+$a("uso-periodo").addEventListener("change", () => carregarUso());
+
+async function carregarUso() {
+  const caixa = $a("uso-conteudo");
+  caixa.innerHTML = '<p class="carregando">Carregando…</p>';
+  try { caixa.innerHTML = montarUso(await api("uso", Number($a("uso-periodo").value))); ligarDicas(caixa); }
+  catch (e) { caixa.innerHTML = `<p class="erro">${esc(e.message)}</p>`; }
+}
+
+function montarUso(u) {
+  if (!u.aberturas) {
+    return '<p class="vazio">Nenhum acesso registrado neste período. O registro começou em 23/10/2026; os acessos aparecem aqui conforme o painel for usado.</p>';
+  }
+  const pct = (n, t) => (t ? Math.round((n / t) * 100) : 0);
+  // Pico: a célula mais cheia do mapa
+  let pico = { n: 0 };
+  u.calor.forEach((horas, d) => horas.forEach((n, h) => { if (n > pico.n) pico = { n, d, h }; }));
+  const cartoes = [
+    [u.aberturas, "Acessos ao painel", `${u.dias === 7 ? "nos últimos 7 dias" : `nos últimos ${u.dias} dias`}`],
+    [u.visitantes, "Navegadores diferentes", "cada navegador conta uma vez"],
+    [u.aberturas_equipe, "Acessos da equipe", `${u.pessoas_equipe} pessoa(s) com login · ${pct(u.aberturas_equipe, u.aberturas)}%`],
+    [u.aberturas_publico, "Acessos de visitantes", `sem login · ${pct(u.aberturas_publico, u.aberturas)}%`],
+    [u.noticias_abertas, "Notícias abertas", u.csv ? `${u.csv} exportação(ões) para Excel` : "cliques no título"],
+    [`${pct(u.dispositivos.celular, u.aberturas)}%`, "Pelo celular", `${u.dispositivos.celular} de ${u.aberturas} acessos`],
+  ];
+  return `
+    <div class="uso-cartoes">${cartoes.map(([n, r, d]) =>
+      `<div class="uso-cartao"><span class="num">${esc(n)}</span><span class="rot">${esc(r)}</span><span class="det">${esc(d)}</span></div>`).join("")}</div>
+    ${pico.n ? `<p class="uso-pico">Horário de maior uso: <b>${NOME_DIA[pico.d]}, das ${pico.h}h às ${pico.h + 1}h</b> (${pico.n} acesso${pico.n > 1 ? "s" : ""}).</p>` : ""}
+    <div class="uso-bloco">
+      <h4>Quando o painel é acessado <span class="meta">dia da semana × hora</span></h4>
+      ${mapaDeCalor(u.calor)}
+    </div>
+    <div class="uso-bloco">
+      <h4>Acessos por dia</h4>
+      ${barrasPorDia(u.serie)}
+    </div>
+    <div class="uso-tabelas">
+      ${tabelaUso("Quem da equipe acessou", ["Pessoa", "Acessos", "Último"],
+        u.equipe.map((e) => [e.nome, e.n, dataCurta(e.ultimo)]), "Ninguém da equipe entrou com login neste período.")}
+      ${tabelaUso("Seções mais vistas", ["Seção", "Vezes"], u.visoes.map((v) => [NOME_VISAO[v.chave] || v.chave, v.n]),
+        "Só o Início foi usado.")}
+      ${tabelaUso("Instituições mais abertas", ["Instituição", "Notícias"], u.instituicoes.map((i) => [i.chave, i.n]),
+        "Nenhuma notícia aberta.")}
+      ${tabelaUso("Notícias mais abertas", ["Notícia", "Vezes"], u.noticias.map((n) => [`${n.instituicao ? `[${n.instituicao}] ` : ""}${n.chave}`, n.n]),
+        "Nenhuma notícia aberta.")}
+      ${tabelaUso("Buscas mais feitas", ["Termo", "Vezes"], u.buscas.map((b) => [b.chave, b.n]), "Nenhuma busca.")}
+    </div>`;
+}
+
+function mapaDeCalor(calor) {
+  const max = Math.max(1, ...calor.flat());
+  const nivel = (n) => (n ? Math.min(5, Math.ceil((n / max) * 5)) : 0);
+  const horas = Array.from({ length: 24 }, (_, h) => h);
+  const cab = horas.map((h) => `<span class="calor-hora">${h % 3 === 0 ? `${h}h` : ""}</span>`).join("");
+  const linhas = DIAS_SEMANA.map(([rot, d]) => `<span class="calor-dia">${rot}</span>` + horas.map((h) => {
+    const n = calor[d][h];
+    const dica = `${NOME_DIA[d]}, ${h}h–${h + 1}h: ${n} acesso${n === 1 ? "" : "s"}`;
+    return `<span class="calor-cel n${nivel(n)}" data-dica="${esc(dica)}" aria-label="${esc(dica)}"></span>`;
+  }).join("")).join("");
+  const legenda = [0, 1, 2, 3, 4, 5].map((i) => `<span class="calor-cel n${i}"></span>`).join("");
+  return `<div class="calor-rolagem"><div class="calor" role="img" aria-label="Mapa de calor de acessos por dia da semana e hora">
+      <span></span>${cab}${linhas}</div></div>
+    <div class="calor-legenda"><span>menos</span>${legenda}<span>mais (até ${max} acesso${max > 1 ? "s" : ""} na mesma hora)</span></div>`;
+}
+
+function barrasPorDia(serie) {
+  const max = Math.max(1, ...serie.map((s) => s.equipe + s.publico));
+  const marcar = Math.max(1, Math.ceil(serie.length / 10)); // rótulo de data a cada N barras
+  const barras = serie.map((s, i) => {
+    const [a, m, d] = s.dia.split("-");
+    const dica = `${d}/${m}: ${s.equipe + s.publico} acesso(s) · equipe ${s.equipe} · visitantes ${s.publico}`;
+    return `<div class="barra" data-dica="${esc(dica)}" aria-label="${esc(dica)}">
+        <div class="barra-pilha">
+          ${s.publico ? `<span class="seg seg-publico" style="height:${(s.publico / max) * 100}%"></span>` : ""}
+          ${s.equipe ? `<span class="seg seg-equipe" style="height:${(s.equipe / max) * 100}%"></span>` : ""}
+        </div>
+        <span class="barra-rot">${i % marcar === 0 || i === serie.length - 1 ? `${d}/${m}` : ""}</span>
+      </div>`;
+  }).join("");
+  return `<div class="barras-legenda"><span><i class="seg-equipe"></i>Equipe (com login)</span><span><i class="seg-publico"></i>Visitantes</span>
+      <span class="meta">máximo: ${max} por dia</span></div>
+    <div class="barras" style="--n:${serie.length}">${barras}</div>`;
+}
+
+function tabelaUso(titulo, colunas, linhas, vazio) {
+  return `<div class="uso-tabela"><h4>${esc(titulo)}</h4>${linhas.length
+    ? `<table class="tabela"><thead><tr>${colunas.map((c, i) => `<th${i ? ' class="num-col"' : ""}>${esc(c)}</th>`).join("")}</tr></thead>
+       <tbody>${linhas.map((l) => `<tr>${l.map((c, i) => `<td${i ? ' class="num-col"' : ""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`
+    : `<p class="carregando">${esc(vazio)}</p>`}</div>`;
+}
+
+// Dica flutuante (mapa de calor e barras): aparece ao passar o mouse ou tocar.
+function ligarDicas(caixa) {
+  let dica = $a("dica-uso");
+  if (!dica) {
+    dica = document.createElement("div");
+    dica.id = "dica-uso"; dica.className = "dica-flutuante"; dica.setAttribute("role", "tooltip");
+    document.body.appendChild(dica);
+  }
+  const mostrar = (e) => {
+    const alvo = e.target.closest("[data-dica]");
+    if (!alvo || !caixa.contains(alvo)) { dica.classList.remove("visivel"); return; }
+    dica.textContent = alvo.dataset.dica;
+    const r = alvo.getBoundingClientRect();
+    dica.classList.add("visivel");
+    dica.style.left = Math.max(8, Math.min(r.left + r.width / 2 - dica.offsetWidth / 2, innerWidth - dica.offsetWidth - 8)) + "px";
+    dica.style.top = Math.max(8, r.top - dica.offsetHeight - 8) + "px";
+  };
+  caixa.addEventListener("mouseover", mostrar);
+  caixa.addEventListener("click", mostrar);
+  caixa.addEventListener("mouseleave", () => dica.classList.remove("visivel"));
+}

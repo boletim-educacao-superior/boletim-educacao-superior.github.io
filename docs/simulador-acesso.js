@@ -10,13 +10,46 @@ window.SimuladorAcesso = (() => {
   ];
   const registro = [];
   let marcas = [];                 // { id, tipo, por, em, motivo }
+  // Uso do painel: alguns acessos de exemplo (últimos 30 dias, mais em dias úteis de manhã) para o relatório ter o que mostrar.
+  const eventos = [];
+  for (let i = 0; i < 160; i++) {
+    const d = new Date(Date.now() - Math.floor(Math.random() * 30) * 864e5);
+    if ([0, 6].includes(d.getDay()) && Math.random() < 0.7) continue;
+    d.setHours(Math.random() < 0.6 ? 8 + Math.floor(Math.random() * 4) : 13 + Math.floor(Math.random() * 6), 10);
+    const equipe = Math.random() < 0.45;
+    eventos.push({ quando: d.toLocaleString("sv-SE").slice(0, 19), visitante: "v" + (equipe ? "eq" : Math.floor(Math.random() * 40)),
+                   email: equipe ? (Math.random() < 0.6 ? "diegoeduardo@pucminas.br" : "ana.teste@pucminas.br") : "",
+                   tipo: "abertura", detalhe: "inicio", dispositivo: Math.random() < 0.3 ? "celular" : "computador" });
+  }
+  [["noticia", "MEC|urgente|Novo Marco Regulatório do EAD"], ["noticia", "INEP|alta|Enade 2027: inscrições"], ["noticia", "MEC|urgente|Novo Marco Regulatório do EAD"],
+   ["busca", "marco regulatório"], ["busca", "enade"], ["visao", "sinalizadas"]].forEach(([tipo, detalhe]) =>
+    eventos.push({ quando: agora(), visitante: "veq", email: "", tipo, detalhe, dispositivo: "computador" }));
   const lidos = new Map();         // id → { por, em } (da equipe)
   const codigos = {}, sessoes = {};
+
+  // O estado sobrevive a recarregar a página (entrar e sair recarregam), enquanto a aba estiver aberta.
+  const CHAVE = "radar.simulador";
+  try {
+    const salvo = JSON.parse(sessionStorage.getItem(CHAVE) || "null");
+    if (salvo) {
+      equipe.splice(0, equipe.length, ...salvo.equipe);
+      registro.splice(0, registro.length, ...salvo.registro);
+      marcas = salvo.marcas;
+      eventos.splice(0, eventos.length, ...salvo.eventos);
+      salvo.lidos.forEach(([k, v]) => lidos.set(k, v));
+      Object.assign(sessoes, salvo.sessoes);
+    }
+  } catch { /* começa do zero */ }
+  const salvar = () => {
+    try { sessionStorage.setItem(CHAVE, JSON.stringify({ equipe, registro, marcas, eventos, lidos: [...lidos], sessoes })); } catch { /* cheio */ }
+  };
   const quem = (s) => sessoes[s];
   const pessoa = (e) => equipe.find((p) => p.email === String(e).toLowerCase());
   const reg = (q, acao, detalhe = "") => registro.unshift({ quando: agora(), quem: q, acao, detalhe });
   const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, cadastrado_em: p.cadastrado_em,
-                           cadastrado_por: "cineaned@gmail.com", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso });
+                           cadastrado_por: "cineaned@gmail.com", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso,
+                           // Simulação: a "visita anterior" foi há 3 dias (para o cartão de novidades ter números)
+                           visita_anterior: new Date(Date.now() - 3 * 864e5).toLocaleString("sv-SE").slice(0, 19) });
   const lista = () => equipe.map((p) => ({ ...p, senha: undefined, tem_senha: !!p.senha }));
   const sessaoNova = (p) => { const s = crypto.randomUUID(); sessoes[s] = p.email; return { sessao: s, perfil: perfil(p) }; };
   const falha = (erro) => ({ ok: false, erro });
@@ -73,6 +106,34 @@ window.SimuladorAcesso = (() => {
         apagarSenha: (email) => { admin(); pessoa(email).senha = ""; reg(p.email, "senha_apagada", email); return lista(); },
         enviarBoasVindas: (email) => { admin(); pessoa(email).boasvindas_em = agora(); reg(p.email, "boasvindas_enviado", email); return lista(); },
         registro: () => { admin(); return registro; },
+        uso: (dias) => {
+          admin();
+          const ini = new Date(Date.now() - (dias - 1) * 864e5).toLocaleString("sv-SE").slice(0, 10);
+          const ev = eventos.filter((e) => e.quando.slice(0, 10) >= ini);
+          const ab = ev.filter((e) => e.tipo === "abertura");
+          const calor = Array.from({ length: 7 }, () => Array(24).fill(0));
+          ab.forEach((e) => { const d = new Date(e.quando.replace(" ", "T")); calor[d.getDay()][d.getHours()]++; });
+          const top = (lista, chave) => { const c = {}; lista.forEach((x) => { const k = chave(x); c[k] = c[k] || { chave: k, n: 0 }; c[k].n++; }); return Object.values(c).sort((a, b) => b.n - a.n).slice(0, 10); };
+          const serie = Array.from({ length: dias }, (_, i) => {
+            const dia = new Date(Date.now() - (dias - 1 - i) * 864e5).toLocaleString("sv-SE").slice(0, 10);
+            const doDia = ab.filter((e) => e.quando.startsWith(dia));
+            return { dia, equipe: doDia.filter((e) => e.email).length, publico: doDia.filter((e) => !e.email).length };
+          });
+          const eq = ab.filter((e) => e.email);
+          return {
+            dias, aberturas: ab.length, aberturas_equipe: eq.length, aberturas_publico: ab.length - eq.length,
+            visitantes: new Set(ab.map((e) => e.visitante)).size, visitantes_publico: new Set(ab.filter((e) => !e.email).map((e) => e.visitante)).size,
+            pessoas_equipe: new Set(eq.map((e) => e.email)).size, noticias_abertas: ev.filter((e) => e.tipo === "noticia").length,
+            csv: ev.filter((e) => e.tipo === "csv").length,
+            dispositivos: { celular: ab.filter((e) => e.dispositivo === "celular").length, computador: ab.filter((e) => e.dispositivo !== "celular").length },
+            calor, serie,
+            equipe: top(eq, (e) => e.email).map((x) => ({ ...x, nome: (pessoa(x.chave) || {}).nome || x.chave, ultimo: eq.filter((e) => e.email === x.chave).map((e) => e.quando).sort().pop() })),
+            visoes: top(ev.filter((e) => e.tipo === "visao"), (e) => e.detalhe),
+            instituicoes: top(ev.filter((e) => e.tipo === "noticia"), (e) => e.detalhe.split("|")[0]),
+            noticias: top(ev.filter((e) => e.tipo === "noticia"), (e) => e.detalhe.split("|").slice(2).join("|")).map((x) => ({ ...x, instituicao: "MEC" })),
+            buscas: top(ev.filter((e) => e.tipo === "busca"), (e) => e.detalhe),
+          };
+        },
         marcacoes: () => ({
           marcas: marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por })),
           lidos: [...lidos].map(([id, l]) => ({ id, ...l, nome: (pessoa(l.por) || {}).nome || l.por })),
@@ -93,10 +154,19 @@ window.SimuladorAcesso = (() => {
     },
   };
 
+  acoes.publico = () => ({ ok: true, dados: { irrelevantes: marcas.filter((m) => m.tipo === "irrelevante").map((m) => m.id) } });
+  acoes.evento = (c) => {
+    const sessao = c.sessao && sessoes[c.sessao];
+    eventos.push({ quando: agora(), visitante: c.visitante, email: sessao || "", tipo: c.tipo, detalhe: c.detalhe || "", dispositivo: c.dispositivo });
+    return { ok: true, dados: true };
+  };
+
   return {
     chamar: async (corpo) => {
       await new Promise((r) => setTimeout(r, 250)); // parece uma chamada de rede
-      return (acoes[corpo.acao] || (() => falha("Ação desconhecida.")))(corpo);
+      const r = (acoes[corpo.acao] || (() => falha("Ação desconhecida.")))(corpo);
+      salvar();
+      return r;
     },
   };
 })();
