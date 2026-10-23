@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023214118"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023214251"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -311,6 +311,12 @@ function salvarFiltros() {
 // Os demais filtros (período, setor, instituições...) voltam como estavam na última visita.
 const PRIORIDADE_INICIAL = "urgente";
 function restaurarFiltros() {
+  // Visitante (sem login) sempre abre em "Urgente e alta" nos últimos 12 meses (pedido do Diego, 23/10/2026).
+  if (!logado()) {
+    $("f-prioridade").value = "alta+";
+    $("f-periodo").value = "365";
+    return;
+  }
   $("f-prioridade").value = PRIORIDADE_INICIAL;
   const f = lerLocal("radar.filtros", null);
   if (!f) return;
@@ -412,9 +418,12 @@ function preencherCartoes() {
   const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999-12-31");
   const hoje = new Date().toLocaleDateString("sv-SE");
   const NOME_PERIODO = { "7": "últimos 7 dias", "30": "últimos 30 dias", "90": "últimos 90 dias", "180": "últimos 6 meses",
+                         "365": "últimos 12 meses",
                          "ano": `ano de ${new Date().getFullYear()}` };
   $("resumo-periodo").innerHTML = `Indicadores de <b>${formatarData(limite || maisAntigo)}</b> a <b>${formatarData(hoje)}</b> ` +
-    `(${NOME_PERIODO[periodo] || "todo o período disponível"}). Para mudar, use o filtro "Período".`;
+    `(${NOME_PERIODO[periodo] || "todo o período disponível"})` +
+    (limite && limite < maisAntigo ? `; o histórico começa em ${formatarData(maisAntigo)}` : "") +
+    '. Para mudar, use o filtro "Período".';
   if (logado()) {
     $("n-novos").textContent = estado.itens.filter(ehNovo).length;
     $("n-novos-det").textContent = estado.ultimaVisita

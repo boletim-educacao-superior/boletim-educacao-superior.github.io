@@ -63,6 +63,8 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   admin · equipe (cadastrada pelo admin, marca para todos) · usuario (coluna `perfil`='usuario': sinaliza e marca lidas só
   para si, aba `Pessoais`; não marca sem relevância; não vê "Coletar agora"). Admin promove ("Tornar equipe CINEA") ou rebaixa.
   Visitante vê as abas da equipe com cadeado (convite para criar conta).
+- Filtros iniciais: visitante sempre "Urgente e alta" + "Últimos 12 meses"; quem entrou, "Urgente" + período salvo.
+  Cartões do Início seguem o período; a legenda acima dá as datas ("Indicadores de … a …").
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).
