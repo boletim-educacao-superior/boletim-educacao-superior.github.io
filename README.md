@@ -56,9 +56,10 @@ Detalhes, configuração e manutenção em [acesso/README.md](acesso/README.md).
 | Modo | Quando | O que acontece |
 |---|---|---|
 | **Manual** | Botão "Coletar agora" no painel, ou GitHub › Actions › *Coleta do Radar* › *Run workflow* | Coleta e atualiza o painel (~1 min) |
-| **Automático** | Dias úteis, às 8h, 12h e 17h (Brasília) | Atualiza o painel em silêncio. **Só alerta se surgir item urgente novo** |
+| **Automático** | Todos os dias, às 4h (Brasília) | Atualiza o painel em silêncio. **Só alerta se surgir item urgente novo** |
 
-Para mudar os horários, edite a linha `cron` em `.github/workflows/coleta.yml`.
+Para mudar os horários, edite a linha `cron` em `.github/workflows/coleta.yml` (em UTC: Brasília + 3h).
+O painel mostra o novo horário sozinho, a partir da coleta seguinte.
 Para desligar a coleta automática, apague o bloco `schedule:`.
 
 ### Temas e setor indicado

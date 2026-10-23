@@ -20,7 +20,7 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 |---|---|
 | Repositório | https://github.com/certificacao-cinea/radar-educacao-superior (público, org `certificacao-cinea`, escolhida pelo Diego) |
 | Painel | https://certificacao-cinea.github.io/radar-educacao-superior/ (GitHub Pages, pasta `docs/`) |
-| Coleta | GitHub Actions `.github/workflows/coleta.yml` (manual + dias úteis 8h/12h/17h) |
+| Coleta | GitHub Actions `.github/workflows/coleta.yml` (manual + todo dia às 4h de Brasília, desde 23/10/2026; antes: dias úteis 8h/12h/17h) |
 | Fontes e regras | `config/fontes.toml`, `config/regras.toml` |
 | Pasta no Drive (cineaned) | **Radar da Educação Superior**, `1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe`: script de acesso e planilha da equipe (pedido do Diego: centralizar tudo do Radar) |
 | Acesso (login) | Apps Script na conta cineaned, `acesso/` (ver `acesso/README.md`). Painel: `docs/acesso.js` |
