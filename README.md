@@ -168,6 +168,17 @@ execução.
 última coleta* mostra qual falhou e o erro. A coleta continua com as demais;
 a execução só é marcada como falha se **todas** falharem.
 
+### Publicar mudanças no painel
+
+Depois de mexer em qualquer arquivo de `docs/` (menos `docs/dados/`), rode antes do commit:
+
+```bash
+python ferramentas/versao.py
+```
+
+Isso carimba a mesma versão na página e nos scripts. Sem isso, quem abrir o painel logo depois da
+publicação pode receber uma mistura de arquivos novos e antigos (o navegador guarda cada um por 10 minutos).
+
 ### Rodar no próprio computador
 
 ```bash

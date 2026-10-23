@@ -6,7 +6,9 @@
 <title>Radar da Educação Superior</title>
 <meta name="description" content="Monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="estilo.css?v=20261023183141">
+<!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
+<script>window.RADAR_VERSAO = "20261023183141";</script>
 </head>
 <body class="bloqueado">
 
@@ -22,7 +24,7 @@
     </div>
 
     <!-- Entrar com e-mail e senha -->
-    <form id="form-entrar" class="form-portaria" novalidate>
+    <form id="form-entrar" class="form-portaria" novalidate onsubmit="return false">
       <h2>Entrar</h2>
       <label>E-mail <input id="entrar-email" type="email" autocomplete="username" required></label>
       <label>Senha <input id="entrar-senha" type="password" autocomplete="current-password" required></label>
@@ -35,7 +37,7 @@
     </form>
 
     <!-- Primeiro acesso / esqueci a senha: e-mail → código → senha nova -->
-    <form id="form-codigo" class="form-portaria" novalidate hidden>
+    <form id="form-codigo" class="form-portaria" novalidate hidden onsubmit="return false">
       <h2 id="codigo-titulo">Primeiro acesso</h2>
       <p id="codigo-explica" class="explica"></p>
       <label>E-mail <input id="codigo-email" type="email" autocomplete="username" required></label>
@@ -291,7 +293,17 @@
   </div>
 </dialog>
 
-<script src="acesso.js"></script>
-<script src="app.js"></script>
+<!-- Se algum script falhar ao carregar, avisa na tela de entrada em vez de deixar o botão "Entrar" sem efeito -->
+<script>
+  window.addEventListener("error", function () {
+    var a = document.getElementById("portaria-aviso");
+    if (!a || window.RADAR_AVISOU) return;
+    window.RADAR_AVISOU = true;
+    a.hidden = false;
+    a.textContent = "O Radar não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
+  });
+</script>
+<script src="acesso.js?v=20261023183141"></script>
+<script src="app.js?v=20261023183141"></script>
 </body>
 </html>

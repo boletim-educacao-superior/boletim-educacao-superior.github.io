@@ -4,6 +4,25 @@
 // Importante: isto organiza QUEM usa o painel. Os dados do Radar continuam públicos no GitHub
 // (decisão de 23/10/2026); a entrada não é uma proteção dos dados.
 
+const VERSAO_ACESSO = "20261023183141"; // carimbado por ferramentas/versao.py
+
+/**
+ * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
+ * publicações diferentes, recarrega uma vez buscando tudo de novo (o ?r= força o index.html novo).
+ * Devolve true se vai recarregar.
+ */
+function conferirVersao() {
+  const esperada = window.RADAR_VERSAO, app = typeof VERSAO_APP === "undefined" ? null : VERSAO_APP;
+  if (esperada === VERSAO_ACESSO && esperada === app) return false;
+  let tentou = false;
+  try { tentou = sessionStorage.getItem("radar.recarregou") === esperada; sessionStorage.setItem("radar.recarregou", esperada); } catch { /* sem sessionStorage */ }
+  if (tentou) return false; // já tentou uma vez: segue com o que tem, para não ficar recarregando sem parar
+  const u = new URL(location.href);
+  u.searchParams.set("r", Date.now().toString(36));
+  location.replace(u.toString());
+  return true;
+}
+
 const ACESSO = {
   // Endereço do App da Web do Apps Script (termina em /exec). Ver acesso/README.md.
   url: "https://script.google.com/macros/s/AKfycbxgKFOecHcd4-nfNhmtiZbPWP8F9J4AX2Y5Wjm6iJDDXgfig6tNl6zcC7sb4lSmS-3Q/exec",
@@ -27,6 +46,23 @@ function urlServidor() {
   return ACESSO.url;
 }
 
+/**
+ * O Apps Script às vezes responde com uma página de erro do Google em vez de JSON (por alguns segundos
+ * depois de uma publicação, ou num soluço da rede). Tenta de novo uma vez antes de desistir.
+ */
+async function chamarGoogle(url, corpo) {
+  for (let tentativa = 1; ; tentativa++) {
+    try {
+      // text/plain evita a "pré-consulta" CORS, que o Apps Script não responde.
+      const resp = await fetch(url, { method: "POST", body: JSON.stringify(corpo) });
+      const texto = await resp.text();
+      if (resp.ok) return JSON.parse(texto);
+    } catch { /* rede ou resposta que não é JSON: tenta de novo */ }
+    if (tentativa >= 2) throw new Error("O servidor do Google não respondeu direito. Tente de novo em alguns segundos.");
+    await new Promise((ok) => setTimeout(ok, 2000));
+  }
+}
+
 async function servidor(acao, dados = {}) {
   const url = urlServidor();
   let r;
@@ -41,9 +77,7 @@ async function servidor(acao, dados = {}) {
     r = await window.SimuladorAcesso.chamar({ acao, ...dados });
   } else {
     // text/plain evita a "pré-consulta" CORS, que o Apps Script não responde.
-    const resp = await fetch(url, { method: "POST", body: JSON.stringify({ acao, ...dados }) });
-    if (!resp.ok) throw new Error("Servidor indisponível. Tente de novo em instantes.");
-    r = await resp.json();
+    r = await chamarGoogle(url, { acao, ...dados });
   }
   if (!r.ok) {
     if (r.erro === "SESSAO_INVALIDA") { sessaoCaiu(); throw new Error("Sua sessão terminou. Entre de novo."); }
@@ -134,7 +168,15 @@ $a("form-entrar").addEventListener("submit", async (ev) => {
   try {
     await ocupado(form.querySelector("button[type=submit]"), async () => entrou(await servidor("entrar", { email, senha })), "Entrando…");
     $a("entrar-senha").value = "";
-  } catch (e) { msg(form, e.message); }
+  } catch (e) {
+    // Quem ainda não criou a senha vai direto para o primeiro acesso, com o e-mail preenchido.
+    if (/ainda não criou sua senha/.test(e.message)) {
+      trocarModo("primeiro");
+      msg($a("form-codigo"), "Este e-mail ainda não tem senha. Clique em \"Enviar código\" para criar a sua.", "info");
+      return;
+    }
+    msg(form, e.message);
+  }
 });
 
 document.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => trocarModo(b.dataset.modo)));
@@ -415,7 +457,9 @@ $a("form-membro").addEventListener("submit", async (ev) => {
 });
 
 // ---------------------------------------------------------------- início --
-(async function iniciarAcesso() {
+// Começa só depois de todos os scripts da página (app.js inclusive) terem carregado.
+document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
+  if (conferirVersao()) return;
   if (!urlServidor()) {
     mostrarPortaria("entrar");
     $a("form-entrar").hidden = true;
@@ -431,4 +475,4 @@ $a("form-membro").addEventListener("submit", async (ev) => {
   catch (e) {
     if (Acesso.sessao) { mostrarPortaria("entrar"); msg($a("form-entrar"), e.message); }
   }
-})();
+});

@@ -3,6 +3,8 @@
 // Marcações ("sinalizada", "sem relevância") são da equipe e "lida" é de cada pessoa: as duas ficam
 // no servidor de acesso (acesso.js / acesso/Acesso.gs). A "última visita" fica no localStorage.
 
+const VERSAO_APP = "20261023183141"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
   // endereço do GitHub Pages (usuario.github.io/repositorio).
