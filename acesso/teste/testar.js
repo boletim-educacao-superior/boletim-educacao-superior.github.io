@@ -275,6 +275,38 @@ cenario("Meu perfil", (a) => {
   conferir("nome com fórmula vira texto", r.ok && a.aba("Equipe")[1][1] === "'=HYPERLINK(1)", a.aba("Equipe")[1]);
 });
 
+cenario("Marcações: sinalizada, sem relevância e lidas", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  a.api(adm, "salvarMembro", ANA, "Ana Teste", false, false);
+  const ana = primeiroAcesso(a, ANA, "outra2026senha").dados.sessao;
+  const N1 = "0123456789abcdef", N2 = "fedcba9876543210";
+
+  let r = a.api(ana, "marcar", N1, "sinalizada", true, "", "Portaria SERES 1", "https://www.in.gov.br/x");
+  conferir("pessoa da equipe sinaliza", r.ok && r.dados.length === 1 && r.dados[0].tipo === "sinalizada" && r.dados[0].nome === "Ana Teste", r);
+  r = a.api(adm, "marcacoes");
+  conferir("a sinalização é vista pela equipe toda", r.ok && r.dados.marcas.some((m) => m.id === N1 && m.por === ANA), r);
+  r = a.api(adm, "marcar", N1, "irrelevante", true, "  Ato de outra IES  ", "Portaria SERES 1", "javascript:alert(1)");
+  conferir("marcar sem relevância tira a sinalização", r.ok && r.dados.length === 1 && r.dados[0].tipo === "irrelevante" && r.dados[0].motivo === "Ato de outra IES", r);
+  conferir("link que não é https não é gravado", a.aba("Marcacoes")[1][6] === "", a.aba("Marcacoes")[1]);
+  r = a.api(adm, "marcar", N1, "irrelevante", false);
+  conferir("desfazer tira a marcação", r.ok && r.dados.length === 0, r);
+  r = a.api(adm, "marcar", "../../etc", "sinalizada", true);
+  conferir("id de notícia inválido é recusado", !r.ok && /inválida/.test(r.erro), r);
+  r = a.api(adm, "marcar", N1, "apagar", true);
+  conferir("tipo de marcação inválido é recusado", !r.ok, r);
+
+  r = a.api(ana, "marcarLidos", [N1, N2, N1, "lixo"], true);
+  conferir("marca lidas (ignora repetidas e inválidas)", r.ok && a.aba("Lidos").length === 3, a.aba("Lidos"));
+  a.api(ana, "marcarLidos", [N1], true);
+  conferir("marcar de novo não duplica", a.aba("Lidos").length === 3);
+  conferir("lidas são por pessoa", a.api(adm, "marcacoes").dados.lidos.length === 0 && a.api(ana, "marcacoes").dados.lidos.length === 2);
+  a.api(ana, "marcarLidos", [N2], false);
+  conferir("marca como não lida", JSON.stringify(a.api(ana, "marcacoes").dados.lidos) === JSON.stringify([N1]));
+  const acoes = a.api(adm, "registro").dados.map((x) => x.acao);
+  conferir("sinalizar e desfazer entram no registro", ["item_sinalizada", "item_irrelevante", "item_irrelevante_desfeito"].every((x) => acoes.includes(x)), acoes);
+});
+
 cenario("Troca de senha", (a) => {
   a.g.configurar();
   const s1 = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;

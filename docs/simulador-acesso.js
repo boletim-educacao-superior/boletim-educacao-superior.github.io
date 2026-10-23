@@ -9,6 +9,8 @@ window.SimuladorAcesso = (() => {
     { email: "ana.teste@pucminas.br", nome: "Ana Teste", admin: false, senha: "teste2026ok", cadastrado_em: agora(), ultimo_acesso: "" },
   ];
   const registro = [];
+  let marcas = [];                 // { id, tipo, por, em, motivo }
+  const lidosPor = {};             // email → Set de ids
   const codigos = {}, sessoes = {};
   const quem = (s) => sessoes[s];
   const pessoa = (e) => equipe.find((p) => p.email === String(e).toLowerCase());
@@ -71,6 +73,21 @@ window.SimuladorAcesso = (() => {
         apagarSenha: (email) => { admin(); pessoa(email).senha = ""; reg(p.email, "senha_apagada", email); return lista(); },
         enviarBoasVindas: (email) => { admin(); pessoa(email).boasvindas_em = agora(); reg(p.email, "boasvindas_enviado", email); return lista(); },
         registro: () => { admin(); return registro; },
+        marcacoes: () => ({
+          marcas: marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por })),
+          lidos: [...(lidosPor[p.email] || [])],
+        }),
+        marcar: (id, tipo, ativo, motivo, titulo) => {
+          marcas = marcas.filter((m) => !(m.id === id && (m.tipo === tipo || ativo)));
+          if (ativo) marcas.push({ id, tipo, por: p.email, em: agora(), motivo: motivo || "" });
+          reg(p.email, ativo ? "item_" + tipo : "item_" + tipo + "_desfeito", titulo);
+          return marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por }));
+        },
+        marcarLidos: (ids, lido) => {
+          const meus = (lidosPor[p.email] = lidosPor[p.email] || new Set());
+          ids.forEach((i) => (lido ? meus.add(i) : meus.delete(i)));
+          return true;
+        },
       }[nome];
       if (!f) return falha("Ação desconhecida.");
       try { return { ok: true, dados: f(...(args || [])) }; } catch (e) { return falha(e.message); }

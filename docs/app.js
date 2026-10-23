@@ -1,6 +1,7 @@
 // Painel do Radar da Educação Superior.
 // Lê dados/itens.json e dados/status.json (gerados pelo coletor) e filtra no navegador.
-// "Lido" e "última visita" ficam no localStorage de cada pessoa.
+// Marcações ("sinalizada", "sem relevância") são da equipe e "lida" é de cada pessoa: as duas ficam
+// no servidor de acesso (acesso.js / acesso/Acesso.gs). A "última visita" fica no localStorage.
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -22,11 +23,40 @@ const estado = {
   itens: [],
   instituicoes: new Set(),
   lidos: new Set(),
+  marcas: new Map(),      // id da notícia → { tipo, por, nome, em, motivo }
   ultimaVisita: null,
   somenteNovos: false,
+  visao: "inicio",
 };
 
 const $ = (id) => document.getElementById(id);
+
+// ------------------------------------------------------------------ visões --
+// Cada item do menu é um recorte. "Sinalizadas" e "Sem relevância" mostram tudo o que foi marcado,
+// sem o filtro de período, para nada marcado ficar escondido.
+const marca = (it) => estado.marcas.get(it.id)?.tipo;
+const VISOES = {
+  "inicio": {
+    titulo: "Início", explica: "Tudo o que o Radar coletou, menos o que a equipe marcou como sem relevância.",
+    filtro: (it) => marca(it) !== "irrelevante",
+  },
+  "sinalizadas": {
+    titulo: "Sinalizadas", explica: "Notícias que alguém da equipe marcou para acompanhar. Todos veem as mesmas.",
+    filtro: (it) => marca(it) === "sinalizada", semPeriodo: true,
+  },
+  "nao-lidas": {
+    titulo: "Não lidas", explica: "O que você ainda não abriu nem marcou como lido.",
+    filtro: (it) => !estado.lidos.has(it.id) && marca(it) !== "irrelevante",
+  },
+  "lidas": {
+    titulo: "Lidas", explica: "O que você já abriu ou marcou como lido (vale em qualquer navegador).",
+    filtro: (it) => estado.lidos.has(it.id),
+  },
+  "sem-relevancia": {
+    titulo: "Sem relevância", explica: "Notícias que a equipe marcou como fora do nosso interesse. Os motivos ajudam a ajustar as regras do Radar.",
+    filtro: (it) => marca(it) === "irrelevante", semPeriodo: true, comRotina: true,
+  },
+};
 
 // ------------------------------------------------------------ armazenamento --
 function lerLocal(chave, padrao) {
@@ -41,12 +71,15 @@ function gravarLocal(chave, valor) {
 
 // ------------------------------------------------------------------- dados --
 async function carregar() {
-  const [itens, status] = await Promise.all([
+  const [itens, status, marcacoes] = await Promise.all([
     fetch("dados/itens.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])),
     fetch("dados/status.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    api("marcacoes").catch(() => ({ marcas: [], lidos: [] })),
   ]);
   estado.itens = itens;
-  estado.lidos = new Set(lerLocal("radar.lidos", []));
+  aplicarMarcacoes(marcacoes.marcas);
+  estado.lidos = new Set(marcacoes.lidos);
+  migrarLidosDoNavegador();
   estado.ultimaVisita = lerLocal("radar.ultimaVisita", null);
   // A "última visita" só avança na próxima abertura, para os novos continuarem destacados agora.
   gravarLocal("radar.ultimaVisita", new Date().toISOString());
@@ -55,11 +88,63 @@ async function carregar() {
   restaurarFiltros();
   mostrarStatus(status);
   configurarBotaoColeta();
-  render();
+  irPara(location.hash);
+}
+
+function aplicarMarcacoes(lista) {
+  estado.marcas = new Map(lista.map((m) => [m.id, m]));
+}
+
+// Antes do login, "lido" ficava só no navegador. Na primeira entrada, leva esses lidos para o servidor.
+function migrarLidosDoNavegador() {
+  const antigos = lerLocal("radar.lidos", null);
+  if (!Array.isArray(antigos)) return;
+  const novos = antigos.filter((id) => !estado.lidos.has(id));
+  novos.forEach((id) => estado.lidos.add(id));
+  try { localStorage.removeItem("radar.lidos"); } catch { /* modo privado */ }
+  if (novos.length) api("marcarLidos", novos, true).catch(() => {});
 }
 
 function ehNovo(it) {
   return estado.ultimaVisita ? it.visto_em > estado.ultimaVisita : false;
+}
+
+// ------------------------------------------------------------------ páginas --
+// O endereço manda: #inicio, #sinalizadas, #nao-lidas, #lidas, #sem-relevancia ou #admin.
+function irPara(hash) {
+  const nome = String(hash || "").replace(/^#/, "") || "inicio";
+  const admin = nome === "admin" && Acesso.perfil?.admin;
+  $("pagina-radar").hidden = admin;
+  $("pagina-admin").hidden = !admin;
+  if (admin) {
+    marcarMenu(null);
+    abrirPaginaAdmin();
+    return;
+  }
+  estado.visao = VISOES[nome] ? nome : "inicio";
+  marcarMenu(estado.visao);
+  $("visao-titulo").textContent = VISOES[estado.visao].titulo;
+  $("visao-explica").textContent = VISOES[estado.visao].explica;
+  // Atalhos de prioridade e "novos" só fazem sentido no Início.
+  $("pagina-radar").classList.toggle("visao-inicio", estado.visao === "inicio");
+  render();
+}
+window.addEventListener("hashchange", () => { if (painelIniciado) { irPara(location.hash); window.scrollTo(0, 0); } });
+
+function marcarMenu(visao) {
+  document.querySelectorAll(".menu-principal [data-visao]").forEach((a) => {
+    const atual = a.dataset.visao === visao;
+    a.classList.toggle("ativo", atual);
+    atual ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current");
+  });
+}
+
+function atualizarContadores() {
+  const conta = (v) => estado.itens.filter(VISOES[v].filtro).length;
+  for (const v of ["sinalizadas", "nao-lidas", "lidas", "sem-relevancia"]) {
+    const n = conta(v);
+    $(`c-${v}`).textContent = n ? n : "";
+  }
 }
 
 // ----------------------------------------------------------------- filtros --
@@ -92,25 +177,21 @@ function montarFiltros() {
     });
     caixa.appendChild(b);
   }
-  for (const id of ["f-busca", "f-prioridade", "f-setor", "f-tema", "f-tipo", "f-periodo", "f-rotina", "f-naolidos"]) {
+  for (const id of ["f-busca", "f-prioridade", "f-setor", "f-tema", "f-tipo", "f-periodo", "f-rotina"]) {
     $(id).addEventListener(id === "f-busca" ? "input" : "change", () => { estado.somenteNovos = false; render(); });
   }
   document.querySelectorAll("[data-atalho]").forEach((b) =>
     b.addEventListener("click", () => aplicarAtalho(b.dataset.atalho)));
   $("btn-limpar").addEventListener("click", () => aplicarAtalho("limpar"));
   $("btn-csv").addEventListener("click", exportarCSV);
-  $("btn-lertodos").addEventListener("click", () => {
-    filtrar().forEach((it) => estado.lidos.add(it.id));
-    gravarLocal("radar.lidos", [...estado.lidos]);
-    render();
-  });
+  $("btn-lertodos").addEventListener("click", () => marcarLidos(filtrar().map((it) => it.id), true));
 }
 
 function aplicarAtalho(nome) {
   $("f-busca").value = ""; $("f-tema").value = ""; $("f-setor").value = ""; $("f-tipo").value = "";
-  $("f-naolidos").checked = false; $("f-rotina").checked = true;
+  $("f-rotina").checked = true;
   estado.instituicoes.clear();
-  document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", "false"));
+  document.querySelectorAll(".chip[data-valor]").forEach((c) => c.setAttribute("aria-pressed", "false"));
   estado.somenteNovos = nome === "novos";
   $("f-prioridade").value = nome === "urgente" ? "urgente" : nome === "alta" ? "alta+" : "";
   $("f-periodo").value = nome === "limpar" ? "30" : "";
@@ -142,18 +223,19 @@ function semAcento(s) {
 }
 
 function filtrar() {
+  const visao = VISOES[estado.visao];
   const busca = semAcento($("f-busca").value.trim());
   const prio = $("f-prioridade").value;
   const tema = $("f-tema").value;
   const setor = $("f-setor").value;
   const tipo = $("f-tipo").value;
-  const dias = $("f-periodo").value;
-  const ocultarRotina = $("f-rotina").checked;
-  const naoLidos = $("f-naolidos").checked;
+  const dias = visao.semPeriodo ? "" : $("f-periodo").value;
+  const ocultarRotina = $("f-rotina").checked && !visao.comRotina;
   const limite = dias ? new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10) : "";
   const maxPrio = { urgente: 0, "alta+": 1, "media+": 2 }[prio] ?? 3;
 
   return estado.itens.filter((it) => {
+    if (!visao.filtro(it)) return false;
     if (estado.somenteNovos && !ehNovo(it)) return false;
     if (PRIORIDADES[it.prioridade] > maxPrio) return false;
     if (estado.instituicoes.size && !estado.instituicoes.has(it.instituicao)) return false;
@@ -161,8 +243,7 @@ function filtrar() {
     if (setor && !(it.setores || []).includes(setor)) return false;
     if (tipo && it.tipo !== tipo) return false;
     if (limite && (it.data || "") < limite) return false;
-    if (ocultarRotina && it.rotina && it.prioridade !== "urgente") return false;
-    if (naoLidos && estado.lidos.has(it.id)) return false;
+    if (ocultarRotina && it.rotina && it.prioridade !== "urgente" && !marca(it)) return false;
     if (busca && !semAcento(`${it.titulo} ${it.resumo} ${it.orgao} ${it.fonte}`).includes(busca)) return false;
     return true;
   });
@@ -177,8 +258,9 @@ function formatarData(iso) {
 
 function render() {
   salvarFiltros();
+  atualizarContadores();
   const visiveis = filtrar();
-  const contagemPorPrio = (p) => estado.itens.filter((it) => it.prioridade === p).length;
+  const contagemPorPrio = (p) => estado.itens.filter((it) => it.prioridade === p && marca(it) !== "irrelevante").length;
   $("n-urgente").textContent = contagemPorPrio("urgente");
   $("n-alta").textContent = contagemPorPrio("alta");
   $("n-novos").textContent = estado.itens.filter(ehNovo).length;
@@ -192,47 +274,19 @@ function render() {
   if (!visiveis.length) {
     const li = document.createElement("li");
     li.className = "vazio";
-    li.textContent = estado.itens.length
-      ? "Nenhum item com esses filtros. Experimente ampliar o período ou limpar os filtros."
-      : "Ainda não há dados. Rode a primeira coleta.";
+    const vazio = {
+      "sinalizadas": 'Nenhuma notícia sinalizada. Use "☆ Sinalizar" numa notícia para a equipe acompanhar.',
+      "sem-relevancia": "Nada foi marcado como sem relevância.",
+      "lidas": "Você ainda não leu nenhuma notícia com esses filtros.",
+      "nao-lidas": "Você já leu tudo o que aparece com esses filtros.",
+    }[estado.visao];
+    li.textContent = !estado.itens.length ? "Ainda não há dados. Rode a primeira coleta."
+      : vazio || "Nenhum item com esses filtros. Experimente ampliar o período ou limpar os filtros.";
     lista.appendChild(li);
     return;
   }
-  const tpl = $("tpl-item");
   const frag = document.createDocumentFragment();
-  for (const it of visiveis.slice(0, 400)) {
-    const el = tpl.content.firstElementChild.cloneNode(true);
-    el.classList.add(`p-${it.prioridade}`);
-    if (estado.lidos.has(it.id)) el.classList.add("lido");
-    if (ehNovo(it)) el.classList.add("e-novo");
-    el.querySelector(".badge-prio").textContent = ROTULO_PRIORIDADE[it.prioridade];
-    el.querySelector(".badge-inst").textContent = it.instituicao;
-    el.querySelector(".item-tipo").textContent = it.tipo;
-    const t = el.querySelector(".item-data");
-    t.textContent = formatarData(it.data); t.dateTime = it.data;
-    const a = el.querySelector(".item-titulo a");
-    a.href = it.link; a.textContent = it.titulo;
-    a.addEventListener("click", () => marcarLido(it.id, true, el));
-    el.querySelector(".motivo").textContent = it.motivo_urgencia ? `⚑ ${it.motivo_urgencia}` : "";
-    el.querySelector(".item-resumo").textContent = it.resumo ? it.resumo.slice(0, 320) + (it.resumo.length > 320 ? "…" : "") : "";
-    const setores = el.querySelector(".setores");
-    for (const s of it.setores || []) {
-      const span = document.createElement("span");
-      span.className = "tag-setor"; span.textContent = s; span.title = `Setor indicado: ${NOME_SETOR[s] || s}`;
-      setores.appendChild(span);
-    }
-    const temas = el.querySelector(".temas");
-    for (const tm of it.temas || []) {
-      const s = document.createElement("span"); s.className = "tag"; s.textContent = tm; temas.appendChild(s);
-    }
-    const org = el.querySelector(".orgao");
-    org.textContent = [it.fonte, it.orgao].filter(Boolean).join(" · ");
-    org.title = org.textContent;
-    const btn = el.querySelector(".btn-lido");
-    btn.textContent = estado.lidos.has(it.id) ? "Marcar como não lido" : "Marcar como lido";
-    btn.addEventListener("click", () => marcarLido(it.id, !estado.lidos.has(it.id), el));
-    frag.appendChild(el);
-  }
+  for (const it of visiveis.slice(0, 400)) frag.appendChild(montarItem(it));
   lista.appendChild(frag);
   if (visiveis.length > 400) {
     const li = document.createElement("li");
@@ -242,11 +296,142 @@ function render() {
   }
 }
 
-function marcarLido(id, lido, el) {
-  lido ? estado.lidos.add(id) : estado.lidos.delete(id);
-  gravarLocal("radar.lidos", [...estado.lidos]);
+function montarItem(it) {
+  const el = $("tpl-item").content.firstElementChild.cloneNode(true);
+  el.dataset.id = it.id;
+  el.classList.add(`p-${it.prioridade}`);
+  if (ehNovo(it)) el.classList.add("e-novo");
+  el.querySelector(".badge-prio").textContent = ROTULO_PRIORIDADE[it.prioridade];
+  el.querySelector(".badge-inst").textContent = it.instituicao;
+  el.querySelector(".item-tipo").textContent = it.tipo;
+  const t = el.querySelector(".item-data");
+  t.textContent = formatarData(it.data); t.dateTime = it.data;
+  const a = el.querySelector(".item-titulo a");
+  a.href = it.link; a.textContent = it.titulo;
+  a.addEventListener("click", () => { if (!estado.lidos.has(it.id)) marcarLidos([it.id], true); });
+  el.querySelector(".motivo").textContent = it.motivo_urgencia ? `⚑ ${it.motivo_urgencia}` : "";
+  el.querySelector(".item-resumo").textContent = it.resumo ? it.resumo.slice(0, 320) + (it.resumo.length > 320 ? "…" : "") : "";
+  const setores = el.querySelector(".setores");
+  for (const s of it.setores || []) {
+    const span = document.createElement("span");
+    span.className = "tag-setor"; span.textContent = s; span.title = `Setor indicado: ${NOME_SETOR[s] || s}`;
+    setores.appendChild(span);
+  }
+  const temas = el.querySelector(".temas");
+  for (const tm of it.temas || []) {
+    const s = document.createElement("span"); s.className = "tag"; s.textContent = tm; temas.appendChild(s);
+  }
+  const org = el.querySelector(".orgao");
+  org.textContent = [it.fonte, it.orgao].filter(Boolean).join(" · ");
+  org.title = org.textContent;
+  el.querySelector(".btn-sinalizar").addEventListener("click", () => alternarMarca(it, "sinalizada"));
+  el.querySelector(".btn-irrelevante").addEventListener("click", () =>
+    marca(it) === "irrelevante" ? alternarMarca(it, "irrelevante") : pedirMotivo(it));
+  el.querySelector(".btn-lido").addEventListener("click", () => marcarLidos([it.id], !estado.lidos.has(it.id)));
+  pintarItem(el, it);
+  return el;
+}
+
+/** Atualiza só a aparência de um item (marcas e lido), sem refazer a lista. */
+function pintarItem(el, it) {
+  const m = estado.marcas.get(it.id), lido = estado.lidos.has(it.id);
   el.classList.toggle("lido", lido);
-  el.querySelector(".btn-lido").textContent = lido ? "Marcar como não lido" : "Marcar como lido";
+  el.classList.toggle("sinalizada", m?.tipo === "sinalizada");
+  el.classList.toggle("irrelevante", m?.tipo === "irrelevante");
+  const s = el.querySelector(".btn-sinalizar");
+  s.textContent = m?.tipo === "sinalizada" ? "★ Sinalizada" : "☆ Sinalizar";
+  s.setAttribute("aria-pressed", String(m?.tipo === "sinalizada"));
+  s.title = m?.tipo === "sinalizada" ? "Tirar a sinalização (para toda a equipe)" : "Sinalizar para a equipe acompanhar";
+  el.querySelector(".btn-irrelevante").textContent = m?.tipo === "irrelevante" ? "↺ Desfazer “sem relevância”" : "Sem relevância";
+  el.querySelector(".btn-lido").textContent = lido ? "Marcar como não lida" : "Marcar como lida";
+  const info = el.querySelector(".marca-info");
+  info.className = "marca-info" + (m ? ` marca-${m.tipo}` : "");
+  info.textContent = !m ? ""
+    : m.pendente ? "Salvando…"
+    : `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} por ${m.nome || m.por}` +
+      (m.em ? ` em ${formatarData(String(m.em).slice(0, 10))}` : "") + (m.motivo ? ` · “${m.motivo}”` : "");
+}
+
+function repintar(id) {
+  const it = estado.itens.find((x) => x.id === id);
+  const el = document.querySelector(`#lista [data-id="${CSS.escape(id)}"]`);
+  if (it && el) pintarItem(el, it);
+}
+
+// ---------------------------------------------------------------- marcações --
+// A tela muda na hora; o servidor (que leva alguns segundos) confirma depois. Se der erro, desfaz e avisa.
+async function alternarMarca(it, tipo, motivo = "") {
+  const antes = estado.marcas.get(it.id);
+  const ativo = antes?.tipo !== tipo;
+  if (ativo) estado.marcas.set(it.id, { id: it.id, tipo, por: Acesso.perfil.email, nome: Acesso.perfil.nome, motivo, pendente: true });
+  else estado.marcas.delete(it.id);
+  repintar(it.id); atualizarContadores();
+  try {
+    aplicarMarcacoes(await api("marcar", it.id, tipo, ativo, motivo, it.titulo, it.link));
+    aviso(ativo ? (tipo === "sinalizada" ? "Sinalizada para a equipe." : "Marcada como sem relevância.") : "Marcação desfeita.");
+  } catch (e) {
+    antes ? estado.marcas.set(it.id, antes) : estado.marcas.delete(it.id);
+    aviso(`Não foi possível salvar: ${e.message}`, true);
+  }
+  // Sair ou entrar no recorte atual (ex.: tirar a sinalização dentro de "Sinalizadas") refaz a lista.
+  render();
+}
+
+const SUGESTOES_MOTIVO = ["Ato de outra instituição", "Educação básica", "Fora do nosso escopo", "Notícia repetida", "Evento sem relação"];
+let itemMotivo = null;
+function pedirMotivo(it) {
+  itemMotivo = it;
+  $("irr-noticia").textContent = it.titulo;
+  $("irr-motivo").value = "";
+  $("irr-sugestoes").innerHTML = SUGESTOES_MOTIVO.map((s) => `<button type="button" class="chip">${escapar(s)}</button>`).join("");
+  $("irr-sugestoes").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("irr-motivo").value = b.textContent; }));
+  $("dlg-irrelevante").showModal();
+  $("irr-motivo").focus();
+}
+$("form-irrelevante").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  $("dlg-irrelevante").close();
+  if (itemMotivo) alternarMarca(itemMotivo, "irrelevante", $("irr-motivo").value.trim());
+});
+
+// Lidas: a tela muda na hora e os pedidos ao servidor são juntados (um clique atrás do outro vira um pedido só).
+const fila = { lidas: new Set(), naoLidas: new Set(), timer: null };
+function marcarLidos(ids, lido) {
+  for (const id of ids) {
+    lido ? estado.lidos.add(id) : estado.lidos.delete(id);
+    (lido ? fila.lidas : fila.naoLidas).add(id);
+    (lido ? fila.naoLidas : fila.lidas).delete(id);
+  }
+  clearTimeout(fila.timer);
+  fila.timer = setTimeout(enviarLidos, 1200);
+  if (ids.length === 1 && estado.visao !== "lidas" && estado.visao !== "nao-lidas") { repintar(ids[0]); atualizarContadores(); }
+  else render();
+}
+async function enviarLidos() {
+  const lidas = [...fila.lidas], naoLidas = [...fila.naoLidas];
+  fila.lidas.clear(); fila.naoLidas.clear();
+  try {
+    if (lidas.length) await api("marcarLidos", lidas, true);
+    if (naoLidas.length) await api("marcarLidos", naoLidas, false);
+  } catch (e) {
+    aviso(`Não foi possível salvar o que você leu: ${e.message}`, true);
+  }
+}
+// Se a pessoa fechar a aba logo depois de marcar, ainda tenta mandar.
+window.addEventListener("pagehide", () => { if (fila.lidas.size || fila.naoLidas.size) enviarLidos(); });
+
+function aviso(texto, erro = false) {
+  let a = $("aviso");
+  if (!a) {
+    a = document.createElement("div");
+    a.id = "aviso"; a.className = "aviso"; a.setAttribute("role", "status");
+    document.body.appendChild(a);
+  }
+  a.textContent = texto;
+  a.classList.toggle("aviso-erro", erro);
+  a.classList.add("visivel");
+  clearTimeout(aviso.t);
+  aviso.t = setTimeout(() => a.classList.remove("visivel"), erro ? 6000 : 2500);
 }
 
 // --------------------------------------------------------------- utilidades --
@@ -254,6 +439,7 @@ function mostrarStatus(status) {
   if (!status) { $("atualizado").textContent = "Sem informação de coleta"; return; }
   const quando = new Date(status.ultima_execucao);
   $("atualizado").textContent = "Última coleta: " + quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  mostrarAgenda(status.agenda);
   const falhas = status.fontes.filter((f) => !f.ok);
   $("status-resumo").textContent = falhas.length
     ? `· ${falhas.length} fonte(s) com erro`
@@ -265,6 +451,37 @@ function mostrarStatus(status) {
     tr.innerHTML = `<td>${escapar(f.fonte)}</td><td>${situacao}</td><td>${f.ok ? f.itens : "–"}</td>`;
     corpo.appendChild(tr);
   }
+}
+
+/**
+ * "Coleta automática: dias úteis, às 8h, 12h e 17h · próxima: hoje às 17h".
+ * O horário vem do agendamento do GitHub (o coletor lê o coleta.yml), em horário de Brasília.
+ */
+function mostrarAgenda(ag) {
+  if (!ag || !ag.horas?.length) return;
+  const el = $("agenda");
+  const proxima = proximaColeta(ag);
+  el.textContent = `Coleta automática: ${ag.descricao.charAt(0).toLowerCase()}${ag.descricao.slice(1)}` +
+    (proxima ? ` · próxima: ${proxima}` : "");
+  el.title = "Horário de Brasília. O GitHub pode atrasar alguns minutos nos horários de pico.";
+  el.hidden = false;
+}
+
+function proximaColeta(ag) {
+  // "Agora" em Brasília (UTC-3, sem horário de verão).
+  const agora = new Date(Date.now() - 3 * 3600e3);
+  const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  for (let d = 0; d < 8; d++) {
+    const dia = new Date(agora.getTime() + d * 864e5);
+    if (!ag.dias.includes(dia.getUTCDay())) continue;
+    for (const h of ag.horas) {
+      const minutos = h * 60 + (ag.minuto || 0);
+      if (d === 0 && minutos <= agora.getUTCHours() * 60 + agora.getUTCMinutes()) continue;
+      const hora = `${h}h${ag.minuto ? String(ag.minuto).padStart(2, "0") : ""}`;
+      return d === 0 ? `hoje às ${hora}` : d === 1 ? `amanhã às ${hora}` : `${DIAS[dia.getUTCDay()]} às ${hora}`;
+    }
+  }
+  return "";
 }
 
 function configurarBotaoColeta() {
@@ -281,11 +498,13 @@ function escapar(s) {
 }
 
 function exportarCSV() {
-  const cols = ["data", "prioridade", "instituicao", "tipo", "titulo", "setores", "temas", "motivo_urgencia", "orgao", "link"];
+  const cols = ["data", "prioridade", "instituicao", "tipo", "titulo", "setores", "temas", "motivo_urgencia", "marcacao", "orgao", "link"];
   const linhas = [cols.join(";")];
   for (const it of filtrar()) {
+    const m = estado.marcas.get(it.id);
+    const linha = { ...it, marcacao: m ? `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} (${m.nome || m.por})` : "" };
     linhas.push(cols.map((c) => {
-      const v = Array.isArray(it[c]) ? it[c].join(", ") : it[c] ?? "";
+      const v = Array.isArray(linha[c]) ? linha[c].join(", ") : linha[c] ?? "";
       return `"${String(v).replace(/"/g, '""')}"`;
     }).join(";"));
   }
@@ -293,7 +512,7 @@ function exportarCSV() {
   const blob = new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `radar-educacao-superior-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `radar-${estado.visao}-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }

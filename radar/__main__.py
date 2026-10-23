@@ -9,6 +9,7 @@
 """
 
 import json
+import re
 import sys
 import time
 import tomllib
@@ -25,6 +26,9 @@ MAX_ATOS_DOU = 60
 RAIZ = Path(__file__).resolve().parent.parent
 ARQ_ITENS = RAIZ / "docs" / "dados" / "itens.json"
 ARQ_STATUS = RAIZ / "docs" / "dados" / "status.json"
+ARQ_WORKFLOW = RAIZ / ".github" / "workflows" / "coleta.yml"
+FUSO_BRASILIA = -3  # sem horário de verão desde 2019
+NOME_DIA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"]
 ORDEM_PRIORIDADE = {"urgente": 0, "alta": 1, "media": 2, "baixa": 3}
 
 
@@ -53,6 +57,43 @@ def coletar(config):
             relatorio.append({"fonte": nome, "instituicao": instituicao, "ok": False, "erro": str(e)[:300]})
             print(f"[erro] {nome}: {e}")
     return itens, relatorio
+
+
+def agenda_automatica():
+    """Lê o agendamento (linha cron) do workflow e devolve horas e dias em horário de Brasília.
+
+    Assim o painel mostra sempre o horário que está valendo no GitHub, sem um segundo lugar para manter.
+    Só entende o formato usado aqui: "MIN HORAS * * DIAS" (horas e dias como lista ou faixa).
+    """
+    try:
+        m = re.search(r'cron:\s*"(\d+) ([\d,]+) \* \* ([\d,\-*]+)"', ARQ_WORKFLOW.read_text(encoding="utf-8"))
+    except OSError:
+        return None
+    if not m:
+        return None
+    minuto = int(m.group(1))
+
+    def expandir(campo, ate):
+        if campo == "*":
+            return list(range(ate + 1))
+        valores = []
+        for parte in campo.split(","):
+            a, _, b = parte.partition("-")
+            valores += list(range(int(a), int(b or a) + 1))
+        return valores
+
+    horas = sorted((h + FUSO_BRASILIA) % 24 for h in expandir(m.group(2), 23))
+    dias = sorted(set(expandir(m.group(3), 6)))  # 0 = domingo (no cron, dia em UTC; nossas horas não cruzam a meia-noite)
+    if dias == [1, 2, 3, 4, 5]:
+        quando = "Dias úteis"
+    elif len(dias) == 7:
+        quando = "Todos os dias"
+    else:
+        quando = ", ".join(NOME_DIA[d] for d in dias).capitalize()
+    fmt = lambda h: f"{h}h" + (f"{minuto:02d}" if minuto else "")
+    lista = [fmt(h) for h in horas]
+    texto = lista[0] if len(lista) == 1 else ", ".join(lista[:-1]) + " e " + lista[-1]
+    return {"descricao": f"{quando}, às {texto}", "horas": horas, "minuto": minuto, "dias": dias}
 
 
 def main(argv):
@@ -104,6 +145,7 @@ def main(argv):
         "urgentes_novos": len(urgentes_novos),
         "alertas_enviados_por": canais,
         "total_no_painel": len(itens),
+        "agenda": agenda_automatica(),
         "fontes": relatorio,
     }, ensure_ascii=False, indent=1), encoding="utf-8")
 

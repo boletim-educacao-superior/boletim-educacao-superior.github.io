@@ -23,7 +23,11 @@ const ADMINS_INICIAIS = [{ email: 'diegoeduardo@pucminas.br', nome: 'Diego Eduar
 const ABAS = {
   // senha = hash (nunca a senha); senha_em = quando foi criada ou trocada
   Equipe: ['email', 'nome', 'admin', 'cadastrado_por', 'cadastrado_em', 'boasvindas_em', 'senha', 'senha_em', 'ultimo_acesso'],
-  Registro: ['quando', 'quem', 'acao', 'detalhe']
+  Registro: ['quando', 'quem', 'acao', 'detalhe'],
+  // Marcações da equipe (compartilhadas): notícia sinalizada ou sem relevância, com quem marcou e por quê
+  Marcacoes: ['item_id', 'tipo', 'por', 'em', 'motivo', 'titulo', 'link'],
+  // Notícias lidas, por pessoa (vale em qualquer navegador)
+  Lidos: ['email', 'item_id', 'em']
 };
 
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -514,7 +518,76 @@ function api_salvarMeuNome_(ss, nome) {
   return perfil_(ss, USUARIO_ATUAL_);
 }
 
+// ===================================================================== marcações das notícias --
+
+const TIPOS_MARCA = ['sinalizada', 'irrelevante'];
+const ROTULO_MARCA = { sinalizada: 'Sinalizou', irrelevante: 'Marcou como sem relevância' };
+const ID_ITEM_RE = /^[a-f0-9]{16}$/;   // id gerado pelo coletor (radar/fontes.py: gerar_id)
+
+function mapaNomes_(ss) {
+  const m = {};
+  lerAba_(ss, 'Equipe').linhas.forEach(function (p) { m[p.email.toLowerCase()] = p.nome; });
+  m[CONTA_SISTEMA] = 'Conta do sistema';
+  return m;
+}
+
+/** Marcações da equipe (todas) e as notícias que ESTA pessoa já leu. */
+function api_marcacoes_(ss) {
+  const nomes = mapaNomes_(ss);
+  const marcas = lerAba_(ss, 'Marcacoes').linhas.map(function (r) {
+    return { id: r.item_id, tipo: r.tipo, por: r.por, nome: nomes[r.por] || r.por, em: r.em, motivo: r.motivo };
+  });
+  const lidos = lerAba_(ss, 'Lidos').linhas
+    .filter(function (r) { return r.email === USUARIO_ATUAL_; })
+    .map(function (r) { return r.item_id; });
+  return { marcas: marcas, lidos: lidos };
+}
+
+/**
+ * Liga ou desliga uma marcação. Sinalizada e sem relevância não convivem: marcar uma tira a outra.
+ * Devolve as marcações atualizadas da equipe.
+ */
+function api_marcar_(ss, id, tipo, ativo, motivo, titulo, link) {
+  id = String(id || '');
+  if (!ID_ITEM_RE.test(id)) throw falha_('Notícia inválida.');
+  if (TIPOS_MARCA.indexOf(tipo) < 0) throw falha_('Marcação inválida.');
+  motivo = String(motivo || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  titulo = String(titulo || '').slice(0, 300);
+  link = /^https:\/\//.test(String(link || '')) ? String(link).slice(0, 600) : '';
+  return comTrava_(function () {
+    const tab = lerAba_(ss, 'Marcacoes');
+    // Apaga de baixo para cima, para os números das linhas não mudarem no meio.
+    tab.linhas.filter(function (r) { return r.item_id === id && (r.tipo === tipo || ativo); })
+      .sort(function (a, b) { return b._linha - a._linha; })
+      .forEach(function (r) { tab.sh.deleteRow(r._linha); });
+    if (ativo) tab.sh.appendRow(linha_([id, tipo, USUARIO_ATUAL_, agora_(), motivo, titulo, link]));
+    registrar_(ss, ativo ? 'item_' + tipo : 'item_' + tipo + '_desfeito', titulo + (motivo ? ' · ' + motivo : ''));
+    return api_marcacoes_(ss).marcas;
+  });
+}
+
+/** Marca várias notícias como lidas (ou não lidas) para quem está conectado. Não vai para o registro. */
+function api_marcarLidos_(ss, ids, lido) {
+  ids = (Array.isArray(ids) ? ids : []).map(String).filter(function (i) { return ID_ITEM_RE.test(i); }).slice(0, 1000);
+  if (!ids.length) return true;
+  return comTrava_(function () {
+    const tab = lerAba_(ss, 'Lidos'), meus = {};
+    tab.linhas.forEach(function (r) { if (r.email === USUARIO_ATUAL_) meus[r.item_id] = r; });
+    if (lido) {
+      const novas = ids.filter(function (i, k) { return !meus[i] && ids.indexOf(i) === k; })
+        .map(function (i) { return [USUARIO_ATUAL_, i, agora_()]; });
+      if (novas.length) tab.sh.getRange(tab.sh.getLastRow() + 1, 1, novas.length, 3).setValues(novas);
+    } else {
+      ids.map(function (i) { return meus[i]; }).filter(Boolean)
+        .sort(function (a, b) { return b._linha - a._linha; })
+        .forEach(function (r) { tab.sh.deleteRow(r._linha); });
+    }
+    return true;
+  });
+}
+
 const API_ = {
+  marcacoes: api_marcacoes_, marcar: api_marcar_, marcarLidos: api_marcarLidos_,
   perfil: api_perfil_, salvarMeuNome: api_salvarMeuNome_, alterarSenha: api_alterarSenha_, equipe: api_equipe_, salvarMembro: api_salvarMembro_,
   removerMembro: api_removerMembro_, apagarSenha: api_apagarSenha_, enviarBoasVindas: api_enviarBoasVindas_,
   registro: api_registro_

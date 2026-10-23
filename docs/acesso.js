@@ -259,7 +259,7 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
   const p = Acesso.perfil || {};
   const itens = [
     ["perfil", "Meu perfil"], ["senha", "Alterar senha"],
-    p.admin && ["hr"], p.admin && ["equipe", "Equipe"], p.admin && ["registro", "Registro de atividades"],
+    p.admin && ["hr"], p.admin && ["admin", "Administrador"], p.admin && ["registro", "Registro de atividades"],
     ["hr"], ["sair", "Sair"],
   ].filter(Boolean);
   const m = document.createElement("div");
@@ -276,7 +276,7 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
     const b = e.target.closest("[data-ir]");
     if (!b) return;
     fecharMenu();
-    ({ perfil: abrirPerfil, senha: abrirSenha, equipe: () => abrirAdmin("equipe"), registro: () => abrirAdmin("registro"), sair })[b.dataset.ir]();
+    ({ perfil: abrirPerfil, senha: abrirSenha, admin: () => irParaAdmin(false), registro: () => irParaAdmin(true), sair })[b.dataset.ir]();
   };
   m.onkeydown = (e) => {
     const bs = [...m.querySelectorAll("button")], i = bs.indexOf(document.activeElement);
@@ -309,6 +309,8 @@ const ROTULO_ACAO = {
   senha_alterada: "Trocou a senha", senha_apagada: "Senha apagada pelo administrador", codigo_enviado: "Pediu código",
   membro_cadastrado: "Cadastrou pessoa", membro_alterado: "Alterou pessoa", membro_removido: "Removeu pessoa",
   boasvindas_enviado: "Enviou boas-vindas", nome_alterado: "Trocou o próprio nome",
+  item_sinalizada: "Sinalizou notícia", item_sinalizada_desfeito: "Tirou a sinalização",
+  item_irrelevante: "Marcou como sem relevância", item_irrelevante_desfeito: "Desfez “sem relevância”",
 };
 
 function dataCurta(t) {
@@ -321,28 +323,33 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-async function abrirAdmin(aba) {
-  limparMsgs();
-  $a("dlg-admin").showModal();
-  await trocarAba(aba);
+// Página do Administrador (endereço #admin). app.js chama abrirPaginaAdmin() quando o endereço muda.
+function irParaAdmin(registro) {
+  if (registro) $a("sanfona-registro").open = true;
+  if (location.hash === "#admin") abrirPaginaAdmin(registro);
+  else { irParaRegistro = registro; location.hash = "#admin"; }
 }
+let irParaRegistro = false;
 
-document.querySelectorAll("#dlg-admin .aba").forEach((b) => b.addEventListener("click", () => trocarAba(b.dataset.aba)));
-async function trocarAba(aba) {
-  document.querySelectorAll("#dlg-admin .aba").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === aba)));
-  $a("aba-equipe").hidden = aba !== "equipe";
-  $a("aba-registro").hidden = aba !== "registro";
-  if (aba === "equipe") return carregarEquipe();
-  if (aba === "registro") {
-    const corpo = $a("registro-corpo");
-    corpo.innerHTML = `<tr><td colspan="3" class="carregando">Carregando…</td></tr>`;
-    try {
-      const linhas = await api("registro");
-      corpo.innerHTML = linhas.length ? linhas.map((r) => `<tr><td class="nowrap">${dataCurta(r.quando)}</td><td>${esc(r.quem)}</td>` +
-        `<td>${esc(ROTULO_ACAO[r.acao] || r.acao)}${r.detalhe ? `<div class="detalhe">${esc(r.detalhe)}</div>` : ""}</td></tr>`).join("")
-        : `<tr><td colspan="3" class="carregando">Nada registrado ainda.</td></tr>`;
-    } catch (e) { corpo.innerHTML = `<tr><td colspan="3" class="erro">${esc(e.message)}</td></tr>`; }
-  }
+function abrirPaginaAdmin(registro = irParaRegistro) {
+  irParaRegistro = false;
+  limparMsgs();
+  carregarEquipe();
+  if ($a("sanfona-registro").open) carregarRegistro();
+  if (registro) setTimeout(() => $a("sanfona-registro").scrollIntoView({ block: "start" }), 0);
+  else window.scrollTo(0, 0);
+}
+$a("sanfona-registro").addEventListener("toggle", () => { if ($a("sanfona-registro").open) carregarRegistro(); });
+
+async function carregarRegistro() {
+  const corpo = $a("registro-corpo");
+  corpo.innerHTML = `<tr><td colspan="3" class="carregando">Carregando…</td></tr>`;
+  try {
+    const linhas = await api("registro");
+    corpo.innerHTML = linhas.length ? linhas.map((r) => `<tr><td class="nowrap">${dataCurta(r.quando)}</td><td>${esc(r.quem)}</td>` +
+      `<td>${esc(ROTULO_ACAO[r.acao] || r.acao)}${r.detalhe ? `<div class="detalhe">${esc(r.detalhe)}</div>` : ""}</td></tr>`).join("")
+      : `<tr><td colspan="3" class="carregando">Nada registrado ainda.</td></tr>`;
+  } catch (e) { corpo.innerHTML = `<tr><td colspan="3" class="erro">${esc(e.message)}</td></tr>`; }
 }
 
 async function carregarEquipe(lista) {
@@ -366,6 +373,8 @@ async function carregarEquipe(lista) {
         ${eu ? "" : '<button type="button" class="link perigo" data-acao="remover">Remover</button>'}
       </div></td></tr>`;
   }).join("") || `<tr><td colspan="4" class="carregando">Ninguém cadastrado.</td></tr>`;
+  const semSenha = lista.filter((p) => !p.tem_senha).length;
+  $a("equipe-conta").textContent = `· ${lista.length} pessoa(s)` + (semSenha ? ` · ${semSenha} ainda sem senha` : "");
   corpo.querySelectorAll("[data-acao]").forEach((b) => b.addEventListener("click", () => acaoMembro(b, lista)));
 }
 

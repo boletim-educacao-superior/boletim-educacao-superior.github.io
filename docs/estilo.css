@@ -311,3 +311,80 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
   .tabela tr { display: block; border-bottom: 1px solid var(--borda); padding: 6px 0; }
   .tabela td { display: block; border: 0; padding: 3px 4px; }
 }
+
+/* ----------------------------------------------------------- coleta e agenda --- */
+.coleta-info { display: flex; flex-direction: column; gap: 1px; }
+.agenda { color: var(--texto-suave); font-size: .8rem; }
+
+/* ------------------------------------------------- menu principal (abas) --- */
+.menu-principal {
+  max-width: 1040px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 2px;
+}
+.menu-principal a {
+  padding: 10px 14px 11px; font-size: .9rem; font-weight: 600; color: var(--texto-suave); text-decoration: none;
+  border-bottom: 3px solid transparent; display: inline-flex; align-items: center; gap: 6px;
+}
+.menu-principal a:hover { color: var(--texto); }
+.menu-principal a.ativo { color: var(--marca); border-bottom-color: var(--marca); }
+.menu-principal .cont {
+  font-size: .72rem; font-weight: 700; background: var(--fundo); border: 1px solid var(--borda);
+  border-radius: 999px; padding: 0 7px; min-width: 20px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.menu-principal .cont:empty { display: none; }
+.menu-principal a.ativo .cont { background: var(--media-fundo); border-color: transparent; color: var(--marca); }
+
+.visao-cab { margin-bottom: 14px; }
+.visao-titulo { margin: 0; font-size: 1.25rem; }
+#pagina-radar:not(.visao-inicio) .resumo { display: none; }
+
+/* ------------------------------------------------- ações e marcações no item --- */
+.item-acoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.acao {
+  background: var(--fundo); border: 1px solid var(--borda); border-radius: 7px; padding: 4px 10px;
+  font-size: .8rem; cursor: pointer; color: var(--texto);
+}
+.acao:hover { border-color: var(--marca); color: var(--marca); }
+.item.sinalizada .btn-sinalizar { background: var(--alta-fundo); border-color: transparent; color: var(--alta); font-weight: 600; }
+.item.sinalizada { box-shadow: inset 0 0 0 1px var(--alta-fundo), var(--sombra); }
+.item.irrelevante { opacity: .7; }
+.marca-info { margin: 6px 0 0; font-size: .82rem; font-weight: 600; }
+.marca-info:empty { display: none; }
+.marca-sinalizada { color: var(--alta); }
+.marca-irrelevante { color: var(--texto-suave); }
+
+/* Aviso flutuante (salvo / erro) */
+.aviso {
+  position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 20px); z-index: 60;
+  background: var(--texto); color: var(--superficie); padding: 10px 16px; border-radius: 10px;
+  font-size: .9rem; box-shadow: 0 8px 24px rgba(16, 24, 40, .25); opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px);
+}
+.aviso.visivel { opacity: 1; transform: translate(-50%, 0); }
+.aviso-erro { background: var(--urgente); color: #fff; }
+
+/* -------------------------------------------------- página do Administrador --- */
+.tag-so-admin {
+  font-size: .7rem; font-weight: 700; color: var(--marca); background: var(--media-fundo);
+  border-radius: 999px; padding: 2px 9px; vertical-align: 3px; margin-left: 6px;
+}
+.bloco { display: flex; flex-direction: column; gap: 10px; }
+.cadastro-equipe { background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+.cadastro-equipe h3 { margin: 0; font-size: 1rem; }
+.cadastro-equipe label:not(.check) { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--texto-suave); }
+.cadastro-equipe input:not([type=checkbox]) {
+  padding: 9px 11px; border: 1px solid var(--borda); border-radius: 8px; background: var(--fundo); color: var(--texto); font: inherit;
+}
+.sanfona { background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; margin-top: 12px; }
+.sanfona > summary {
+  cursor: pointer; padding: 12px 16px; font-weight: 700; list-style: none; display: flex; align-items: center; gap: 8px;
+}
+.sanfona > summary::-webkit-details-marker { display: none; }
+.sanfona > summary::before { content: "▸"; color: var(--texto-suave); transition: transform .15s; }
+.sanfona[open] > summary::before { transform: rotate(90deg); }
+.sanfona > summary .meta { font-weight: 400; color: var(--texto-suave); font-size: .86rem; }
+.sanfona > .tabela-rolagem { padding: 0 16px 14px; }
+
+@media (max-width: 720px) {
+  .menu-principal { padding: 0 8px; }
+  .menu-principal a { padding: 8px 9px 9px; font-size: .84rem; }
+}
