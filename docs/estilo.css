@@ -90,6 +90,8 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 .cartao:hover { border-color: var(--marca); }
 .cartao .num { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .cartao .rot { color: var(--texto-suave); font-size: .82rem; }
+.cartao .det { color: var(--texto-suave); font-size: .74rem; opacity: .85; }
+.cartao .det:empty { display: none; }
 .cartao-urgente .num { color: var(--urgente); }
 .cartao-alta .num { color: var(--alta); }
 .cartao-novo .num { color: var(--novo); }

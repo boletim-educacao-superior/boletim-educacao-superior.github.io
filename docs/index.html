@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior (Radar): monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261023213545">
+<link rel="stylesheet" href="estilo.css?v=20261023213743">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261023213545";</script>
+<script>window.RADAR_VERSAO = "20261023213743";</script>
 </head>
 <body class="bloqueado">
 
@@ -121,10 +121,11 @@
     <p id="visao-explica" class="explica"></p>
   </div>
   <section class="resumo" aria-label="Resumo">
-    <button class="cartao cartao-urgente" data-atalho="urgente"><span class="num" id="n-urgente">–</span><span class="rot">Urgentes</span></button>
-    <button class="cartao cartao-alta" data-atalho="alta"><span class="num" id="n-alta">–</span><span class="rot">Prioridade alta</span></button>
-    <button class="cartao cartao-novo" data-atalho="novos"><span class="num" id="n-novos">–</span><span class="rot" id="n-novos-rot">Novos desde sua última visita</span></button>
-    <button class="cartao" data-atalho="todos"><span class="num" id="n-total">–</span><span class="rot">Urgentes e alta (total)</span></button>
+    <!-- Os números seguem o período escolhido no filtro; a linha de baixo diz qual é e dá a referência do ano -->
+    <button class="cartao cartao-urgente" data-atalho="urgente"><span class="num" id="n-urgente">–</span><span class="rot">Urgentes</span><span class="det" id="n-urgente-det"></span></button>
+    <button class="cartao cartao-alta" data-atalho="alta"><span class="num" id="n-alta">–</span><span class="rot">Prioridade alta</span><span class="det" id="n-alta-det"></span></button>
+    <button class="cartao cartao-novo" data-atalho="novos"><span class="num" id="n-novos">–</span><span class="rot" id="n-novos-rot">Novos desde sua última visita</span><span class="det" id="n-novos-det"></span></button>
+    <button class="cartao" data-atalho="todos"><span class="num" id="n-total">–</span><span class="rot">Urgentes e alta</span><span class="det" id="n-total-det"></span></button>
   </section>
 
   <section class="filtros" aria-label="Filtros">
@@ -346,7 +347,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261023213545"></script>
-<script src="app.js?v=20261023213545"></script>
+<script src="acesso.js?v=20261023213743"></script>
+<script src="app.js?v=20261023213743"></script>
 </body>
 </html>

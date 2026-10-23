@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023213545"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023213743"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -296,7 +296,7 @@ function aplicarAtalho(nome) {
   }
   estado.somenteNovos = nome === "novos";
   $("f-prioridade").value = nome === "urgente" ? "urgente" : "alta+";
-  $("f-periodo").value = nome === "limpar" ? "30" : "";
+  if (nome === "limpar") $("f-periodo").value = "30";
   estado.pagina = 1;
   render();
 }
@@ -337,8 +337,7 @@ function filtrar() {
   const tipo = $("f-tipo").value;
   const dias = visao.semPeriodo ? "" : $("f-periodo").value;
   const ocultarRotina = $("f-rotina").checked && !visao.comRotina;
-  const limite = !dias ? "" : dias === "ano" ? `${new Date().getFullYear()}-01-01`
-    : new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10);
+  const limite = limitePeriodo(dias);
   const maxPrio = { urgente: 0, "alta+": 1, "media+": 2 }[prio] ?? 3;
 
   return estado.itens.filter((it) => {
@@ -367,16 +366,7 @@ function render() {
   salvarFiltros();
   atualizarContadores();
   const visiveis = filtrar();
-  const contagemPorPrio = (p) => estado.itens.filter((it) => it.prioridade === p && marca(it) !== "irrelevante").length;
-  $("n-urgente").textContent = contagemPorPrio("urgente");
-  $("n-alta").textContent = contagemPorPrio("alta");
-  if (logado()) {
-    $("n-novos").textContent = estado.itens.filter(ehNovo).length;
-    $("n-novos-rot").textContent = estado.ultimaVisita
-      ? `Novos desde sua última visita (${estado.ultimaVisita.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })})`
-      : "Novos desde sua última visita (esta é a primeira)";
-  }
-  $("n-total").textContent = estado.itens.length;
+  preencherCartoes();
   const paginas = Math.max(1, Math.ceil(visiveis.length / POR_PAGINA));
   estado.pagina = Math.min(Math.max(1, estado.pagina), paginas);
   const ini = (estado.pagina - 1) * POR_PAGINA;
@@ -405,6 +395,39 @@ function render() {
   const frag = document.createDocumentFragment();
   for (const it of paginaAtual(visiveis)) frag.appendChild(montarItem(it));
   lista.appendChild(frag);
+}
+
+/**
+ * Cartões do Início: o número segue o período do filtro ("nos últimos 30 dias"); a linha de baixo
+ * dá a referência do ano ("72 desde janeiro"), para ter noção de escala. Sem relevância não conta.
+ */
+function preencherCartoes() {
+  const periodo = $("f-periodo").value, limite = limitePeriodo(periodo);
+  const ano = new Date().getFullYear(), inicioAno = `${ano}-01-01`;
+  const validos = estado.itens.filter((it) => marca(it) !== "irrelevante");
+  const conta = (lista, desde) => lista.filter((it) => !desde || (it.data || "") >= desde).length;
+  const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999");
+  const NOME_PERIODO = { "7": "nos últimos 7 dias", "30": "nos últimos 30 dias", "90": "nos últimos 90 dias",
+                         "180": "nos últimos 6 meses", "ano": `em ${ano}, desde janeiro` };
+  const rotulo = NOME_PERIODO[periodo] || `todo o histórico, desde ${formatarData(maisAntigo).slice(3)}`;
+  const referencia = periodo === "ano" || !periodo ? "" : " · ";
+  for (const [id, lista] of [["urgente", validos.filter((it) => it.prioridade === "urgente")],
+                             ["alta", validos.filter((it) => it.prioridade === "alta")], ["total", validos]]) {
+    $(`n-${id}`).textContent = conta(lista, limite);
+    $(`n-${id}-det`).textContent = rotulo + (referencia && `${referencia}${conta(lista, inicioAno)} desde janeiro`);
+  }
+  if (logado()) {
+    $("n-novos").textContent = estado.itens.filter(ehNovo).length;
+    $("n-novos-det").textContent = estado.ultimaVisita
+      ? `desde ${estado.ultimaVisita.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`
+      : "esta é a sua primeira visita";
+  }
+}
+
+/** Data mais antiga do período escolhido ("" = sem limite). */
+function limitePeriodo(dias) {
+  return !dias ? "" : dias === "ano" ? `${new Date().getFullYear()}-01-01`
+    : new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10);
 }
 
 function paginaAtual(lista) {
