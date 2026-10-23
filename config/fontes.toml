@@ -15,8 +15,11 @@
 # =============================================================================
 
 [geral]
-# Itens mais antigos que isso saem do painel.
+# Itens mais antigos que isso saem do painel...
 dias_retencao = 180
+# ...exceto os publicados a partir desta data, que ficam sempre (pedido do Diego: histórico desde jan/2026).
+# Para trazer de volta um período antigo: python -m radar --desde AAAA-MM-DD
+manter_desde = "2026-01-01"
 # Janela de busca no Google Notícias (ex.: "7d", "30d").
 janela_google = "7d"
 
@@ -106,19 +109,37 @@ ativo = true
 
 [[dou]]
 instituicao = "DOU"
-rotulo = "INEP / ENADE / Censo"
-consulta = "\"Exame Nacional de Desempenho dos Estudantes\" OR \"Censo da Educação Superior\""
+rotulo = "ENADE"
+consulta = "\"Exame Nacional de Desempenho dos Estudantes\""
 secao = "todos"
 periodo = "semana"
 ativo = true
 
 [[dou]]
 instituicao = "DOU"
-rotulo = "DCNs / currículo"
-consulta = "\"Diretrizes Curriculares Nacionais\" OR \"carga horária a distância\""
+rotulo = "DCNs"
+consulta = "\"Diretrizes Curriculares Nacionais\""
 secao = "do1"
 periodo = "semana"
 ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "Censo da Educação Superior"
+consulta = "\"Censo da Educação Superior\""
+secao = "todos"
+periodo = "semana"
+ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "Carga horária a distância"
+consulta = "\"carga horária a distância\""
+secao = "do1"
+periodo = "semana"
+ativo = true
+
+# A busca do DOU NÃO entende OR: use uma busca [[dou]] por termo.
 
 [[dou]]
 instituicao = "DOU"

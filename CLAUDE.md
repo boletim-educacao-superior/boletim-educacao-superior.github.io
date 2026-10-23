@@ -39,6 +39,10 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - Administrador é página própria (`#admin`), aberta pela engrenagem (itens "Administrador" e "Registro de atividades").
 - Agenda abaixo de "Última coleta": o coletor lê a linha `cron` do coleta.yml e grava `agenda` no status.json (horário de Brasília).
 - Logo depois de `clasp update-deployment`, o `/exec` pode responder por alguns segundos com uma página de erro do Drive: é passageiro.
+- Varredura retroativa (pedido do Diego, 23/10/2026): `python -m radar --desde 2026-01-01`. Google Notícias aceita
+  `after:`/`before:` (máx. ~100 por busca: períodos de 15 dias, divididos se lotar); DOU aceita período `personalizado`
+  mas **não pagina** (máx. 20): semanas, divididas até dia a dia. `manter_desde = "2026-01-01"` segura o histórico.
+  Texto integral do DOU fica em `dados/textos_dou.json` (fora de docs/, o painel não baixa).
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

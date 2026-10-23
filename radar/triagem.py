@@ -46,6 +46,8 @@ class Triagem:
         self.temas_prioritarios = set(u.get("temas_prioritarios", []))
         self.re_prazo = _compilar(u.get("termos_prazo", []))
         self.inst_oficiais = set(u.get("instituicoes_oficiais", []))
+        self.re_internos = _compilar(u.get("orgaos_internos", []))
+        self.re_normativos = _compilar(u.get("orgaos_normativos", []))
         desconhecidos = (self.temas_urgentes | self.temas_prioritarios) - set(self.setores_por_tema)
         if desconhecidos:
             raise ValueError(f"regras.toml [urgencia] cita tema(s) inexistente(s): {sorted(desconhecidos)}")
@@ -75,11 +77,16 @@ class Triagem:
             pontos -= self.peso_rotina
 
         cita_puc = _palavra(self.re_instituicao, texto)
-        oficial = item["instituicao"] in self.inst_oficiais
+        # Ato interno de outra instituição (pela unidade no DOU ou pelo título): não é norma para a PUC Minas.
+        interno = item["instituicao"] == "DOU" and _palavra(self.re_internos, orgao.split("/", 1)[-1] + " " + titulo)
+        oficial = item["instituicao"] in self.inst_oficiais and not interno
+        # No DOU, a norma precisa vir do MEC, da Presidência ou de conselho profissional (não de outro ministério).
+        orgao_normativo = item["instituicao"] != "DOU" or (
+            self.re_normativos is None or _palavra(self.re_normativos, orgao.split("/", 1)[0]))
         motivo = ""
         if cita_puc and _palavra(self.re_orgaos, orgao + " " + texto) and oficial and not ruido:
             motivo = "Ato oficial que cita a PUC Minas"
-        elif tipo in self.tipos_normativos and self.temas_urgentes.intersection(temas) and not rotina:
+        elif tipo in self.tipos_normativos and self.temas_urgentes.intersection(temas) and not rotina and not interno and orgao_normativo:
             motivo = f"{tipo} sobre {', '.join(sorted(self.temas_urgentes.intersection(temas)))}"
         elif _palavra(self.re_criticos, texto) and not rotina and tipo != "Evento":
             motivo = "Mudança normativa estrutural"

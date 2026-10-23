@@ -14,6 +14,7 @@ import unicodedata
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from datetime import timedelta
 from email.utils import parsedate_to_datetime
 
 USER_AGENT = (
@@ -59,8 +60,13 @@ def gerar_id(*partes):
 
 # ------------------------------------------------------------ Google News --
 
-def buscar_google_news(fonte, janela):
-    consulta = f"{fonte['consulta']} when:{janela}"
+def buscar_google_news(fonte, janela, periodo=None):
+    """janela = últimos dias ("7d"); periodo = (inicio, fim) em date, para a varredura retroativa."""
+    if periodo:
+        # before é exclusivo: soma um dia para incluir o último dia do período.
+        consulta = f"{fonte['consulta']} after:{periodo[0].isoformat()} before:{(periodo[1] + timedelta(days=1)).isoformat()}"
+    else:
+        consulta = f"{fonte['consulta']} when:{janela}"
     url = "https://news.google.com/rss/search?" + urllib.parse.urlencode(
         {"q": consulta, "hl": "pt-BR", "gl": "BR", "ceid": "BR:pt-419"}
     )
@@ -98,13 +104,19 @@ RE_PARAMS_DOU = re.compile(
 )
 
 
-def buscar_dou(fonte):
-    url = "https://www.in.gov.br/consulta/-/buscar/dou?" + urllib.parse.urlencode({
-        "q": fonte["consulta"],
-        "s": fonte.get("secao", "todos"),
-        "exactDate": fonte.get("periodo", "semana"),
-        "sortType": "1",  # mais recentes primeiro
-    })
+# A busca do DOU devolve no máximo 20 atos e não pagina: quem quiser mais precisa de períodos menores.
+LIMITE_DOU = 20
+
+
+def buscar_dou(fonte, periodo=None):
+    """periodo = (inicio, fim) em date, para a varredura retroativa; sem ele, usa o "periodo" da fonte."""
+    parametros = {"q": fonte["consulta"], "s": fonte.get("secao", "todos"), "sortType": "1"}  # 1 = mais recentes primeiro
+    if periodo:
+        parametros.update({"exactDate": "personalizado",
+                           "publishFrom": periodo[0].strftime("%d-%m-%Y"), "publishTo": periodo[1].strftime("%d-%m-%Y")})
+    else:
+        parametros["exactDate"] = fonte.get("periodo", "semana")
+    url = "https://www.in.gov.br/consulta/-/buscar/dou?" + urllib.parse.urlencode(parametros)
     pagina = baixar(url)
     m = RE_PARAMS_DOU.search(pagina)
     if not m:

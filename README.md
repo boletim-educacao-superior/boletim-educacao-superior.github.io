@@ -169,6 +169,18 @@ execução.
 última coleta* mostra qual falhou e o erro. A coleta continua com as demais;
 a execução só é marcada como falha se **todas** falharem.
 
+### Varredura retroativa (trazer notícias antigas)
+
+A coleta normal olha só os últimos dias. Para buscar um período antigo (por exemplo, desde janeiro):
+
+```bash
+python -m radar --desde 2026-01-01
+```
+
+O Radar busca período a período no Google Notícias e no DOU, baixa o texto dos atos e reclassifica tudo.
+Leva alguns minutos, **não envia alertas** e não marca nada como "novo" para a equipe. Depois, faça o commit
+de `docs/dados` e `dados`. O histórico desde `manter_desde` (em `config/fontes.toml`) nunca é apagado.
+
 ### Publicar mudanças no painel
 
 Depois de mexer em qualquer arquivo de `docs/` (menos `docs/dados/`), rode antes do commit:

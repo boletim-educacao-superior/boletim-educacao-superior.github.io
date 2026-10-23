@@ -214,6 +214,16 @@ termos = [
 termos_instituicao = ["pontificia universidade catolica de minas gerais", "puc minas", "sociedade mineira de cultura"]
 orgaos_oficiais = ["ministerio da educacao", "conselho nacional de educacao", "inep", "seres"]
 
+# Atos internos de outras instituições (portaria de reitoria, resolução de conselho universitário) citam EAD
+# o tempo todo e não mudam nada para a PUC Minas: não contam para as regras 2 e 4.
+orgaos_internos = ["universidade", "instituto federal", "centro federal", "fundacao universidade", "colegio pedro ii",
+                   "gabreitor", "reitoria", "cepe", "consuni", "conselho universitario"]
+
+# Para a regra 2, ato do DOU só conta se vier de um destes órgãos (o começo da hierarquia no DOU).
+# Conselhos profissionais entram: resoluções deles sobre EAD afetam cursos de graduação (saúde, por exemplo).
+orgaos_normativos = ["ministerio da educacao", "atos do poder executivo", "presidencia da republica",
+                     "entidades de fiscalizacao do exercicio das profissoes liberais"]
+
 # 2) Ato normativo (portaria, resolução...) que trate de EAD/educação digital.
 tipos_normativos = ["Portaria", "Resolução", "Parecer", "Decreto / Lei"]
 temas_urgentes = ["EAD e educação digital"]

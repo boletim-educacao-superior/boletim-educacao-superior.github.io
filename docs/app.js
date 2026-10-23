@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância") são da equipe e "lida" é de cada pessoa: as duas ficam
 // no servidor de acesso (acesso.js / acesso/Acesso.gs). A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023183141"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023184215"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -233,7 +233,8 @@ function filtrar() {
   const tipo = $("f-tipo").value;
   const dias = visao.semPeriodo ? "" : $("f-periodo").value;
   const ocultarRotina = $("f-rotina").checked && !visao.comRotina;
-  const limite = dias ? new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10) : "";
+  const limite = !dias ? "" : dias === "ano" ? `${new Date().getFullYear()}-01-01`
+    : new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10);
   const maxPrio = { urgente: 0, "alta+": 1, "media+": 2 }[prio] ?? 3;
 
   return estado.itens.filter((it) => {
