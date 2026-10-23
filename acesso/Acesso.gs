@@ -392,7 +392,9 @@ function registrarAcesso_(ss) {
 
 function perfil_(ss, email) {
   const m = membro_(ss, email).p;
-  return { email: email, nome: m ? m.nome : 'Conta do sistema', admin: ehAdmin_(ss, email) };
+  return { email: email, nome: m ? m.nome : 'Conta do sistema', admin: ehAdmin_(ss, email), sistema: email === CONTA_SISTEMA,
+           cadastrado_em: m ? m.cadastrado_em : '', cadastrado_por: m ? m.cadastrado_por : '',
+           senha_em: m ? m.senha_em : prop_('SENHA_SISTEMA_EM') || '', ultimo_acesso: m ? m.ultimo_acesso : '' };
 }
 
 function exigirAdmin_(ss) {
@@ -499,8 +501,21 @@ function api_registro_(ss) {
 }
 
 /** Ações que o navegador pode pedir com uma sessão válida (o resto não existe para ele). */
+/** Meu perfil: a pessoa troca só o próprio nome (e-mail e perfil, só um administrador muda). */
+function api_salvarMeuNome_(ss, nome) {
+  nome = String(nome || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (!nome) throw falha_('Digite o seu nome.');
+  const m = membro_(ss, USUARIO_ATUAL_);
+  if (!m.p) throw falha_('A conta do sistema não tem nome para trocar.');
+  const antes = m.p.nome;
+  m.p.nome = nome;
+  salvarCampos_(m.tab, m.p, ['nome']);
+  registrar_(ss, 'nome_alterado', antes + ' → ' + nome);
+  return perfil_(ss, USUARIO_ATUAL_);
+}
+
 const API_ = {
-  perfil: api_perfil_, alterarSenha: api_alterarSenha_, equipe: api_equipe_, salvarMembro: api_salvarMembro_,
+  perfil: api_perfil_, salvarMeuNome: api_salvarMeuNome_, alterarSenha: api_alterarSenha_, equipe: api_equipe_, salvarMembro: api_salvarMembro_,
   removerMembro: api_removerMembro_, apagarSenha: api_apagarSenha_, enviarBoasVindas: api_enviarBoasVindas_,
   registro: api_registro_
 };

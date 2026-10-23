@@ -62,7 +62,9 @@ button { font: inherit; color: inherit; }
 
 .topo { background: var(--superficie); border-bottom: 1px solid var(--borda); }
 .topo-inner, .conteudo, .rodape { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
-.topo-inner { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding-top: 18px; padding-bottom: 18px; }
+.topo-inner { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; padding-top: 18px; padding-bottom: 18px; }
+.titulo-bloco { min-width: 0; }
+.topo-acoes { margin-top: 10px; }
 h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 .sub { margin: 2px 0 0; color: var(--texto-suave); font-size: .9rem; }
 .topo-acoes { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -210,10 +212,60 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 .msg-ok { color: var(--novo); }
 .msg-info { color: var(--media); }
 
-/* ------------------------------------------------------- topo: usuário --- */
-.usuario { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: .86rem; }
-.usuario-nome { font-weight: 600; }
+/* ---------------------- topo: conta (mesmo molde do sistema de certificados) --- */
+.conta { display: flex; align-items: center; gap: 10px; flex: none; }
+.conta-texto > span { white-space: nowrap; }
+.conta-texto { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-size: .78rem; color: var(--texto-suave); line-height: 1.45; }
+.conta-texto small { font-size: .74rem; }
+.conta-texto .link { font-size: .82rem; }
+.link-perfil { color: var(--texto); font-weight: 600; }
+.link-perfil:hover { color: var(--marca); }
+.perfil-topo {
+  display: inline-block; margin-top: 2px; padding: 1px 8px; border-radius: 10px; font-size: .7rem; font-weight: 600;
+  background: var(--baixa-fundo); color: var(--texto-suave);
+}
+.perfil-topo[data-perfil="admin"] { background: var(--marca); color: var(--marca-contraste); }
+.sigla {
+  width: 38px; height: 38px; flex: none; border-radius: 50%; border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--marca); color: var(--marca-contraste); font-weight: 700; font-size: .85rem; letter-spacing: .5px;
+}
+.sigla:hover { filter: brightness(1.08); }
+.sigla-grande { width: 64px; height: 64px; font-size: 1.4rem; cursor: default; }
+.botao-redondo {
+  width: 38px; height: 38px; flex: none; border-radius: 50%; border: 1px solid var(--borda); background: var(--superficie);
+  color: var(--texto-suave); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.botao-redondo svg { width: 19px; height: 19px; }
+.botao-redondo:hover, .botao-redondo[aria-expanded="true"] { color: var(--marca); border-color: var(--marca); }
 .link.perigo { color: var(--urgente); }
+
+/* Menu suspenso da engrenagem */
+.menu-lista {
+  position: fixed; z-index: 50; min-width: 220px; background: var(--superficie); border: 1px solid var(--borda);
+  border-radius: 10px; padding: 6px; box-shadow: 0 12px 32px rgba(16, 24, 40, .18); display: flex; flex-direction: column;
+}
+.menu-lista .menu-cab { padding: 8px 10px 6px; display: flex; flex-direction: column; font-size: .86rem; }
+.menu-lista .menu-cab span { color: var(--texto-suave); font-size: .78rem; overflow-wrap: anywhere; }
+.menu-lista button {
+  background: none; border: 0; text-align: left; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: .9rem; color: var(--texto);
+}
+.menu-lista button:hover, .menu-lista button:focus-visible { background: var(--fundo); color: var(--marca); outline: none; }
+.menu-lista hr { border: 0; border-top: 1px solid var(--borda); margin: 4px 2px; width: auto; }
+
+/* Meu perfil */
+.perfil-cabeca { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.perfil-cabeca h2 { margin: 0; }
+.perfil-cabeca .detalhe { color: var(--texto-suave); font-size: .85rem; overflow-wrap: anywhere; }
+.perfil-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dialogo input[readonly] { opacity: .8; }
+.acao-esquerda { margin-right: auto; }
+
+@media (max-width: 720px) {
+  .conta-texto { display: none; }
+  .perfil-grade { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* ----------------------------------------------------------- diálogos --- */
 .dialogo {

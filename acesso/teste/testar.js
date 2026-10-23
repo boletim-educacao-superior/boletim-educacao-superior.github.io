@@ -260,6 +260,21 @@ cenario("Senha guardada com 2000 repetições (versão anterior) continua valend
 });
 function vmHash(a, senha, sal, it) { return vm.runInContext(`hashSenha_(${JSON.stringify(senha)}, ${JSON.stringify(sal)}, ${it})`, a.g); }
 
+cenario("Meu perfil", (a) => {
+  a.g.configurar();
+  const s = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  let r = a.api(s, "perfil");
+  conferir("perfil traz cadastro e data da senha", r.ok && r.dados.cadastrado_por === "cineaned@gmail.com" && !!r.dados.senha_em && r.dados.admin, r);
+  conferir("perfil não traz o hash da senha", !JSON.stringify(r.dados).includes("v1$"));
+  r = a.api(s, "salvarMeuNome", "  Diego   E. Silva ");
+  conferir("troca o próprio nome (espaços arrumados)", r.ok && r.dados.nome === "Diego E. Silva", r);
+  conferir("planilha guarda o nome novo", a.aba("Equipe")[1][1] === "Diego E. Silva");
+  r = a.api(s, "salvarMeuNome", "   ");
+  conferir("nome vazio é recusado", !r.ok && /Digite o seu nome/.test(r.erro), r);
+  r = a.api(s, "salvarMeuNome", "=HYPERLINK(1)");
+  conferir("nome com fórmula vira texto", r.ok && a.aba("Equipe")[1][1] === "'=HYPERLINK(1)", a.aba("Equipe")[1]);
+});
+
 cenario("Troca de senha", (a) => {
   a.g.configurar();
   const s1 = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;

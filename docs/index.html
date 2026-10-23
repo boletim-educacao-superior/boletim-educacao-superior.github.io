@@ -59,19 +59,24 @@
 
 <header class="topo">
   <div class="topo-inner">
-    <div>
+    <div class="titulo-bloco">
       <h1>Radar da Educação Superior</h1>
       <p class="sub">Hub de Integração e Relacionamento · CINEA · NED · Prograd — PUC Minas</p>
-    </div>
-    <div class="topo-acoes">
-      <span id="atualizado" class="atualizado">Carregando…</span>
-      <a id="btn-coletar" class="btn" target="_blank" rel="noopener" title="Abre o GitHub para disparar uma coleta agora">Coletar agora ↗</a>
-      <div class="usuario">
-        <span id="usuario-nome" class="usuario-nome"></span>
-        <button id="btn-admin" class="link" type="button" hidden>Administrador</button>
-        <button id="btn-senha" class="link" type="button">Alterar senha</button>
-        <button id="btn-sair" class="link" type="button">Sair</button>
+      <div class="topo-acoes">
+        <span id="atualizado" class="atualizado">Carregando…</span>
+        <a id="btn-coletar" class="btn" target="_blank" rel="noopener" title="Abre o GitHub para disparar uma coleta agora">Coletar agora ↗</a>
       </div>
+    </div>
+    <!-- Conta, no mesmo molde do sistema de certificados: quem está conectado, sigla e engrenagem -->
+      <div class="conta">
+        <div class="conta-texto">
+          <small>Conectado como</small>
+          <span><button type="button" id="usuario-nome" class="link link-perfil" title="Meu perfil"></button> · <button type="button" id="link-sair" class="link">sair</button></span>
+          <span class="perfil-topo" id="perfil-topo"></span>
+        </div>
+        <button type="button" class="sigla" id="sigla-topo" title="Meu perfil" aria-label="Meu perfil"></button>
+        <button type="button" class="botao-redondo" id="botao-engrenagem" aria-label="Meu perfil, senha e administração"
+          title="Meu perfil, senha e administração" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </div>
 </header>
@@ -153,6 +158,34 @@
   </li>
 </template>
 
+<!-- Meu perfil: a pessoa vê os próprios dados e troca só o nome -->
+<dialog id="dlg-perfil" class="dialogo" aria-labelledby="mp-titulo">
+  <form id="form-perfil" method="dialog" novalidate>
+    <div class="perfil-cabeca">
+      <div class="sigla sigla-grande" id="mp-sigla" aria-hidden="true"></div>
+      <div>
+        <h2 id="mp-titulo"></h2>
+        <div class="detalhe" id="mp-email-topo"></div>
+        <span class="perfil-topo" id="mp-perfil-tag"></span>
+      </div>
+    </div>
+    <label>Nome <input id="mp-nome" maxlength="120" autocomplete="name"></label>
+    <label>E-mail <input id="mp-email" readonly></label>
+    <div class="perfil-grade">
+      <label>Cadastrado em <input id="mp-desde" readonly></label>
+      <label>Cadastrado por <input id="mp-por" readonly></label>
+      <label>Senha criada em <input id="mp-senha-em" readonly></label>
+    </div>
+    <p class="dica">Só um administrador muda o e-mail ou o perfil.</p>
+    <p class="msg" role="alert"></p>
+    <div class="dialogo-acoes">
+      <button type="button" class="link acao-esquerda" id="mp-trocar-senha">Alterar senha</button>
+      <button type="button" class="btn-sec" data-fechar>Fechar</button>
+      <button type="submit" class="btn" id="mp-salvar" disabled>Salvar nome</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- Alterar a própria senha -->
 <dialog id="dlg-senha" class="dialogo" aria-labelledby="dlg-senha-titulo">
   <form id="form-senha" method="dialog" novalidate>
@@ -172,7 +205,7 @@
 <!-- Administrador: equipe e registro de atividades -->
 <dialog id="dlg-admin" class="dialogo dialogo-largo" aria-labelledby="dlg-admin-titulo">
   <div class="dialogo-cab">
-    <h2 id="dlg-admin-titulo">Administrador</h2>
+    <h2 id="dlg-admin-titulo">Administração</h2>
     <button type="button" class="link" data-fechar>Fechar ✕</button>
   </div>
   <div class="abas" role="tablist">

@@ -95,11 +95,25 @@ function entrou(dados) {
   mostrarPerfil(dados.perfil);
 }
 
-function mostrarPerfil(perfil) {
+// Sigla do nome, como no sistema de certificados: primeira e última palavra que contam ("Diego Eduardo" → DE).
+const iniciais = (n) => String(n || "").split(" ").filter((p) => p.length > 2 || /^[A-ZÀ-Ú]/.test(p))
+  .filter((p) => !/^(de|da|do|dos|das|e)$/i.test(p))
+  .map((p) => p[0]).filter((c, i, a) => i === 0 || i === a.length - 1).join("").toUpperCase() || "?";
+const ROTULO_PERFIL = (p) => (p.admin ? "Administrador" : "Equipe");
+
+function preencherConta(perfil) {
   Acesso.perfil = perfil;
   $a("usuario-nome").textContent = perfil.nome;
-  $a("usuario-nome").title = perfil.email;
-  $a("btn-admin").hidden = !perfil.admin;
+  $a("usuario-nome").title = `Meu perfil (${perfil.email})`;
+  const tag = $a("perfil-topo");
+  tag.textContent = ROTULO_PERFIL(perfil);
+  tag.dataset.perfil = perfil.admin ? "admin" : "equipe";
+  $a("sigla-topo").textContent = iniciais(perfil.nome || perfil.email);
+  $a("sigla-topo").title = `${perfil.nome} · Meu perfil`;
+}
+
+function mostrarPerfil(perfil) {
+  preencherConta(perfil);
   $a("portaria").hidden = true;
   document.body.classList.remove("bloqueado");
   iniciarPainel();
@@ -158,12 +172,13 @@ $a("codigo-reenviar").addEventListener("click", async (ev) => {
   try { await ocupado(ev.currentTarget, enviarCodigo, "Enviando…"); } catch (e) { msg($a("form-codigo"), e.message); }
 });
 
-$a("btn-sair").addEventListener("click", async () => {
+async function sair() {
   const s = Acesso.sessao;
   gravarSessao(null);
   try { await servidor("sair", { sessao: s }); } catch { /* sai do mesmo jeito */ }
   location.reload();
-});
+}
+$a("link-sair").addEventListener("click", sair);
 
 // ----------------------------------------------------------- diálogos --
 document.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
@@ -182,11 +197,96 @@ function confirmar(texto, rotulo = "Confirmar") {
   });
 }
 
-$a("btn-senha").addEventListener("click", () => {
+function abrirSenha() {
   limparMsgs();
   ["senha-atual", "senha-nova", "senha-nova2"].forEach((id) => ($a(id).value = ""));
   $a("dlg-senha").showModal();
+}
+
+// ------------------------------------------------------------ meu perfil --
+async function abrirPerfil() {
+  limparMsgs();
+  const dlg = $a("dlg-perfil");
+  const mostrar = (p) => {
+    $a("mp-sigla").textContent = iniciais(p.nome || p.email);
+    $a("mp-titulo").textContent = p.nome;
+    $a("mp-email-topo").textContent = p.email;
+    const tag = $a("mp-perfil-tag");
+    tag.textContent = ROTULO_PERFIL(p); tag.dataset.perfil = p.admin ? "admin" : "equipe";
+    $a("mp-nome").value = p.nome; $a("mp-nome").readOnly = !!p.sistema;
+    $a("mp-email").value = p.email;
+    $a("mp-desde").value = p.cadastrado_em ? dataCurta(p.cadastrado_em).slice(0, 10) : "—";
+    $a("mp-por").value = p.cadastrado_por === "cineaned@gmail.com" ? "Conta do sistema" : p.cadastrado_por || "—";
+    $a("mp-por").title = p.cadastrado_por || "";
+    $a("mp-senha-em").value = p.senha_em ? dataCurta(p.senha_em).slice(0, 10) : "—";
+    $a("mp-salvar").disabled = true;
+  };
+  mostrar(Acesso.perfil);
+  dlg.showModal();
+  try { const p = await api("perfil"); preencherConta(p); mostrar(p); } catch (e) { msg($a("form-perfil"), e.message); }
+}
+$a("mp-nome").addEventListener("input", () => {
+  const v = $a("mp-nome").value.replace(/\s+/g, " ").trim();
+  $a("mp-salvar").disabled = !v || v === Acesso.perfil.nome;
 });
+$a("form-perfil").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const form = ev.currentTarget;
+  try {
+    const p = await ocupado($a("mp-salvar"), () => api("salvarMeuNome", $a("mp-nome").value), "Salvando…");
+    preencherConta(p);
+    $a("mp-titulo").textContent = p.nome;
+    $a("mp-sigla").textContent = iniciais(p.nome);
+    $a("mp-salvar").disabled = true;
+    msg(form, "Nome atualizado.", "ok");
+  } catch (e) { msg(form, e.message); }
+});
+$a("mp-trocar-senha").addEventListener("click", () => { $a("dlg-perfil").close(); abrirSenha(); });
+$a("usuario-nome").addEventListener("click", abrirPerfil);
+$a("sigla-topo").addEventListener("click", abrirPerfil);
+
+// ------------------------------------------------- engrenagem (menu) --
+// Mesmo comportamento da engrenagem dos certificados: lista o que o perfil da pessoa pode ver.
+function fecharMenu() {
+  document.querySelectorAll(".menu-lista").forEach((m) => m.remove());
+  $a("botao-engrenagem").setAttribute("aria-expanded", "false");
+}
+$a("botao-engrenagem").addEventListener("click", (ev) => {
+  ev.stopPropagation();
+  const g = $a("botao-engrenagem"), jaAberto = g.getAttribute("aria-expanded") === "true";
+  fecharMenu();
+  if (jaAberto) return;
+  const p = Acesso.perfil || {};
+  const itens = [
+    ["perfil", "Meu perfil"], ["senha", "Alterar senha"],
+    p.admin && ["hr"], p.admin && ["equipe", "Equipe"], p.admin && ["registro", "Registro de atividades"],
+    ["hr"], ["sair", "Sair"],
+  ].filter(Boolean);
+  const m = document.createElement("div");
+  m.className = "menu-lista"; m.setAttribute("role", "menu");
+  m.innerHTML = `<div class="menu-cab"><b>${esc(p.nome)}</b><span>${esc(p.email)}</span></div>` +
+    itens.map(([a, t]) => (a === "hr" ? "<hr>" : `<button type="button" role="menuitem" data-ir="${a}">${esc(t)}</button>`)).join("");
+  document.body.appendChild(m);
+  const r = g.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 8)) + "px";
+  m.style.top = r.bottom + 6 + "px";
+  g.setAttribute("aria-expanded", "true");
+  m.querySelector("button").focus();
+  m.onclick = (e) => {
+    const b = e.target.closest("[data-ir]");
+    if (!b) return;
+    fecharMenu();
+    ({ perfil: abrirPerfil, senha: abrirSenha, equipe: () => abrirAdmin("equipe"), registro: () => abrirAdmin("registro"), sair })[b.dataset.ir]();
+  };
+  m.onkeydown = (e) => {
+    const bs = [...m.querySelectorAll("button")], i = bs.indexOf(document.activeElement);
+    if (e.key === "Escape") { fecharMenu(); g.focus(); }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); bs[(i + (e.key === "ArrowDown" ? 1 : bs.length - 1)) % bs.length].focus(); }
+  };
+});
+document.addEventListener("click", (ev) => { if (!ev.target.closest(".menu-lista")) fecharMenu(); });
+window.addEventListener("resize", fecharMenu);
+document.addEventListener("scroll", fecharMenu, true);
 
 $a("form-senha").addEventListener("submit", async (ev) => {
   ev.preventDefault();
@@ -208,7 +308,7 @@ const ROTULO_ACAO = {
   senha_errada: "Senha errada", senha_criada: "Criou a senha", senha_redefinida: "Trocou a senha (código)",
   senha_alterada: "Trocou a senha", senha_apagada: "Senha apagada pelo administrador", codigo_enviado: "Pediu código",
   membro_cadastrado: "Cadastrou pessoa", membro_alterado: "Alterou pessoa", membro_removido: "Removeu pessoa",
-  boasvindas_enviado: "Enviou boas-vindas",
+  boasvindas_enviado: "Enviou boas-vindas", nome_alterado: "Trocou o próprio nome",
 };
 
 function dataCurta(t) {
@@ -221,18 +321,18 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-$a("btn-admin").addEventListener("click", async () => {
+async function abrirAdmin(aba) {
   limparMsgs();
-  trocarAba("equipe");
   $a("dlg-admin").showModal();
-  await carregarEquipe();
-});
+  await trocarAba(aba);
+}
 
 document.querySelectorAll("#dlg-admin .aba").forEach((b) => b.addEventListener("click", () => trocarAba(b.dataset.aba)));
 async function trocarAba(aba) {
   document.querySelectorAll("#dlg-admin .aba").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === aba)));
   $a("aba-equipe").hidden = aba !== "equipe";
   $a("aba-registro").hidden = aba !== "registro";
+  if (aba === "equipe") return carregarEquipe();
   if (aba === "registro") {
     const corpo = $a("registro-corpo");
     corpo.innerHTML = `<tr><td colspan="3" class="carregando">Carregando…</td></tr>`;

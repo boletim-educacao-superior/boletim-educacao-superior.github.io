@@ -13,7 +13,8 @@ window.SimuladorAcesso = (() => {
   const quem = (s) => sessoes[s];
   const pessoa = (e) => equipe.find((p) => p.email === String(e).toLowerCase());
   const reg = (q, acao, detalhe = "") => registro.unshift({ quando: agora(), quem: q, acao, detalhe });
-  const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin });
+  const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, cadastrado_em: p.cadastrado_em,
+                           cadastrado_por: "cineaned@gmail.com", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso });
   const lista = () => equipe.map((p) => ({ ...p, senha: undefined, tem_senha: !!p.senha }));
   const sessaoNova = (p) => { const s = crypto.randomUUID(); sessoes[s] = p.email; return { sessao: s, perfil: perfil(p) }; };
   const falha = (erro) => ({ ok: false, erro });
@@ -31,7 +32,7 @@ window.SimuladorAcesso = (() => {
       const p = pessoa(email);
       if (!p || codigos[p.email] !== codigo) return falha("Código incorreto. Restam 4 tentativas.");
       const e = validarSenha(senha); if (e) return falha(e);
-      delete codigos[p.email]; p.senha = senha; reg(p.email, "senha_criada");
+      delete codigos[p.email]; p.senha = senha; p.senha_em = agora(); reg(p.email, "senha_criada");
       return { ok: true, dados: sessaoNova(p) };
     },
     entrar({ email, senha }) {
@@ -47,6 +48,11 @@ window.SimuladorAcesso = (() => {
       const admin = () => { if (!p.admin) throw new Error("Só administradores podem fazer isso."); };
       const f = {
         perfil: () => { p.ultimo_acesso = agora(); return perfil(p); },
+        salvarMeuNome: (nome) => {
+          nome = String(nome || "").replace(/\s+/g, " ").trim();
+          if (!nome) throw new Error("Digite o seu nome.");
+          reg(p.email, "nome_alterado", p.nome + " → " + nome); p.nome = nome; return perfil(p);
+        },
         alterarSenha: (atual, nova) => {
           if (atual !== p.senha) throw new Error("A senha atual não confere.");
           const e = validarSenha(nova); if (e) throw new Error(e);
