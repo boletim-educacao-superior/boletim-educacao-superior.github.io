@@ -1,4 +1,8 @@
-# Radar da Educação Superior · CINEA / NED · PUC Minas
+# Observatório da Educação Superior (Radar da Educação Superior) · CINEA / NED · PUC Minas
+
+Nome trocado em 23/10/2026 a pedido do Diego: título "Observatório da Educação Superior", com "Radar da Educação Superior"
+como subtítulo. O endereço (…/radar-educacao-superior/) e os nomes internos (pasta, planilha, código) continuam "Radar".
+Desde a mesma data, "Lida" também é compartilhada pela equipe (como Sinalizada e Sem relevância).
 
 Contexto para retomar o trabalho em qualquer sessão. A conta do Claude é compartilhada: **não usar a memória do Claude**,
 o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Documents/certificados-ned/CLAUDE.md`).

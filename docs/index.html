@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Radar da Educação Superior</title>
-<meta name="description" content="Monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
+<title>Observatório da Educação Superior</title>
+<meta name="description" content="Observatório da Educação Superior (Radar): monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261023204118">
+<link rel="stylesheet" href="estilo.css?v=20261023205056">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261023204118";</script>
+<script>window.RADAR_VERSAO = "20261023205056";</script>
 </head>
 <body class="bloqueado">
 
@@ -24,8 +24,8 @@
     <div class="portaria-marca">
       <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--marca)"/><circle cx="16" cy="16" r="8" fill="none" stroke="var(--superficie)" stroke-width="2.5"/><circle cx="16" cy="16" r="2.5" fill="var(--superficie)"/></svg>
       <div>
-        <h1 id="portaria-titulo">Radar da Educação Superior</h1>
-        <p class="sub">CINEA · NED — PUC Minas</p>
+        <h1 id="portaria-titulo">Observatório da Educação Superior</h1>
+        <p class="sub">Radar da Educação Superior · CINEA · NED — PUC Minas</p>
       </div>
     </div>
 
@@ -68,7 +68,8 @@
 <header class="topo">
   <div class="topo-inner">
     <div class="titulo-bloco">
-      <h1>Radar da Educação Superior</h1>
+      <h1>Observatório da Educação Superior</h1>
+      <p class="sub">Radar da Educação Superior</p>
     </div>
     <!-- Conta, no mesmo molde do sistema de certificados: quem está conectado, sigla e engrenagem -->
       <div class="conta">
@@ -93,7 +94,7 @@
     </div>
   </div>
   <!-- Menu principal (como as abas do sistema de certificados). Cada item tem um endereço: #inicio, #sinalizadas... -->
-  <nav class="menu-principal" aria-label="Seções do Radar">
+  <nav class="menu-principal" aria-label="Seções do Observatório">
     <a href="#inicio" data-visao="inicio">Início</a>
     <a href="#sinalizadas" data-visao="sinalizadas">Sinalizadas <span class="cont" id="c-sinalizadas"></span></a>
     <a href="#nao-lidas" data-visao="nao-lidas">Não lidas <span class="cont" id="c-nao-lidas"></span></a>
@@ -167,7 +168,7 @@
 <section id="pagina-admin" aria-labelledby="admin-titulo" hidden>
   <div class="visao-cab">
     <h2 id="admin-titulo" class="visao-titulo">Administrador <span class="tag-so-admin">só administradores</span></h2>
-    <p class="explica">Quem pode entrar no Radar, com que perfil, e o que foi feito no sistema.</p>
+    <p class="explica">Quem pode entrar no Observatório, com que perfil, e o que foi feito no sistema.</p>
   </div>
 
   <form id="form-membro" class="bloco cadastro-equipe" novalidate>
@@ -209,7 +210,7 @@
 
 <footer class="rodape">
   Triagem automática por palavras-chave. Confira sempre a fonte original antes de encaminhar.
-  "Sinalizada" e "Sem relevância" são vistas por toda a equipe; "lida" vale só para você, em qualquer navegador.
+  "Sinalizada", "Sem relevância" e "Lida" são compartilhadas: o que alguém da equipe marca aparece para todos.
 </footer>
 
 <template id="tpl-item">
@@ -290,7 +291,7 @@
     <label>Por quê? (opcional) <input id="irr-motivo" maxlength="300" placeholder="Ex.: ato de outra instituição, educação básica…"></label>
     <div class="chips" id="irr-sugestoes"></div>
     <p class="dica">A notícia sai do Início para toda a equipe e vai para "Sem relevância", onde pode ser desfeita.
-      O motivo ajuda a ajustar as regras do Radar.</p>
+      O motivo ajuda a ajustar as regras de triagem.</p>
     <div class="dialogo-acoes">
       <button type="button" class="btn-sec" data-fechar>Cancelar</button>
       <button type="submit" class="btn">Marcar</button>
@@ -314,10 +315,10 @@
     if (!a || window.RADAR_AVISOU) return;
     window.RADAR_AVISOU = true;
     a.hidden = false;
-    a.textContent = "O Radar não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
+    a.textContent = "O Observatório não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261023204118"></script>
-<script src="app.js?v=20261023204118"></script>
+<script src="acesso.js?v=20261023205056"></script>
+<script src="app.js?v=20261023205056"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 // Importante: isto organiza QUEM usa o painel. Os dados do Radar continuam públicos no GitHub
 // (decisão de 23/10/2026); a entrada não é uma proteção dos dados.
 
-const VERSAO_ACESSO = "20261023204118"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023205056"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -89,7 +89,7 @@ async function servidor(acao, dados = {}) {
     if (!window.SimuladorAcesso) {
       await new Promise((ok, falhou) => {
         const s = document.createElement("script");
-        s.src = "simulador-acesso.js"; s.onload = ok; s.onerror = falhou;
+        s.src = `simulador-acesso.js?v=${VERSAO_ACESSO}`; s.onload = ok; s.onerror = falhou;
         document.head.appendChild(s);
       });
     }
@@ -365,7 +365,7 @@ $a("form-senha").addEventListener("submit", async (ev) => {
 
 // ------------------------------------------------------- administrador --
 const ROTULO_ACAO = {
-  entrada: "Entrou", acesso: "Abriu o Radar", entrada_recusada: "Tentativa de quem não é da equipe",
+  entrada: "Entrou", acesso: "Abriu o Observatório", entrada_recusada: "Tentativa de quem não é da equipe",
   senha_errada: "Senha errada", senha_criada: "Criou a senha", senha_redefinida: "Trocou a senha (código)",
   senha_alterada: "Trocou a senha", senha_apagada: "Senha apagada pelo administrador", codigo_enviado: "Pediu código",
   membro_cadastrado: "Cadastrou pessoa", membro_alterado: "Alterou pessoa", membro_removido: "Removeu pessoa",
@@ -442,7 +442,7 @@ async function carregarEquipe(lista) {
 async function acaoMembro(botao, lista) {
   const email = botao.closest("tr").dataset.email, p = lista.find((x) => x.email === email), form = $a("form-membro");
   const perguntas = {
-    remover: [`Remover ${p.nome} do Radar? A pessoa perde o acesso na hora.`, "Remover"],
+    remover: [`Remover ${p.nome} do Observatório? A pessoa perde o acesso na hora.`, "Remover"],
     apagarSenha: [`Apagar a senha de ${p.nome}? A pessoa sai de todos os navegadores e precisa fazer o "Primeiro acesso" de novo.`, "Apagar senha"],
   };
   const acao = botao.dataset.acao;
@@ -484,7 +484,7 @@ document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
     $a("form-entrar").hidden = true;
     const aviso = $a("portaria-aviso");
     aviso.hidden = false;
-    aviso.textContent = "O acesso ao Radar ainda não foi configurado. Fale com o administrador do sistema.";
+    aviso.textContent = "O acesso ao Observatório ainda não foi configurado. Fale com o administrador do sistema.";
     return;
   }
   const s = lerSessao();

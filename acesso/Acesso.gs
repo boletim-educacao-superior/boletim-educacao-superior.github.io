@@ -14,6 +14,9 @@
 
 const CONTA_SISTEMA = 'cineaned@gmail.com';   // dona do script: sempre administradora
 const ENDERECO_PAINEL = 'https://certificacao-cinea.github.io/radar-educacao-superior/';
+// Nome que as pessoas veem (o endereço continua "radar-educacao-superior" para não quebrar links já enviados).
+const NOME_SISTEMA = 'Observatório da Educação Superior';
+const REMETENTE = 'Observatório · CINEA | PUC Minas';
 const NOME_PLANILHA = 'Radar da Educação Superior - Acesso (não mexer)';
 // Pasta "Radar da Educação Superior" no Drive da cineaned: tudo do Radar no Google fica nela (script e planilha).
 const PASTA_ID = '1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe';
@@ -26,7 +29,7 @@ const ABAS = {
   Registro: ['quando', 'quem', 'acao', 'detalhe'],
   // Marcações da equipe (compartilhadas): notícia sinalizada ou sem relevância, com quem marcou e por quê
   Marcacoes: ['item_id', 'tipo', 'por', 'em', 'motivo', 'titulo', 'link'],
-  // Notícias lidas, por pessoa (vale em qualquer navegador)
+  // Notícias lidas pela equipe (compartilhado): quem leu primeiro e quando. Uma linha por notícia.
   Lidos: ['email', 'item_id', 'em']
 };
 
@@ -262,7 +265,7 @@ function pedirCodigo_(email) {
   if (!podeEntrar_(ss, email)) {
     if (lim.dados.recusas++ < RECUSAS_REGISTRADAS_DIA) registrar_(ss, 'entrada_recusada', 'Pediu código, mas o e-mail não está na equipe');
     lim.salvar();
-    throw falha_('Este e-mail não está cadastrado no Radar. Confira se digitou certo ou peça acesso a um administrador.');
+    throw falha_('Este e-mail não está cadastrado no Observatório. Confira se digitou certo ou peça acesso a um administrador.');
   }
   cache.put('codigo-recente:' + email, '1', 60);
   meu.c++;
@@ -274,12 +277,12 @@ function pedirCodigo_(email) {
   lim.salvar();
   const codigo = ('00000' + (parseInt(Utilities.getUuid().replace(/-/g, '').slice(0, 12), 16) % 1000000)).slice(-6);
   cache.put('codigo:' + email, JSON.stringify({ h: hmac_(email + '|' + codigo), erros: 0 }), CODIGO_MINUTOS * 60);
-  MailApp.sendEmail(email, 'Radar da Educação Superior: código ' + codigo,
-    'Seu código para criar ou trocar a senha do Radar da Educação Superior (CINEA) é:\n\n' + codigo +
+  MailApp.sendEmail(email, NOME_SISTEMA + ': código ' + codigo,
+    'Seu código para criar ou trocar a senha do ' + NOME_SISTEMA + ' (CINEA) é:\n\n' + codigo +
     '\n\nEle vale por ' + CODIGO_MINUTOS + ' minutos e só deve ser digitado em ' + ENDERECO_PAINEL +
     '\nNão repasse este código a ninguém: a equipe do CINEA nunca pede este código por telefone, mensagem ou e-mail.' +
     '\nSe você não pediu este código, ignore este e-mail: sua senha continua a mesma.',
-    { name: 'Radar · CINEA | PUC Minas' });
+    { name: REMETENTE });
   registrar_(ss, 'codigo_enviado', 'Pediu código para criar ou trocar a senha');
   return { ok: true };
 }
@@ -303,7 +306,7 @@ function definirSenha_(email, codigo, senha) {
   cache.remove(chave);
   const ss = planilha_();
   USUARIO_ATUAL_ = email;
-  if (!podeEntrar_(ss, email)) throw falha_('Este e-mail não está mais cadastrado no Radar.');
+  if (!podeEntrar_(ss, email)) throw falha_('Este e-mail não está mais cadastrado no Observatório.');
   const tinha = !!(senhaDe_(ss, email) || {}).senha;
   const hash = gravarSenha_(ss, email, hashSenha_(senha));
   cache.remove('senha-erros:' + email);
@@ -386,7 +389,7 @@ function registrarAcesso_(ss) {
     const cache = CacheService.getScriptCache(), chave = 'acesso:' + USUARIO_ATUAL_;
     if (cache.get(chave)) return;
     cache.put(chave, '1', 30 * 60);
-    registrar_(ss, 'acesso', 'Abriu o Radar');
+    registrar_(ss, 'acesso', 'Abriu o Observatório');
     const m = membro_(ss, USUARIO_ATUAL_);
     if (m.p) { m.p.ultimo_acesso = agora_(); salvarCampos_(m.tab, m.p, ['ultimo_acesso']); }
   } catch (e) { /* auxiliar */ }
@@ -482,8 +485,8 @@ function api_enviarBoasVindas_(ss, email) {
   if (!m.p) throw falha_('Pessoa não encontrada.');
   if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) throw falha_('O limite de e-mails de hoje foi atingido. Tente amanhã.');
   const quem = perfil_(ss, USUARIO_ATUAL_).nome;
-  MailApp.sendEmail(email, 'Você agora tem acesso ao Radar da Educação Superior',
-    'Olá, ' + m.p.nome + '!\n\n' + quem + ' liberou seu acesso ao Radar da Educação Superior do CINEA: o painel que acompanha ' +
+  MailApp.sendEmail(email, 'Você agora tem acesso ao ' + NOME_SISTEMA,
+    'Olá, ' + m.p.nome + '!\n\n' + quem + ' liberou seu acesso ao ' + NOME_SISTEMA + ' do CINEA (Radar da Educação Superior): o painel que acompanha ' +
     'comunicados, notícias, editais e atos oficiais do MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial.\n\n' +
     'Para entrar pela primeira vez:\n' +
     '1. Abra ' + ENDERECO_PAINEL + '\n' +
@@ -491,7 +494,7 @@ function api_enviarBoasVindas_(ss, email) {
     '3. Você vai receber um código de 6 dígitos. Digite o código e crie sua senha.\n\n' +
     'Depois disso, é só entrar com e-mail e senha. Se esquecer a senha, use "Esqueci a senha".\n\n' +
     'CINEA · Núcleo de Educação Digital · PUC Minas',
-    { name: 'Radar · CINEA | PUC Minas' });
+    { name: REMETENTE });
   m.p.boasvindas_em = agora_();
   salvarCampos_(m.tab, m.p, ['boasvindas_em']);
   registrar_(ss, 'boasvindas_enviado', email);
@@ -531,15 +534,21 @@ function mapaNomes_(ss) {
   return m;
 }
 
-/** Marcações da equipe (todas) e as notícias que ESTA pessoa já leu. */
+/**
+ * Tudo o que a equipe marcou: sinalizadas, sem relevância e lidas. As três são compartilhadas
+ * (pedido do Diego em 23/10/2026): o que uma pessoa marca aparece para todos, com o nome de quem marcou.
+ */
 function api_marcacoes_(ss) {
   const nomes = mapaNomes_(ss);
   const marcas = lerAba_(ss, 'Marcacoes').linhas.map(function (r) {
     return { id: r.item_id, tipo: r.tipo, por: r.por, nome: nomes[r.por] || r.por, em: r.em, motivo: r.motivo };
   });
-  const lidos = lerAba_(ss, 'Lidos').linhas
-    .filter(function (r) { return r.email === USUARIO_ATUAL_; })
-    .map(function (r) { return r.item_id; });
+  const vistos = {}, lidos = [];
+  lerAba_(ss, 'Lidos').linhas.forEach(function (r) {  // planilhas antigas podem ter uma linha por pessoa: vale a primeira
+    if (vistos[r.item_id]) return;
+    vistos[r.item_id] = true;
+    lidos.push({ id: r.item_id, por: r.email, nome: nomes[r.email] || r.email, em: r.em });
+  });
   return { marcas: marcas, lidos: lidos };
 }
 
@@ -566,21 +575,25 @@ function api_marcar_(ss, id, tipo, ativo, motivo, titulo, link) {
   });
 }
 
-/** Marca várias notícias como lidas (ou não lidas) para quem está conectado. Não vai para o registro. */
+/**
+ * Marca notícias como lidas (ou não lidas) PARA A EQUIPE. Lida: guarda quem leu primeiro (se já foi lida,
+ * nada muda). Não lida: tira a marcação para todos e entra no registro, porque afeta a equipe inteira.
+ */
 function api_marcarLidos_(ss, ids, lido) {
   ids = (Array.isArray(ids) ? ids : []).map(String).filter(function (i) { return ID_ITEM_RE.test(i); }).slice(0, 1000);
   if (!ids.length) return true;
   return comTrava_(function () {
-    const tab = lerAba_(ss, 'Lidos'), meus = {};
-    tab.linhas.forEach(function (r) { if (r.email === USUARIO_ATUAL_) meus[r.item_id] = r; });
+    const tab = lerAba_(ss, 'Lidos'), jaLidos = {};
+    tab.linhas.forEach(function (r) { (jaLidos[r.item_id] = jaLidos[r.item_id] || []).push(r); });
     if (lido) {
-      const novas = ids.filter(function (i, k) { return !meus[i] && ids.indexOf(i) === k; })
+      const novas = ids.filter(function (i, k) { return !jaLidos[i] && ids.indexOf(i) === k; })
         .map(function (i) { return [USUARIO_ATUAL_, i, agora_()]; });
       if (novas.length) tab.sh.getRange(tab.sh.getLastRow() + 1, 1, novas.length, 3).setValues(novas);
     } else {
-      ids.map(function (i) { return meus[i]; }).filter(Boolean)
-        .sort(function (a, b) { return b._linha - a._linha; })
-        .forEach(function (r) { tab.sh.deleteRow(r._linha); });
+      const apagar = [];
+      ids.forEach(function (i) { (jaLidos[i] || []).forEach(function (r) { apagar.push(r); }); });
+      apagar.sort(function (a, b) { return b._linha - a._linha; }).forEach(function (r) { tab.sh.deleteRow(r._linha); });
+      if (apagar.length) registrar_(ss, 'item_nao_lida', ids.length + ' notícia(s) voltaram a "não lida" para a equipe');
     }
     return true;
   });
@@ -597,7 +610,7 @@ const API_ = {
 
 /** Só para conferir se o servidor está no ar. */
 function doGet() {
-  return ContentService.createTextOutput('Servidor de acesso do Radar da Educação Superior: no ar.');
+  return ContentService.createTextOutput('Servidor de acesso do ' + NOME_SISTEMA + ': no ar.');
 }
 
 /**

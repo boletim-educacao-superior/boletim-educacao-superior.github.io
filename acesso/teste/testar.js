@@ -298,11 +298,14 @@ cenario("Marcações: sinalizada, sem relevância e lidas", (a) => {
 
   r = a.api(ana, "marcarLidos", [N1, N2, N1, "lixo"], true);
   conferir("marca lidas (ignora repetidas e inválidas)", r.ok && a.aba("Lidos").length === 3, a.aba("Lidos"));
-  a.api(ana, "marcarLidos", [N1], true);
-  conferir("marcar de novo não duplica", a.aba("Lidos").length === 3);
-  conferir("lidas são por pessoa", a.api(adm, "marcacoes").dados.lidos.length === 0 && a.api(ana, "marcacoes").dados.lidos.length === 2);
-  a.api(ana, "marcarLidos", [N2], false);
-  conferir("marca como não lida", JSON.stringify(a.api(ana, "marcacoes").dados.lidos) === JSON.stringify([N1]));
+  a.api(adm, "marcarLidos", [N1], true);
+  conferir("outra pessoa lendo de novo não duplica (fica quem leu primeiro)", a.aba("Lidos").length === 3);
+  const lidosAdm = a.api(adm, "marcacoes").dados.lidos;
+  conferir("lidas são da equipe: o admin vê o que a Ana leu, com o nome dela",
+    lidosAdm.length === 2 && lidosAdm.every((l) => l.por === ANA && l.nome === "Ana Teste"), lidosAdm);
+  a.api(adm, "marcarLidos", [N2], false);
+  conferir("não lida volta para todos", JSON.stringify(a.api(ana, "marcacoes").dados.lidos.map((l) => l.id)) === JSON.stringify([N1]));
+  conferir("voltar para não lida entra no registro", a.api(adm, "registro").dados.some((x) => x.acao === "item_nao_lida"));
   const acoes = a.api(adm, "registro").dados.map((x) => x.acao);
   conferir("sinalizar e desfazer entram no registro", ["item_sinalizada", "item_irrelevante", "item_irrelevante_desfeito"].every((x) => acoes.includes(x)), acoes);
 });

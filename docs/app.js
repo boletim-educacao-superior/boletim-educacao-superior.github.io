@@ -1,9 +1,9 @@
 // Painel do Radar da Educação Superior.
 // Lê dados/itens.json e dados/status.json (gerados pelo coletor) e filtra no navegador.
-// Marcações ("sinalizada", "sem relevância") são da equipe e "lida" é de cada pessoa: as duas ficam
-// no servidor de acesso (acesso.js / acesso/Acesso.gs). A "última visita" fica no localStorage.
+// Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
+// (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023204118"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023205056"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -24,7 +24,7 @@ const NOME_SETOR = {
 const estado = {
   itens: [],
   instituicoes: new Set(),
-  lidos: new Set(),
+  lidos: new Map(),       // id da notícia → { por, nome, em } (quem da equipe leu primeiro)
   marcas: new Map(),      // id da notícia → { tipo, por, nome, em, motivo }
   ultimaVisita: null,
   somenteNovos: false,
@@ -41,7 +41,7 @@ const $ = (id) => document.getElementById(id);
 const marca = (it) => estado.marcas.get(it.id)?.tipo;
 const VISOES = {
   "inicio": {
-    titulo: "Início", explica: "Tudo o que o Radar coletou, menos o que a equipe marcou como sem relevância.",
+    titulo: "Início", explica: "Tudo o que o radar coletou, menos o que a equipe marcou como sem relevância.",
     filtro: (it) => marca(it) !== "irrelevante",
   },
   "sinalizadas": {
@@ -49,15 +49,15 @@ const VISOES = {
     filtro: (it) => marca(it) === "sinalizada", semPeriodo: true, semPrioridade: true,
   },
   "nao-lidas": {
-    titulo: "Não lidas", explica: "O que você ainda não abriu nem marcou como lido.",
+    titulo: "Não lidas", explica: "O que ninguém da equipe abriu nem marcou como lido ainda.",
     filtro: (it) => !estado.lidos.has(it.id) && marca(it) !== "irrelevante",
   },
   "lidas": {
-    titulo: "Lidas", explica: "O que você já abriu ou marcou como lido (vale em qualquer navegador).",
+    titulo: "Lidas", explica: "O que alguém da equipe já abriu ou marcou como lido, com o nome de quem leu.",
     filtro: (it) => estado.lidos.has(it.id),
   },
   "sem-relevancia": {
-    titulo: "Sem relevância", explica: "Notícias que a equipe marcou como fora do nosso interesse. Os motivos ajudam a ajustar as regras do Radar.",
+    titulo: "Sem relevância", explica: "Notícias que a equipe marcou como fora do nosso interesse. Os motivos ajudam a ajustar as regras de triagem.",
     filtro: (it) => marca(it) === "irrelevante", semPeriodo: true, semPrioridade: true, comRotina: true,
   },
 };
@@ -82,7 +82,7 @@ async function carregar() {
   ]);
   estado.itens = itens;
   aplicarMarcacoes(marcacoes.marcas);
-  estado.lidos = new Set(marcacoes.lidos);
+  aplicarLidos(marcacoes.lidos);
   migrarLidosDoNavegador();
   estado.ultimaVisita = lerLocal("radar.ultimaVisita", null);
   // A "última visita" só avança na próxima abertura, para os novos continuarem destacados agora.
@@ -98,13 +98,36 @@ async function carregar() {
 function aplicarMarcacoes(lista) {
   estado.marcas = new Map(lista.map((m) => [m.id, m]));
 }
+function aplicarLidos(lista) {
+  estado.lidos = new Map(lista.map((l) => [l.id, l]));
+}
+const eu = () => ({ por: Acesso.perfil.email, nome: Acesso.perfil.nome, em: new Date().toLocaleDateString("sv-SE") });
+
+// Base compartilhada: busca de novo o que a equipe marcou a cada 90 s e quando a aba volta a ficar visível,
+// para o que um colega marca aparecer sem recarregar a página.
+const ATUALIZAR_MARCACOES_S = 90;
+let ultimaFoto = "";
+async function atualizarMarcacoes() {
+  if (!painelIniciado || document.hidden || fila.lidas.size || fila.naoLidas.size || [...estado.marcas.values()].some((m) => m.pendente)) return;
+  try {
+    const r = await api("marcacoes");
+    const foto = JSON.stringify(r);
+    if (foto === ultimaFoto) return;
+    ultimaFoto = foto;
+    aplicarMarcacoes(r.marcas);
+    aplicarLidos(r.lidos);
+    render();
+  } catch { /* tenta na próxima */ }
+}
+setInterval(atualizarMarcacoes, ATUALIZAR_MARCACOES_S * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) atualizarMarcacoes(); });
 
 // Antes do login, "lido" ficava só no navegador. Na primeira entrada, leva esses lidos para o servidor.
 function migrarLidosDoNavegador() {
   const antigos = lerLocal("radar.lidos", null);
   if (!Array.isArray(antigos)) return;
   const novos = antigos.filter((id) => !estado.lidos.has(id));
-  novos.forEach((id) => estado.lidos.add(id));
+  novos.forEach((id) => estado.lidos.set(id, eu()));
   try { localStorage.removeItem("radar.lidos"); } catch { /* modo privado */ }
   if (novos.length) api("marcarLidos", novos, true).catch(() => {});
 }
@@ -390,10 +413,12 @@ function pintarItem(el, it) {
   el.querySelector(".btn-lido").textContent = lido ? "Marcar como não lida" : "Marcar como lida";
   const info = el.querySelector(".marca-info");
   info.className = "marca-info" + (m ? ` marca-${m.tipo}` : "");
-  info.textContent = !m ? ""
-    : m.pendente ? "Salvando…"
-    : `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} por ${m.nome || m.por}` +
-      (m.em ? ` em ${formatarData(String(m.em).slice(0, 10))}` : "") + (m.motivo ? ` · “${m.motivo}”` : "");
+  const quando = (x) => (x.em ? ` em ${formatarData(String(x.em).slice(0, 10))}` : "");
+  const partes = [];
+  if (m) partes.push(m.pendente ? "Salvando…"
+    : `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} por ${m.nome || m.por}${quando(m)}${m.motivo ? ` · “${m.motivo}”` : ""}`);
+  if (lido) { const l = estado.lidos.get(it.id); partes.push(`Lida por ${l.nome || l.por}${quando(l)}`); }
+  info.textContent = partes.join(" · ");
 }
 
 function repintar(id) {
@@ -442,7 +467,7 @@ $("form-irrelevante").addEventListener("submit", (ev) => {
 const fila = { lidas: new Set(), naoLidas: new Set(), timer: null };
 function marcarLidos(ids, lido) {
   for (const id of ids) {
-    lido ? estado.lidos.add(id) : estado.lidos.delete(id);
+    if (lido) { if (!estado.lidos.has(id)) estado.lidos.set(id, eu()); } else estado.lidos.delete(id);
     (lido ? fila.lidas : fila.naoLidas).add(id);
     (lido ? fila.naoLidas : fila.lidas).delete(id);
   }
@@ -458,7 +483,7 @@ async function enviarLidos() {
     if (lidas.length) await api("marcarLidos", lidas, true);
     if (naoLidas.length) await api("marcarLidos", naoLidas, false);
   } catch (e) {
-    aviso(`Não foi possível salvar o que você leu: ${e.message}`, true);
+    aviso(`Não foi possível salvar as notícias lidas: ${e.message}`, true);
   }
 }
 // Se a pessoa fechar a aba logo depois de marcar, ainda tenta mandar.

@@ -10,7 +10,7 @@ window.SimuladorAcesso = (() => {
   ];
   const registro = [];
   let marcas = [];                 // { id, tipo, por, em, motivo }
-  const lidosPor = {};             // email → Set de ids
+  const lidos = new Map();         // id → { por, em } (da equipe)
   const codigos = {}, sessoes = {};
   const quem = (s) => sessoes[s];
   const pessoa = (e) => equipe.find((p) => p.email === String(e).toLowerCase());
@@ -75,7 +75,7 @@ window.SimuladorAcesso = (() => {
         registro: () => { admin(); return registro; },
         marcacoes: () => ({
           marcas: marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por })),
-          lidos: [...(lidosPor[p.email] || [])],
+          lidos: [...lidos].map(([id, l]) => ({ id, ...l, nome: (pessoa(l.por) || {}).nome || l.por })),
         }),
         marcar: (id, tipo, ativo, motivo, titulo) => {
           marcas = marcas.filter((m) => !(m.id === id && (m.tipo === tipo || ativo)));
@@ -84,8 +84,7 @@ window.SimuladorAcesso = (() => {
           return marcas.map((m) => ({ ...m, nome: (pessoa(m.por) || {}).nome || m.por }));
         },
         marcarLidos: (ids, lido) => {
-          const meus = (lidosPor[p.email] = lidosPor[p.email] || new Set());
-          ids.forEach((i) => (lido ? meus.add(i) : meus.delete(i)));
+          ids.forEach((i) => (lido ? (lidos.has(i) || lidos.set(i, { por: p.email, em: agora() })) : lidos.delete(i)));
           return true;
         },
       }[nome];
