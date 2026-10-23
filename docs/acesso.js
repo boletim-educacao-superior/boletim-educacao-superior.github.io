@@ -4,7 +4,7 @@
 // Importante: isto organiza QUEM usa o painel. Os dados do Radar continuam públicos no GitHub
 // (decisão de 23/10/2026); a entrada não é uma proteção dos dados.
 
-const VERSAO_ACESSO = "20261023205056"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023210029"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de

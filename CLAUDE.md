@@ -50,6 +50,8 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - Topo (pedido do Diego, 23/10/2026): título | conta + engrenagem + tema; segunda linha com Última coleta, Coleta automática e
   Próxima atualização (cada uma numa linha) e "Coletar agora" alinhado à direita da página. Tema como nos certificados: abre
   sempre claro, escuro só para quem escolhe (`radar.tema` no navegador). Busca com botão; lista com 20 notícias por página.
+- Painel mostra só **urgente e alta** (`PRIORIDADE_MINIMA` em app.js; pedido do Diego, 23/10/2026). Média e baixa ficam nos
+  dados e reaparecem se a triagem subir a prioridade. "Coletar agora" fica na linha do menu, à direita.
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

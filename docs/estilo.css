@@ -322,7 +322,13 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 
 /* ------------------------------------------------- menu principal (abas) --- */
 .menu-principal {
-  max-width: 1040px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 2px;
+  max-width: 1040px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 2px; align-items: center;
+}
+/* "Coletar agora" na linha do menu, encostado à direita (alinhado com a borda do conteúdo) */
+.menu-principal #btn-coletar,
+.menu-principal #btn-coletar:hover {
+  margin-left: auto; padding: 6px 14px; font-size: .85rem; border-bottom: 0;
+  color: var(--marca-contraste); /* sem isto, a cor dos links do menu vence a do botão */
 }
 .menu-principal a {
   padding: 10px 14px 11px; font-size: .9rem; font-weight: 600; color: var(--texto-suave); text-decoration: none;

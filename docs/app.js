@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023205056"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023210029"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -13,6 +13,7 @@ const CONFIG = {
 };
 
 const PRIORIDADES = { urgente: 0, alta: 1, media: 2, baixa: 3 };
+const PRIORIDADE_MINIMA = "alta"; // o que for abaixo disso (média, baixa) não aparece no painel
 const ROTULO_PRIORIDADE = { urgente: "Urgente", alta: "Alta", media: "Média", baixa: "Baixa" };
 // Nomes completos dos setores do CINEA (os itens trazem a forma curta, de config/regras.toml).
 const NOME_SETOR = {
@@ -80,7 +81,9 @@ async function carregar() {
     fetch("dados/status.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     api("marcacoes").catch(() => ({ marcas: [], lidos: [] })),
   ]);
-  estado.itens = itens;
+  // Só urgentes e alta prioridade aparecem (pedido do Diego, 23/10/2026). Baixa e média continuam nos dados:
+  // se as regras de triagem mudarem e um item subir de prioridade, ele passa a aparecer sozinho.
+  estado.itens = itens.filter((it) => PRIORIDADES[it.prioridade] <= PRIORIDADES[PRIORIDADE_MINIMA]);
   aplicarMarcacoes(marcacoes.marcas);
   aplicarLidos(marcacoes.lidos);
   migrarLidosDoNavegador();
@@ -228,7 +231,7 @@ function aplicarAtalho(nome) {
   estado.instituicoes.clear();
   document.querySelectorAll(".chip[data-valor]").forEach((c) => c.setAttribute("aria-pressed", "false"));
   estado.somenteNovos = nome === "novos";
-  $("f-prioridade").value = nome === "urgente" ? "urgente" : nome === "alta" ? "alta+" : "";
+  $("f-prioridade").value = nome === "urgente" ? "urgente" : "alta+";
   $("f-periodo").value = nome === "limpar" ? "30" : "";
   estado.pagina = 1;
   render();
