@@ -33,6 +33,12 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - Topo depois de entrar (pedido do Diego, "mesma lógica do certificado"): "Conectado como" + nome (abre Meu perfil) · sair
   + etiqueta do perfil, sigla do nome num círculo e engrenagem com Meu perfil, Alterar senha e, só para admin, Equipe e Registro.
   No celular ficam só a sigla e a engrenagem. Meu perfil troca só o próprio nome (`salvarMeuNome`).
+- Menu (pedido do Diego): Início · Sinalizadas · Não lidas · Lidas · Sem relevância, com endereço próprio (#sinalizadas...).
+  Decisão minha, avisada a ele: **sinalizada e sem relevância são da equipe** (abas `Marcacoes`), **lida é por pessoa**
+  (aba `Lidos`), as duas no servidor. Sinalizada e sem relevância não convivem. Os motivos de "sem relevância" servem para ajustar `regras.toml`.
+- Administrador é página própria (`#admin`), aberta pela engrenagem (itens "Administrador" e "Registro de atividades").
+- Agenda abaixo de "Última coleta": o coletor lê a linha `cron` do coleta.yml e grava `agenda` no status.json (horário de Brasília).
+- Logo depois de `clasp update-deployment`, o `/exec` pode responder por alguns segundos com uma página de erro do Drive: é passageiro.
 - Hash da senha: 500 repetições (com 2000 a entrada demorava; cada hash guarda o próprio número, então os antigos valem).
 - `clasp create` sobrescreve o `appsscript.json`: conferir antes do push.
 - O token do clasp só tem `drive.file`: ele cria pastas, mas não move o script. Quem move é o `configurar()` (escopo `drive`).
