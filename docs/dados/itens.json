@@ -105,6 +105,7 @@
   "data": "2026-10-23",
   "orgao": "www.gov.br",
   "visto_em": "2026-10-23T18:20:45+00:00",
+  "texto": "",
   "temas": [
    "Graduação",
    "Pós-graduação"
@@ -469,6 +470,7 @@
   "data": "2026-10-23",
   "orgao": "Governo Federal",
   "visto_em": "2026-10-23T18:20:45+00:00",
+  "texto": "",
   "temas": [],
   "setores": [],
   "tipo": "Notícia",
@@ -487,10 +489,51 @@
   "data": "2026-10-23",
   "orgao": "Governo do Estado de Rondônia",
   "visto_em": "2026-10-23T18:20:45+00:00",
+  "texto": "",
   "temas": [],
   "setores": [],
   "tipo": "Notícia",
   "pontos": 0,
+  "prioridade": "baixa",
+  "motivo_urgencia": "",
+  "rotina": false
+ },
+ {
+  "id": "a043bce20b89f1a7",
+  "instituicao": "CNE",
+  "fonte": "Google Notícias",
+  "titulo": "Quarta edição do Encontros Inclusivos na Fundaj tem programação educativa e cultural",
+  "resumo": "",
+  "link": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxQenYwOTRWSWladDh1eVlNOFpEQ3hQNk1rLU1XTk9zeGZOVmd3THJ3UEpNOXo0cGxCS2dGZEE4X0JqYTdPR3JfcWNacTRjRHpaeDl0a3MtMzJVSkNkSlFUck9LNWNCWlB6SmI3SE5tckpha2t0ZkFjM2VZdHlzWkJtRGZTQjRmS1lWVHg4dU1PSXJRSXR5TjlTUU9GVDBpaDUzSC0wc1I4ODM3c2t6ZGNXQXp0Z3cyU0JkTUNxMUppNFU3V0p0TXAxNkVrT3pNUHJHN05NVFpReGhVWU13bkRQSnZR?oc=5",
+  "data": "2026-10-23",
+  "orgao": "www.gov.br",
+  "visto_em": "2026-10-23T18:35:06+00:00",
+  "temas": [],
+  "setores": [],
+  "tipo": "Notícia",
+  "pontos": 0,
+  "prioridade": "baixa",
+  "motivo_urgencia": "",
+  "rotina": false
+ },
+ {
+  "id": "261a9e18530f0255",
+  "instituicao": "FAPEMIG",
+  "fonte": "Google Notícias",
+  "titulo": "FAPEMIG divulga resultado parcial do novo edital do Compete Minas",
+  "resumo": "",
+  "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxNZi1QRDM1OExUbV9lWjdVVU5MZFM4QmlOdXpIZUlnV2psREExWV9EVG03cXV0LTBidVBUVnBQWk5Kd01IeU0wTWx0OUFFZDF4aGpUdVVTU3dzYXB2SnZBTzJTbEx1akpaLS1uWl96UTJBLTFTc1VLOVlOMlNJMTBXLUsyeFNOTWJKaE1VZnVjVk5adXBnWGZxUGhjRm5NWVhaTkZ6OUE5X3pKWWVwcHBob2RHTEpfOVh6WWVQTlNDMGtQdHA2QVBKU1NTZWJnNW43Nnc?oc=5",
+  "data": "2026-10-23",
+  "orgao": "Fapemig",
+  "visto_em": "2026-10-23T18:35:06+00:00",
+  "temas": [
+   "Fomento e editais"
+  ],
+  "setores": [
+   "Hub"
+  ],
+  "tipo": "Edital / Chamada",
+  "pontos": 2,
   "prioridade": "baixa",
   "motivo_urgencia": "",
   "rotina": false
@@ -567,6 +610,28 @@
   "prioridade": "media",
   "motivo_urgencia": "",
   "rotina": true
+ },
+ {
+  "id": "9078739e865306fe",
+  "instituicao": "SEMESP",
+  "fonte": "Google Notícias",
+  "titulo": "Semesp envia ofício ao Inep sobre manutenção e aperfeiçoamento dos indicadores CPC e IGC",
+  "resumo": "",
+  "link": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNZ21hSFVhdEMzOWswQVZmejBUTGtBcFBlUzl3Wm1ZTG9lMEdXZk1vM2x0d2RTNmU0TmI3UGN2aWY2Q1pQdTlLSkc4ZGxhRHlfSkVLVmJZb2xfSVBkNmpYdFVIS1prMHlUWHNBdDdBQk5PQk9GbHN1ZjlkVUpIcDUyS3llbnltUndNRk9kLXIwVWt0aV9MYnNIdWc2bWkyRGhUdkg0WWtnZ0EtaV81ejNzZkVqcjhsSnlEV0xjMUZKdXo3emVtWm0yVllaZkJzcjIyVm1IMlR3?oc=5",
+  "data": "2026-10-22",
+  "orgao": "Semesp",
+  "visto_em": "2026-10-23T18:35:06+00:00",
+  "temas": [
+   "Avaliação de cursos"
+  ],
+  "setores": [
+   "Hub"
+  ],
+  "tipo": "Pesquisa / Dados",
+  "pontos": 4,
+  "prioridade": "media",
+  "motivo_urgencia": "",
+  "rotina": false
  },
  {
   "id": "fa65c44f30558b2e",
@@ -1062,25 +1127,6 @@
   "rotina": true
  },
  {
-  "id": "6c6e1e59f5e21fb9",
-  "instituicao": "MEC",
-  "fonte": "Google Notícias",
-  "titulo": "",
-  "resumo": "",
-  "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5aZ1ZmVGZRdDNacUx5OHlVc1ZkOG9WMWtVNG0xaHdNWFFGNm16dnc2eUVxUmo1X3NBU01fcV92SlpqcUlvTHgyVThFX3kxQVBTRUY5WnhfUGZsek42blU1ZGNRNA?oc=5",
-  "data": "2026-10-22",
-  "orgao": "www.gov.br",
-  "visto_em": "2026-10-23T17:12:19+00:00",
-  "texto": "",
-  "temas": [],
-  "setores": [],
-  "tipo": "Notícia",
-  "pontos": 0,
-  "prioridade": "baixa",
-  "motivo_urgencia": "",
-  "rotina": false
- },
- {
   "id": "30b762ffcbbc54de",
   "instituicao": "FAPEMIG",
   "fonte": "Google Notícias",
@@ -1090,6 +1136,7 @@
   "data": "2026-10-22",
   "orgao": "Fapemig",
   "visto_em": "2026-10-23T18:20:45+00:00",
+  "texto": "",
   "temas": [],
   "setores": [],
   "tipo": "Notícia",
@@ -2747,6 +2794,26 @@
   "data": "2026-10-19",
   "orgao": "ABMES — Associação Brasileira de Mantenedoras de Ensino Superior",
   "visto_em": "2026-10-23T18:20:45+00:00",
+  "texto": "",
+  "temas": [],
+  "setores": [],
+  "tipo": "Notícia",
+  "pontos": 0,
+  "prioridade": "baixa",
+  "motivo_urgencia": "",
+  "rotina": false
+ },
+ {
+  "id": "6c6e1e59f5e21fb9",
+  "instituicao": "MEC",
+  "fonte": "Google Notícias",
+  "titulo": "",
+  "resumo": "",
+  "link": "https://news.google.com/rss/articles/CBMiiANBVV95cUxQRkplRnhRbTNqcFBDNjJ4ZUhoSW5jNmtJYktVeHBmZWgtLVJYNjBHeU90WjZiSERRWm8xRWdmb1U5VHJjLXhZTEQwVWt0NGVNdGVpS2F5cXM3cUdMTV92Y2d1aXlfSHZ2cVh4VTF2bmVzOFFuOE9rZW9mTnhXUV9SQ1VWVEtWYjRkUFdVM3VvaHZBbmhJalc0RjdBVm5KeWFIZncyeEN3a2lSejd3b2ZCNUN5cDZiaURvbzFkUDg0QkVSdkl6ZnNyNkZwX0ZZcTlnaUtUQS1UWWtLaVVIVkhSeGxLU1cwT2ZYTDRmSWw2aE5rc1MxMHJpREFRY1ZqUVdLTmxvMnJKY0x3WGdlZXVkZmZUcF9mNEViUzU2d2Y4NjJmWDRMT3ctSVZjOHhnQTJMRXRNcEVwdGxZaEtkNjItblFtMFM0MGtSanJ0OFdRTmZIRnRiamJlSzNQNjRrYXl3azYzaXFHbXZUZVJtTzFKNjdmWFJkN0JZQ21seHNDVkd6YmlnUzFWbw?oc=5",
+  "data": "2026-10-18",
+  "orgao": "www.gov.br",
+  "visto_em": "2026-10-23T17:12:19+00:00",
+  "texto": "",
   "temas": [],
   "setores": [],
   "tipo": "Notícia",
@@ -3313,6 +3380,7 @@
   "data": "2026-10-14",
   "orgao": "Semesp",
   "visto_em": "2026-10-23T18:20:45+00:00",
+  "texto": "",
   "temas": [
    "Eventos"
   ],
