@@ -58,6 +58,10 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - O token do clasp só tem `drive.file`: ele cria pastas, mas não move o script. Quem move é o `configurar()` (escopo `drive`).
 - Para saber se o `configurar()` rodou: a planilha aparece na pasta; enquanto a cineaned não autorizar, o `/exec` responde "Acesso negado".
 
+## Pendências
+Ver `BACKLOG.md`. Principal: resumo semanal e alerta de urgentes por e-mail (proposto e adiado pelo Diego em 23/10/2026;
+hoje ninguém recebe notícias por e-mail).
+
 ## Lições aprendidas
 - Os portais gov.br do MEC e do CNE bloqueiam robôs (F5). Por isso a coleta usa o RSS do Google Notícias por site.
 - A busca do DOU recusa (403) pedidos sem o cabeçalho `Accept`.
