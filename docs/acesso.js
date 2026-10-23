@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261023213743"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261023214118"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -211,6 +211,7 @@ function sessaoCaiu() {
 }
 
 $a("btn-entrar").addEventListener("click", () => pedirLogin(""));
+$a("btn-criar-conta").addEventListener("click", () => { mostrarPortaria("entrar"); trocarModo("cadastro"); });
 $a("portaria-fechar").addEventListener("click", fecharPortaria);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$a("portaria").hidden && painelIniciado) fecharPortaria(); });
 

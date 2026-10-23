@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023213743"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261023214118"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -403,19 +403,18 @@ function render() {
  */
 function preencherCartoes() {
   const periodo = $("f-periodo").value, limite = limitePeriodo(periodo);
-  const ano = new Date().getFullYear(), inicioAno = `${ano}-01-01`;
   const validos = estado.itens.filter((it) => marca(it) !== "irrelevante");
-  const conta = (lista, desde) => lista.filter((it) => !desde || (it.data || "") >= desde).length;
-  const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999");
-  const NOME_PERIODO = { "7": "nos últimos 7 dias", "30": "nos últimos 30 dias", "90": "nos últimos 90 dias",
-                         "180": "nos últimos 6 meses", "ano": `em ${ano}, desde janeiro` };
-  const rotulo = NOME_PERIODO[periodo] || `todo o histórico, desde ${formatarData(maisAntigo).slice(3)}`;
-  const referencia = periodo === "ano" || !periodo ? "" : " · ";
-  for (const [id, lista] of [["urgente", validos.filter((it) => it.prioridade === "urgente")],
-                             ["alta", validos.filter((it) => it.prioridade === "alta")], ["total", validos]]) {
-    $(`n-${id}`).textContent = conta(lista, limite);
-    $(`n-${id}-det`).textContent = rotulo + (referencia && `${referencia}${conta(lista, inicioAno)} desde janeiro`);
-  }
+  const conta = (lista) => lista.filter((it) => !limite || (it.data || "") >= limite).length;
+  $("n-urgente").textContent = conta(validos.filter((it) => it.prioridade === "urgente"));
+  $("n-alta").textContent = conta(validos.filter((it) => it.prioridade === "alta"));
+  $("n-total").textContent = conta(validos);
+  // Legenda única, com as datas do período (como em relatório): "Indicadores de 24/09/2026 a 23/10/2026 (últimos 30 dias)"
+  const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999-12-31");
+  const hoje = new Date().toLocaleDateString("sv-SE");
+  const NOME_PERIODO = { "7": "últimos 7 dias", "30": "últimos 30 dias", "90": "últimos 90 dias", "180": "últimos 6 meses",
+                         "ano": `ano de ${new Date().getFullYear()}` };
+  $("resumo-periodo").innerHTML = `Indicadores de <b>${formatarData(limite || maisAntigo)}</b> a <b>${formatarData(hoje)}</b> ` +
+    `(${NOME_PERIODO[periodo] || "todo o período disponível"}). Para mudar, use o filtro "Período".`;
   if (logado()) {
     $("n-novos").textContent = estado.itens.filter(ehNovo).length;
     $("n-novos-det").textContent = estado.ultimaVisita

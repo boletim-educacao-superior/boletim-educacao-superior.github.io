@@ -428,14 +428,33 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 }
 
 /* ------------------------------------------------- painel aberto (visitante) --- */
-#btn-entrar { padding: 8px 18px; }
+#btn-entrar { padding: 8px 16px; }
+.convite-topo { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 6px; }
+.convite-texto { font-size: .74rem; color: var(--texto-suave); text-align: right; line-height: 1.35; max-width: 270px; }
+.convite-texto br { display: none; }
+@media (max-width: 900px) { .convite-texto { display: none; } }
+.convite-botoes { display: flex; gap: 8px; }
+.convite-botoes .btn { padding: 8px 16px; white-space: nowrap; }
+body:not(.visitante) .convite-topo { display: none; }
+@media (max-width: 720px) {
+  .convite-texto { display: none; }
+  /* Visitante no celular: título em cima, botões (Criar conta · Entrar · tema) numa linha só embaixo */
+  body.visitante .topo-inner { grid-template-columns: minmax(0, 1fr); }
+  body.visitante .conta { grid-row: 2; width: 100%; }
+  body.visitante .convite-topo { flex: 1; align-items: stretch; }
+  body.visitante .convite-botoes .btn { flex: 1; padding: 8px 10px; font-size: .86rem; }
+  body.visitante .convite-botoes .btn-sec { padding: 8px 12px; font-size: .86rem; }
+}
+.resumo-periodo { margin: 0 0 8px; font-size: .84rem; color: var(--texto-suave); }
+.resumo-periodo b { color: var(--texto); font-weight: 600; }
+#pagina-radar:not(.visao-inicio) .resumo-periodo { display: none; }
 .convite-conta { margin-top: 6px; padding: 12px; border-radius: 9px; background: var(--media-fundo); display: flex; flex-direction: column; gap: 8px; }
 .convite-conta p { margin: 0; font-size: .85rem; }
 .convite-conta .btn-sec { background: var(--superficie); font-weight: 600; color: var(--marca); border-color: var(--marca); }
 .selo-usuario { background: var(--baixa-fundo); color: var(--texto-suave); }
 .perfil-topo[data-perfil="usuario"] { background: var(--baixa-fundo); color: var(--texto-suave); }
 i.seg-usuarios, .seg-usuarios { background: var(--barra-usuarios); }
-body:not(.visitante) #btn-entrar { display: none; }
+/* #btn-entrar fica dentro de .convite-topo, que some para quem entrou */
 body.visitante .conta-texto, body.visitante #sigla-topo, body.visitante #botao-engrenagem { display: none; }
 body.visitante .so-equipe { display: none; }
 body.perfil-usuario #btn-coletar { display: none; }  /* coletar é da equipe do CINEA */
