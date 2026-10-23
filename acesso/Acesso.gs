@@ -40,7 +40,7 @@ const SENHA_BLOQUEIO_MIN = 15;
 const ERROS_POR_EMAIL_DIA = 20;       // senhas ou códigos errados por e-mail no dia
 const RECUSAS_REGISTRADAS_DIA = 20;   // tentativas de quem não é da equipe que entram no registro
 const SENHA_MIN = 8;
-const SENHA_ITERACOES = 2000;         // repetições do HMAC no hash da senha (deixa adivinhação lenta)
+const SENHA_ITERACOES = 500;          // repetições do HMAC (2000 deixava a entrada lenta no Apps Script; senhas antigas guardam o próprio número)
 const EMAIL_RE = /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;   // conferido depois de passar para minúsculas
 const SESSAO_INVALIDA = 'SESSAO_INVALIDA';
 

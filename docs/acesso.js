@@ -83,9 +83,10 @@ function trocarModo(modo) {
 function limparMsgs() { document.querySelectorAll(".msg").forEach((m) => { m.textContent = ""; m.className = "msg"; }); }
 function msg(form, texto, tipo = "erro") { const m = form.querySelector(".msg"); m.textContent = texto; m.className = `msg msg-${tipo}`; }
 
-async function ocupado(botao, fn) {
+// Desativa o botão enquanto o servidor responde (o Google às vezes leva vários segundos).
+async function ocupado(botao, fn, espera = "Aguarde…") {
   const rotulo = botao.textContent;
-  botao.disabled = true; botao.textContent = "Aguarde…";
+  botao.disabled = true; botao.textContent = espera;
   try { return await fn(); } finally { botao.disabled = false; botao.textContent = rotulo; }
 }
 
@@ -117,7 +118,7 @@ $a("form-entrar").addEventListener("submit", async (ev) => {
   const form = ev.currentTarget, email = $a("entrar-email").value.trim(), senha = $a("entrar-senha").value;
   if (!email || !senha) return msg(form, "Digite e-mail e senha.");
   try {
-    await ocupado(form.querySelector("button[type=submit]"), async () => entrou(await servidor("entrar", { email, senha })));
+    await ocupado(form.querySelector("button[type=submit]"), async () => entrou(await servidor("entrar", { email, senha })), "Entrando…");
     $a("entrar-senha").value = "";
   } catch (e) { msg(form, e.message); }
 });
@@ -131,7 +132,6 @@ async function enviarCodigo() {
   $a("codigo-email").readOnly = true;
   $a("codigo-passo2").hidden = false;
   $a("codigo-reenviar").hidden = false;
-  $a("codigo-botao").textContent = "Salvar senha e entrar";
   msg(form, `Enviamos um código para ${email}. Ele vale por 15 minutos (confira também o spam).`, "ok");
   $a("codigo-codigo").focus();
 }
@@ -140,16 +140,22 @@ $a("form-codigo").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const form = ev.currentTarget, botao = $a("codigo-botao");
   try {
-    if ($a("codigo-passo2").hidden) return await ocupado(botao, enviarCodigo);
+    if ($a("codigo-passo2").hidden) {
+      await ocupado(botao, enviarCodigo, "Enviando código…");
+      // Só depois de ocupado() devolver o rótulo antigo: senão o botão voltaria a dizer "Enviar código".
+      botao.textContent = "Salvar senha e entrar";
+      return;
+    }
     const codigo = $a("codigo-codigo").value.replace(/\D/g, ""), senha = $a("codigo-senha").value;
     if (codigo.length !== 6) return msg(form, "Digite o código de 6 dígitos que chegou por e-mail.");
     if (senha !== $a("codigo-senha2").value) return msg(form, "As duas senhas não estão iguais.");
-    await ocupado(botao, async () => entrou(await servidor("definirSenha", { email: $a("codigo-email").value.trim(), codigo, senha })));
+    msg(form, "Salvando sua senha. Isso pode levar alguns segundos…", "info");
+    await ocupado(botao, async () => entrou(await servidor("definirSenha", { email: $a("codigo-email").value.trim(), codigo, senha })), "Salvando…");
   } catch (e) { msg(form, e.message); }
 });
 
 $a("codigo-reenviar").addEventListener("click", async (ev) => {
-  try { await ocupado(ev.currentTarget, enviarCodigo); } catch (e) { msg($a("form-codigo"), e.message); }
+  try { await ocupado(ev.currentTarget, enviarCodigo, "Enviando…"); } catch (e) { msg($a("form-codigo"), e.message); }
 });
 
 $a("btn-sair").addEventListener("click", async () => {

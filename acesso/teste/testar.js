@@ -171,7 +171,7 @@ cenario("Primeiro acesso, entrada e sessão", (a) => {
   r = a.chamar({ acao: "definirSenha", email: DIEGO, codigo, senha: SENHA });
   conferir("código certo cria a senha e abre sessão", r.ok && r.dados.sessao && r.dados.perfil.admin, r);
   const guardada = a.aba("Equipe")[1][6];
-  conferir("planilha guarda só o hash", /^v1\$2000\$/.test(guardada) && guardada.indexOf(SENHA) < 0, guardada);
+  conferir("planilha guarda só o hash", /^v1\$500\$/.test(guardada) && guardada.indexOf(SENHA) < 0, guardada);
   r = a.chamar({ acao: "definirSenha", email: DIEGO, codigo, senha: SENHA });
   conferir("código não pode ser usado duas vezes", !r.ok && /expirado/.test(r.erro), r);
 
@@ -248,6 +248,17 @@ cenario("Administração da equipe", (a) => {
   conferir("registro guarda cadastro, remoção e senhas", ["membro_cadastrado", "membro_removido", "senha_apagada", "senha_criada"].every((x) => acoes.includes(x)), acoes);
   conferir("registro nunca contém código ou senha", !JSON.stringify(a.aba("Registro")).match(/radar2026ok|nova2026senha|\b\d{6}\b(?!.*:)/));
 });
+
+cenario("Senha guardada com 2000 repetições (versão anterior) continua valendo", (a) => {
+  a.g.configurar();
+  primeiroAcesso(a, DIEGO, SENHA);
+  const linha = a.aba("Equipe")[1];
+  const sal = linha[6].split("$")[2];
+  linha[6] = vmHash(a, SENHA, sal, 2000);
+  conferir("entra com a senha antiga", a.chamar({ acao: "entrar", email: DIEGO, senha: SENHA }).ok);
+  conferir("senha errada continua barrada", !a.chamar({ acao: "entrar", email: DIEGO, senha: "outra2026x" }).ok);
+});
+function vmHash(a, senha, sal, it) { return vm.runInContext(`hashSenha_(${JSON.stringify(senha)}, ${JSON.stringify(sal)}, ${it})`, a.g); }
 
 cenario("Troca de senha", (a) => {
   a.g.configurar();
