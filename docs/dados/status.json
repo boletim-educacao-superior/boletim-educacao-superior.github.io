@@ -1,0 +1,99 @@
+{
+ "ultima_execucao": "2026-10-23T17:12:53+00:00",
+ "novos_nesta_execucao": 0,
+ "urgentes_novos": 0,
+ "alertas_enviados_por": [],
+ "total_no_painel": 195,
+ "fontes": [
+  {
+   "fonte": "Google Notícias: MEC",
+   "instituicao": "MEC",
+   "ok": true,
+   "itens": 100
+  },
+  {
+   "fonte": "Google Notícias: INEP",
+   "instituicao": "INEP",
+   "ok": true,
+   "itens": 10
+  },
+  {
+   "fonte": "Google Notícias: CNE",
+   "instituicao": "CNE",
+   "ok": true,
+   "itens": 34
+  },
+  {
+   "fonte": "Google Notícias: CAPES",
+   "instituicao": "CAPES",
+   "ok": true,
+   "itens": 11
+  },
+  {
+   "fonte": "Google Notícias: SEMESP",
+   "instituicao": "SEMESP",
+   "ok": true,
+   "itens": 100
+  },
+  {
+   "fonte": "Google Notícias: ABMES",
+   "instituicao": "ABMES",
+   "ok": true,
+   "itens": 57
+  },
+  {
+   "fonte": "Google Notícias: ABED",
+   "instituicao": "ABED",
+   "ok": true,
+   "itens": 3
+  },
+  {
+   "fonte": "Google Notícias: FAPEMIG",
+   "instituicao": "FAPEMIG",
+   "ok": true,
+   "itens": 10
+  },
+  {
+   "fonte": "Google Notícias: CEE-MG",
+   "instituicao": "CEE-MG",
+   "ok": true,
+   "itens": 10
+  },
+  {
+   "fonte": "DOU: Educação a distância",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 0
+  },
+  {
+   "fonte": "DOU: SERES (regulação)",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 13
+  },
+  {
+   "fonte": "DOU: CNE",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 10
+  },
+  {
+   "fonte": "DOU: INEP / ENADE / Censo",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 0
+  },
+  {
+   "fonte": "DOU: DCNs / currículo",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 0
+  },
+  {
+   "fonte": "DOU: PUC Minas citada",
+   "instituicao": "DOU",
+   "ok": true,
+   "itens": 1
+  }
+ ]
+}

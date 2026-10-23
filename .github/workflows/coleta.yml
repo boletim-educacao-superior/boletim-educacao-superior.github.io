@@ -1,0 +1,70 @@
+# Coleta do Radar da Educação Superior.
+#
+# - Manual: aba "Actions" > "Coleta do Radar" > "Run workflow" (ou o botão
+#   "Coletar agora" no painel).
+# - Automática: em dias úteis, 3x ao dia, para detectar itens URGENTES. O
+#   painel é atualizado em silêncio; só os urgentes novos geram alerta.
+#
+# Tudo roda no plano gratuito do GitHub Actions (cerca de 1 min por execução).
+
+name: Coleta do Radar
+
+on:
+  workflow_dispatch:
+    inputs:
+      sem_alerta:
+        description: "Não enviar alertas nesta execução"
+        type: boolean
+        default: false
+  schedule:
+    # Horário em UTC: 11h, 15h e 20h UTC = 8h, 12h e 17h em Brasília.
+    - cron: "0 11,15,20 * * 1-5"
+
+permissions:
+  contents: write   # gravar docs/dados/*.json
+  issues: write     # abrir issue de alerta
+
+concurrency:
+  group: coleta
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Garantir o rótulo "urgente"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh label create urgente --color B42318 --description "Alerta do Radar" 2>/dev/null || true
+
+      - name: Coletar e classificar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          URL_PAINEL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          # E-mail opcional (preencha em Settings > Secrets and variables > Actions):
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORTA: ${{ secrets.SMTP_PORTA }}
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_SENHA: ${{ secrets.SMTP_SENHA }}
+          SMTP_REMETENTE: ${{ secrets.SMTP_REMETENTE }}
+          ALERTA_EMAIL_PARA: ${{ secrets.ALERTA_EMAIL_PARA }}
+        run: python -m radar ${{ inputs.sem_alerta && '--sem-alerta' || '' }}
+
+      - name: Publicar dados atualizados
+        run: |
+          git config user.name "radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/dados
+          if git diff --cached --quiet; then
+            echo "Nada novo."
+          else
+            git commit -m "Coleta $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git push
+          fi

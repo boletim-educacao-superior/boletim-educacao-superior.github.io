@@ -1,0 +1,239 @@
+# =============================================================================
+# REGRAS DE TRIAGEM — Radar da Educação Superior
+# =============================================================================
+# A triagem é por palavras-chave (sem IA, sem custo). Os termos são comparados
+# sem acento e sem diferenciar maiúsculas, no título + resumo de cada item
+# (e no texto integral, para atos do DOU). Termos casam palavra inteira;
+# termine com "*" para casar prefixo ("credenciad*" pega credenciado/a/os).
+#
+# Cada tema soma "peso" à pontuação. A pontuação define a prioridade:
+#   urgente  -> gatilho de urgência atendido (ver [urgencia]); gera alerta
+#   alta     -> pontuação >= limiar_alta
+#   media    -> pontuação >= limiar_media
+#   baixa    -> o restante
+# =============================================================================
+
+[prioridade]
+limiar_alta = 6
+limiar_media = 3
+
+# ------------------------------------------------------------------ Temas --
+# Perfil do CINEA (Centro de Inovação em Ensino e Aprendizagem), no NED
+# (Núcleo de Educação Digital) da Prograd/PUC Minas: educação digital/EAD,
+# regulação e avaliação de cursos, currículo e PPC, formação docente,
+# tecnologias e dados educacionais, experiência discente.
+#
+# "setores" indica qual setor do CINEA deve olhar o item:
+#   Hub          -> Hub de Integração e Relacionamento
+#   Inovação     -> Inovação Pedagógica e Formação Continuada
+#   Tecnologias  -> Tecnologias e Experiências de Aprendizagem
+# Um item recebe os setores de todos os temas que encontrar.
+
+[[tema]]
+nome = "PUC Minas"
+peso = 8
+setores = ["Hub"]
+termos = ["pontificia universidade catolica de minas gerais", "puc minas", "sociedade mineira de cultura"]
+
+[[tema]]
+nome = "EAD e educação digital"
+peso = 5
+setores = ["Hub", "Tecnologias"]
+termos = [
+  "educacao a distancia", "ensino a distancia", "ead", "a distancia",
+  "semipresencial", "hibrido", "polo ead", "polos de ead", "ensino remoto",
+  "educacao digital", "tutoria", "tutores", "ambiente virtual de aprendizagem",
+  "carga horaria a distancia", "atividades a distancia", "abed", "ciaed", "censo ead",
+]
+
+[[tema]]
+nome = "Regulação"
+peso = 4
+setores = ["Hub"]
+termos = [
+  "seres", "secretaria de regulacao", "credenciamento", "recredenciamento",
+  "autorizacao de curso", "reconhecimento de curso", "renovacao de reconhecimento",
+  "e-mec", "emec", "marco regulatorio", "supervisao", "decreto 9.235", "decreto 12.456",
+  "portaria normativa", "medida cautelar", "descredenciamento",
+]
+
+[[tema]]
+nome = "Avaliação de cursos"
+peso = 4
+setores = ["Hub"]
+termos = [
+  "enade", "sinaes", "cpc", "igc", "conceito preliminar de curso",
+  "indice geral de cursos", "avaliacao in loco", "avaliacao de cursos", "conaes", "cpa",
+  "instrumento de avaliacao", "instrumentos de avaliacao", "censo da educacao superior",
+  "basis", "comissao de avaliacao", "avaliadores",
+]
+
+[[tema]]
+nome = "Currículo e PPC"
+peso = 4
+setores = ["Inovação", "Hub"]
+termos = [
+  "diretrizes curriculares", "dcn", "dcns", "projeto pedagogico", "ppc",
+  "nucleo docente estruturante", "nde", "matriz curricular", "curricularizacao da extensao",
+  "carga horaria", "estagio supervisionado", "unidade curricular", "unidades curriculares",
+  "itinerario formativo", "microcertifica*",
+]
+
+[[tema]]
+nome = "Formação docente e inovação pedagógica"
+peso = 3
+setores = ["Inovação"]
+termos = [
+  "formacao docente", "formacao continuada", "desenvolvimento docente", "docencia",
+  "inovacao pedagogica", "metodologias ativas", "praticas pedagogicas", "boas praticas",
+  "aprendizagem ativa", "sala de aula invertida", "ensino hibrido", "design instrucional",
+  "material didatico", "recursos educacionais abertos", "formacao de professores",
+]
+
+[[tema]]
+nome = "Tecnologias e dados educacionais"
+peso = 3
+setores = ["Tecnologias"]
+termos = [
+  "inteligencia artificial", "ia generativa", "chatgpt", "tecnologia educacional",
+  "tecnologias educacionais", "tecnologias digitais", "transformacao digital",
+  "plataforma digital", "lms", "canvas", "moodle", "learning analytics",
+  "analitica da aprendizagem", "dados educacionais", "ciencia de dados", "edtech", "edtechs",
+]
+
+[[tema]]
+nome = "Experiência discente"
+peso = 3
+setores = ["Tecnologias", "Inovação"]
+termos = [
+  "evasao", "permanencia estudantil", "retencao", "engajamento", "experiencia do estudante",
+  "experiencia de aprendizagem", "experiencia discente", "acessibilidade", "inclusao digital",
+  "saude mental", "acolhimento",
+]
+
+[[tema]]
+nome = "Graduação"
+peso = 2
+setores = []
+termos = [
+  "graduacao", "licenciatura", "bacharelado", "curso superior", "tecnologo",
+  "ensino superior", "educacao superior", "universidade", "ies",
+]
+
+[[tema]]
+nome = "Fomento e editais"
+peso = 2
+setores = ["Hub"]
+termos = [
+  "edital", "chamada", "chamada publica", "bolsa", "fomento", "inscricoes abertas",
+  "prouni", "fies", "financiamento estudantil", "premio",
+]
+
+[[tema]]
+nome = "Pós-graduação"
+peso = 1
+setores = []
+termos = ["pos-graduacao", "mestrado", "doutorado", "stricto sensu", "lato sensu", "capes"]
+
+[[tema]]
+nome = "Eventos"
+peso = 1
+setores = []
+termos = ["congresso", "seminario", "webinar", "forum", "encontro", "fnesp", "live", "workshop", "oficina"]
+
+# ------------------------------------------------- Tipos de documento --
+# O primeiro tipo cujo termo aparecer no TÍTULO é o escolhido.
+
+[[tipo]]
+nome = "Portaria"
+termos = ["portaria"]
+[[tipo]]
+nome = "Resolução"
+termos = ["resolucao"]
+[[tipo]]
+nome = "Parecer"
+termos = ["parecer"]
+[[tipo]]
+nome = "Decreto / Lei"
+termos = ["decreto", "lei n", "medida provisoria"]
+[[tipo]]
+nome = "Edital / Chamada"
+termos = ["edital", "chamada", "inscricoes"]
+[[tipo]]
+nome = "Nota técnica"
+termos = ["nota tecnica", "nota informativa", "oficio circular"]
+[[tipo]]
+nome = "Comunicado"
+termos = ["comunicado", "aviso", "nota oficial", "esclarecimento"]
+[[tipo]]
+nome = "Pesquisa / Dados"
+termos = ["censo", "pesquisa", "mapa do ensino superior", "indicadores", "panorama", "resultados"]
+[[tipo]]
+nome = "Evento"
+termos = ["congresso", "seminario", "webinar", "forum", "encontro", "workshop"]
+
+# ---------------------------------------------- Redutores de ruído --
+# Assuntos de educação básica e itens administrativos sem interesse. Cada
+# termo encontrado tira "peso" pontos. Não exclui o item, só rebaixa.
+
+[ruido]
+peso = 3
+termos = [
+  "educacao basica", "ensino fundamental", "ensino medio", "educacao infantil",
+  "alfabetizacao", "creche", "pnae", "alimentacao escolar", "merenda", "saeb",
+  "enem", "pe-de-meia", "escola em tempo integral", "rede municipal", "rede estadual",
+  "eja", "educacao de jovens e adultos", "redes de ensino",
+  "extrato de contrato", "extrato de termo aditivo", "aviso de licitacao",
+  "pregao eletronico", "registro de diplomas",
+]
+
+# ------------------------------------------------- Atos de rotina --
+# Atos individuais do dia a dia regulatório de OUTRAS instituições (autorizar
+# curso X na faculdade Y, CEBAS etc.). Saem com prioridade baixa. Se o ato
+# citar a PUC Minas, a regra de urgência abaixo continua valendo.
+
+[rotina]
+peso = 6
+termos = [
+  "fica autorizado o curso", "ficam autorizados os cursos", "autorizar o curso",
+  "fica reconhecido o curso", "ficam reconhecidos", "reconhecer o curso",
+  "renovar o reconhecimento", "fica renovado o reconhecimento", "ficam renovados",
+  "fica(m) reconhecido*", "fica(m) autorizado*", "ficam indeferidos", "indeferir o pedido",
+  "deferir o requerimento", "pedido de autorizacao", "autorizou o funcionamento",
+  "fica credenciad*", "fica recredenciad*", "fica descredenciad*",
+  "recredenciamento d*", "credenciamento de centro universitario", "recurso contra a decisao",
+  "cebas", "entidade beneficente", "certificado de entidade beneficente",
+  "homologado o parecer cne/ces", "conheceu do recurso", "negou-lhe provimento", "aditamento",
+]
+
+# --------------------------------------------------------- Urgência --
+# Um item vira URGENTE (e dispara alerta) se atender QUALQUER regra abaixo.
+
+[urgencia]
+# 1) Ato do MEC/órgãos vinculados que cite a própria PUC Minas.
+termos_instituicao = ["pontificia universidade catolica de minas gerais", "puc minas", "sociedade mineira de cultura"]
+orgaos_oficiais = ["ministerio da educacao", "conselho nacional de educacao", "inep", "seres"]
+
+# 2) Ato normativo (portaria, resolução...) que trate de EAD/educação digital.
+tipos_normativos = ["Portaria", "Resolução", "Parecer", "Decreto / Lei"]
+temas_urgentes = ["EAD e educação digital"]
+
+# 3) Mudança estrutural, de qualquer fonte. Não vale para atos de rotina,
+#    que costumam citar essas normas só na fundamentação, nem para eventos.
+#    Inclui o que afeta cursos PRESENCIAIS apoiados pelo NED (carga horária
+#    a distância, DCNs) e o que muda a preparação para avaliações do MEC.
+termos_criticos = [
+  "marco regulatorio", "novo marco", "diretrizes curriculares nacionais",
+  "novo instrumento de avaliacao", "instrumentos de avaliacao", "regulamento do enade",
+  "calendario do enade", "politica nacional de educacao a distancia",
+  "carga horaria a distancia em cursos presenciais", "atividades a distancia em cursos presenciais",
+  "limite de carga horaria a distancia", "curricularizacao da extensao",
+]
+
+# 4) Prazo/convocação em tema prioritário, vindo de órgão oficial.
+temas_prioritarios = ["EAD e educação digital", "Regulação", "Avaliação de cursos", "Currículo e PPC"]
+termos_prazo = [
+  "prazo", "ultimo dia", "ultimos dias", "encerra", "prorroga", "cronograma",
+  "convocacao", "obrigatorio", "obrigatoria",
+]
+instituicoes_oficiais = ["DOU", "MEC", "CNE", "INEP"]

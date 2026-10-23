@@ -1,0 +1,129 @@
+# =============================================================================
+# FONTES MONITORADAS — Radar da Educação Superior (HUB de Integração / CINEA)
+# =============================================================================
+# Para acrescentar uma instituição, copie um bloco [[google_news]] e ajuste.
+# Para desativar temporariamente, mude "ativo = true" para "ativo = false".
+#
+# Dois tipos de fonte:
+#   [[google_news]] -> RSS do Google Notícias filtrado por site. Funciona para
+#                      todas as instituições, inclusive portais gov.br que
+#                      bloqueiam robôs.
+#   [[dou]]         -> busca no Diário Oficial da União (in.gov.br). É a fonte
+#                      primária de portarias, resoluções, pareceres e editais.
+#                      secao: "do1" (atos normativos), "do2", "do3" ou "todos".
+#                      periodo: "dia", "semana", "mes" ou "ano".
+# =============================================================================
+
+[geral]
+# Itens mais antigos que isso saem do painel.
+dias_retencao = 180
+# Janela de busca no Google Notícias (ex.: "7d", "30d").
+janela_google = "7d"
+
+# ---------------------------------------------------------------- Nacionais --
+
+[[google_news]]
+instituicao = "MEC"
+nome = "Ministério da Educação"
+consulta = "site:gov.br/mec -site:gov.br/mec/pt-br/cne"
+ativo = true
+
+[[google_news]]
+instituicao = "INEP"
+nome = "Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira"
+consulta = "site:gov.br/inep"
+ativo = true
+
+[[google_news]]
+instituicao = "CNE"
+nome = "Conselho Nacional de Educação"
+consulta = "site:gov.br/mec/pt-br/cne OR \"Conselho Nacional de Educação\""
+ativo = true
+
+[[google_news]]
+instituicao = "CAPES"
+nome = "Coordenação de Aperfeiçoamento de Pessoal de Nível Superior"
+consulta = "site:gov.br/capes"
+ativo = true
+
+[[google_news]]
+instituicao = "SEMESP"
+nome = "Sindicato das Entidades Mantenedoras de Estabelecimentos de Ensino Superior"
+consulta = "site:semesp.org.br"
+ativo = true
+
+[[google_news]]
+instituicao = "ABMES"
+nome = "Associação Brasileira de Mantenedoras de Ensino Superior"
+consulta = "site:abmes.org.br"
+ativo = true
+
+[[google_news]]
+instituicao = "ABED"
+nome = "Associação Brasileira de Educação a Distância"
+consulta = "site:abed.org.br"
+ativo = true
+
+# ------------------------------------------------------------ Minas Gerais --
+
+[[google_news]]
+instituicao = "FAPEMIG"
+nome = "Fundação de Amparo à Pesquisa do Estado de Minas Gerais"
+consulta = "site:fapemig.br"
+ativo = true
+
+[[google_news]]
+instituicao = "CEE-MG"
+nome = "Conselho Estadual de Educação de Minas Gerais"
+consulta = "\"Conselho Estadual de Educação\" \"Minas Gerais\""
+ativo = true
+
+# ----------------------------------------------- Diário Oficial da União --
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "Educação a distância"
+consulta = "\"educação a distância\""
+secao = "do1"
+periodo = "semana"
+ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "SERES (regulação)"
+consulta = "\"Secretaria de Regulação e Supervisão da Educação Superior\""
+secao = "do1"
+periodo = "semana"
+ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "CNE"
+consulta = "\"Conselho Nacional de Educação\""
+secao = "do1"
+periodo = "semana"
+ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "INEP / ENADE / Censo"
+consulta = "\"Exame Nacional de Desempenho dos Estudantes\" OR \"Censo da Educação Superior\""
+secao = "todos"
+periodo = "semana"
+ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "DCNs / currículo"
+consulta = "\"Diretrizes Curriculares Nacionais\" OR \"carga horária a distância\""
+secao = "do1"
+periodo = "semana"
+ativo = true
+
+[[dou]]
+instituicao = "DOU"
+rotulo = "PUC Minas citada"
+consulta = "\"Pontifícia Universidade Católica de Minas Gerais\""
+secao = "todos"
+periodo = "semana"
+ativo = true
