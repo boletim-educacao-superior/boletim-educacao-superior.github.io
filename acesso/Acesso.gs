@@ -13,8 +13,8 @@
  */
 
 const CONTA_SISTEMA = 'cineaned@gmail.com';   // dona do script: sempre administradora
-const ENDERECO_PAINEL = 'https://certificacao-cinea.github.io/radar-educacao-superior/';
-// Nome que as pessoas veem (o endereço continua "radar-educacao-superior" para não quebrar links já enviados).
+const ENDERECO_PAINEL = 'https://certificacao-cinea.github.io/boletim-educacao-superior/';
+// Nome que as pessoas veem. O endereço antigo (…/radar-educacao-superior/) redireciona para o novo.
 const NOME_SISTEMA = 'Boletim da Educação Superior';
 const REMETENTE = 'Boletim · CINEA | PUC Minas';
 const NOME_PLANILHA = 'Radar da Educação Superior - Acesso (não mexer)';
@@ -551,7 +551,7 @@ function api_enviarBoasVindas_(ss, email) {
   if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) throw falha_('O limite de e-mails de hoje foi atingido. Tente amanhã.');
   const quem = perfil_(ss, USUARIO_ATUAL_).nome;
   MailApp.sendEmail(email, 'Você agora tem acesso ao ' + NOME_SISTEMA,
-    'Olá, ' + m.p.nome + '!\n\n' + quem + ' liberou seu acesso ao ' + NOME_SISTEMA + ' do CINEA (Radar da Educação Superior): o painel que acompanha ' +
+    'Olá, ' + m.p.nome + '!\n\n' + quem + ' liberou seu acesso ao ' + NOME_SISTEMA + ' do CINEA: o painel que acompanha ' +
     'comunicados, notícias, editais e atos oficiais do MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial.\n\n' +
     'Para entrar pela primeira vez:\n' +
     '1. Abra ' + ENDERECO_PAINEL + '\n' +

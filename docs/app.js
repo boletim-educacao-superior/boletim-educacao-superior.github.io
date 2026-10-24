@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261023231523"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261024002203"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -42,7 +42,7 @@ const $ = (id) => document.getElementById(id);
 const marca = (it) => estado.marcas.get(it.id)?.tipo;
 const VISOES = {
   "inicio": {
-    titulo: "Início", explica: "Tudo o que o radar coletou, menos o que a equipe marcou como sem relevância.",
+    titulo: "Início", explica: "Tudo o que o Boletim coletou, menos o que a equipe marcou como sem relevância.",
     filtro: (it) => marca(it) !== "irrelevante",
   },
   "sinalizadas": {

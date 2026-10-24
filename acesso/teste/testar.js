@@ -217,7 +217,7 @@ cenario("Administração da equipe", (a) => {
   let r = a.api(adm, "salvarMembro", ANA, "Ana Teste", false, true);
   conferir("admin cadastra pessoa", r.ok && r.dados.some((p) => p.email === ANA && !p.admin && !p.tem_senha), r);
   const bv = a.emails.filter((e) => e.para === ANA).pop();
-  conferir("e-mail de boas-vindas com o link e o passo a passo", bv && /Primeiro acesso/.test(bv.corpo) && /certificacao-cinea\.github\.io\/radar/.test(bv.corpo));
+  conferir("e-mail de boas-vindas com o link e o passo a passo", bv && /Primeiro acesso/.test(bv.corpo) && /certificacao-cinea\.github\.io\/boletim-educacao-superior/.test(bv.corpo));
   conferir("lista da equipe não expõe hash de senha", !JSON.stringify(r.dados).includes("v1$"));
 
   r = a.api(adm, "salvarMembro", "=HIPERLINK(\"x\")@a.com", "x", false, false);

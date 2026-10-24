@@ -14,7 +14,7 @@ from email.message import EmailMessage
 
 
 def _corpo(urgentes, url_painel):
-    linhas = [f"O Boletim da Educação Superior (Radar) encontrou {len(urgentes)} item(ns) urgente(s):", ""]
+    linhas = [f"O Boletim da Educação Superior encontrou {len(urgentes)} item(ns) urgente(s):", ""]
     for it in urgentes:
         linhas.append(f"- [{it['instituicao']}] {it['titulo']}")
         linhas.append(f"  Motivo: {it['motivo_urgencia']} · Data: {it['data']}")
@@ -37,7 +37,7 @@ def alertar_github(urgentes, assunto, url_painel):
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
-            "User-Agent": "radar-educacao-superior",
+            "User-Agent": "boletim-educacao-superior",
         },
         method="POST",
     )

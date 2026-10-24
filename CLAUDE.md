@@ -2,7 +2,10 @@
 
 Nome trocado em 23/10/2026 a pedido do Diego: primeiro "Observatório", depois (mesmo dia) **"Boletim da Educação Superior"**
 (ele achou "Observatório" estranho; queria algo de notícias e informes), com "Radar da Educação Superior"
-como subtítulo. O endereço (…/radar-educacao-superior/) e os nomes internos (pasta, planilha, código) continuam "Radar".
+como subtítulo — trocado depois por **"Centro de Inovação em Ensino e Aprendizagem (CINEA) - NED (PUC Minas)"**.
+Endereço trocado no mesmo dia para **…/boletim-educacao-superior/** (repositório renomeado); o antigo
+**…/radar-educacao-superior/** virou um repositório só com uma página que redireciona (mantém #seção e ?parâmetros).
+Os nomes internos (pasta local, pacote `radar/`, planilha, pasta do Drive) continuam "Radar".
 Desde a mesma data, "Lida" também é compartilhada pela equipe (como Sinalizada e Sem relevância).
 
 Contexto para retomar o trabalho em qualquer sessão. A conta do Claude é compartilhada: **não usar a memória do Claude**,
@@ -23,8 +26,9 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 ## Onde está cada coisa
 | Parte | Local |
 |---|---|
-| Repositório | https://github.com/certificacao-cinea/radar-educacao-superior (público, org `certificacao-cinea`, escolhida pelo Diego) |
-| Painel | https://certificacao-cinea.github.io/radar-educacao-superior/ (GitHub Pages, pasta `docs/`) |
+| Repositório | https://github.com/certificacao-cinea/boletim-educacao-superior (público, org `certificacao-cinea`, escolhida pelo Diego) |
+| Painel | https://certificacao-cinea.github.io/boletim-educacao-superior/ (GitHub Pages, pasta `docs/`) |
+| Redirecionamento | https://github.com/certificacao-cinea/radar-educacao-superior (só `index.html` que manda para o endereço novo; não pôr código nem dados) |
 | Coleta | GitHub Actions `.github/workflows/coleta.yml` (manual + todo dia às 4h de Brasília, desde 23/10/2026; antes: dias úteis 8h/12h/17h) |
 | Fontes e regras | `config/fontes.toml`, `config/regras.toml` |
 | Pasta no Drive (cineaned) | **Radar da Educação Superior**, `1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe`: script de acesso e planilha da equipe (pedido do Diego: centralizar tudo do Radar) |

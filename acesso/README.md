@@ -45,7 +45,7 @@ visitantes, dispositivos, seções, notícias, instituições e buscas.
 4. No *Registro de execução* aparece "Pronto. Pasta: … · Planilha: …". O `configurar()` também move o próprio script
    para a pasta do Radar. Diego Eduardo já entra como administrador.
    Se a execução terminar sem a janela de autorização e sem esse "Pronto", a função escolhida não era a `configurar`.
-5. Teste em https://certificacao-cinea.github.io/radar-educacao-superior/ › *Primeiro acesso*.
+5. Teste em https://certificacao-cinea.github.io/boletim-educacao-superior/ › *Primeiro acesso*.
 
 ## Publicar uma alteração
 

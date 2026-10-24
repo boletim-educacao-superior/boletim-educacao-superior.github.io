@@ -107,7 +107,7 @@ Regras em `[urgencia]` no `config/regras.toml`:
 Pré-requisito: uma conta no GitHub (pode ser institucional ou criada para o setor).
 
 1. **Crie o repositório.** No GitHub: *New repository* › nome
-   `radar-educacao-superior` › **Public**.
+   `boletim-educacao-superior` › **Public**.
    > Hospedar o GitHub Pages de repositório **privado** exige plano pago. O
    > conteúdo do Radar é todo público (notícias e DOU), então um repositório
    > público não expõe nada interno. **Não coloque senhas no código**: use os
@@ -118,14 +118,14 @@ Pré-requisito: uma conta no GitHub (pode ser institucional ou criada para o set
    git init -b main
    git add .
    git commit -m "Radar da Educação Superior"
-   git remote add origin https://github.com/SEU-USUARIO/radar-educacao-superior.git
+   git remote add origin https://github.com/SEU-USUARIO/boletim-educacao-superior.git
    git push -u origin main
    ```
 
 3. **Ative o painel.** No repositório: *Settings › Pages › Build and deployment*
    › *Source: Deploy from a branch* › Branch `main`, pasta **`/docs`** › *Save*.
    Em 1 ou 2 minutos o painel estará em
-   `https://SEU-USUARIO.github.io/radar-educacao-superior/`.
+   `https://SEU-USUARIO.github.io/boletim-educacao-superior/`.
 
 4. **Permita que a coleta grave os dados.** *Settings › Actions › General ›
    Workflow permissions* › **Read and write permissions** › *Save*.

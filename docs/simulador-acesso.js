@@ -61,7 +61,7 @@ window.SimuladorAcesso = (() => {
   const acoes = {
     pedirCodigo({ email }) {
       const p = pessoa(email);
-      if (!p) return falha("Este e-mail não está cadastrado no Radar. Confira se digitou certo ou peça acesso a um administrador.");
+      if (!p) return falha("Este e-mail não está cadastrado no Boletim. Confira se digitou certo ou peça acesso a um administrador.");
       codigos[p.email] = String(Math.floor(100000 + Math.random() * 900000));
       console.info(`[simulador] código para ${p.email}: ${codigos[p.email]}`);
       return { ok: true, dados: { ok: true } };
