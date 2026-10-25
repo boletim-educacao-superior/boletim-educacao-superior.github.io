@@ -1,9 +1,9 @@
 {
- "ultima_execucao": "2026-10-24T11:43:42+00:00",
- "novos_nesta_execucao": 20,
+ "ultima_execucao": "2026-10-25T12:13:09+00:00",
+ "novos_nesta_execucao": 5,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 4662,
+ "total_no_painel": 4667,
  "agenda": {
   "descricao": "Todos os dias, às 4h",
   "horas": [
@@ -37,13 +37,13 @@
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 31
+   "itens": 32
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 9
+   "itens": 8
   },
   {
    "fonte": "Google Notícias: SEMESP",
@@ -67,7 +67,7 @@
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 10
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: CEE-MG",
@@ -78,50 +78,50 @@
   {
    "fonte": "DOU: Educação a distância",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 0
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22educa%C3%A7%C3%A3o+a+dist%C3%A2ncia%22&s=do1&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: SERES (regulação)",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 13
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Secretaria+de+Regula%C3%A7%C3%A3o+e+Supervis%C3%A3o+da+Educa%C3%A7%C3%A3o+Superior%22&s=do1&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: CNE",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 10
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Conselho+Nacional+de+Educa%C3%A7%C3%A3o%22&s=do1&sortType=1&exactDate=semana: <urlopen error [Errno -3] Temporary failure in name resolution>"
   },
   {
    "fonte": "DOU: ENADE",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 1
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Exame+Nacional+de+Desempenho+dos+Estudantes%22&s=todos&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: DCNs",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 1
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Diretrizes+Curriculares+Nacionais%22&s=do1&sortType=1&exactDate=semana: The read operation timed out"
   },
   {
    "fonte": "DOU: Censo da Educação Superior",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 0
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Censo+da+Educa%C3%A7%C3%A3o+Superior%22&s=todos&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: Carga horária a distância",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 0
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22carga+hor%C3%A1ria+a+dist%C3%A2ncia%22&s=do1&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: PUC Minas citada",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 1
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Pontif%C3%ADcia+Universidade+Cat%C3%B3lica+de+Minas+Gerais%22&s=todos&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   }
  ]
 }
