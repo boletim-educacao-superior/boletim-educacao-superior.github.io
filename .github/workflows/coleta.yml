@@ -48,7 +48,7 @@ jobs:
       - name: Coletar e classificar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          URL_PAINEL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          URL_PAINEL: https://boletim-educacao-superior.github.io/
           # E-mail opcional (preencha em Settings > Secrets and variables > Actions):
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORTA: ${{ secrets.SMTP_PORTA }}

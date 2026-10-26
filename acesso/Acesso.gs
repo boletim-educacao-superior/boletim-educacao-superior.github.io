@@ -13,8 +13,9 @@
  */
 
 const CONTA_SISTEMA = 'cineaned@gmail.com';   // dona do script: sempre administradora
-const ENDERECO_PAINEL = 'https://certificacao-cinea.github.io/boletim-educacao-superior/';
-// Nome que as pessoas veem. O endereço antigo (…/radar-educacao-superior/) redireciona para o novo.
+const ENDERECO_PAINEL = 'https://boletim-educacao-superior.github.io/';
+// Domínio próprio desde 26/10/2026 (organização boletim-educacao-superior). Os endereços antigos em
+// certificacao-cinea.github.io (…/radar-educacao-superior/ e …/boletim-educacao-superior/) redirecionam para este.
 const NOME_SISTEMA = 'Boletim da Educação Superior';
 const REMETENTE = 'Boletim · CINEA | PUC Minas';
 const NOME_PLANILHA = 'Radar da Educação Superior - Acesso (não mexer)';

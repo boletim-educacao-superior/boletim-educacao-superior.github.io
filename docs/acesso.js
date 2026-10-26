@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261026132611"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261026134126"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -362,7 +362,8 @@ const mesmosAvisos = (x, y) => x.imediato.join() === y.imediato.join() && x.sema
 function msgAvisos(texto, tipo = "erro") { const m = $a("mp-avisos-msg"); m.textContent = texto; m.className = `msg msg-${tipo}`; }
 function mostrarAvisos(p) {
   const a = p.avisos || AVISOS_VAZIO;
-  $a("mp-avisos").hidden = !!p.sistema;  // a conta do sistema não tem e-mail próprio para receber
+  // A conta do sistema não tem e-mail próprio para receber; sem "avisos" no perfil, o servidor ainda é o antigo.
+  $a("mp-avisos").hidden = !!p.sistema || !p.avisos;
   caixasAvisos().forEach((c) => (c.checked = (a[c.dataset.tipo] || []).includes(c.value)));
   $a("mp-avisos-email").textContent = p.email;
   $a("mp-avisos-salvar").disabled = true;
@@ -413,7 +414,7 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
   if (jaAberto) return;
   const p = Acesso.perfil || {};
   const itens = [
-    ["perfil", "Meu perfil"], !p.sistema && ["avisos", "Avisos por e-mail"], ["senha", "Alterar senha"],
+    ["perfil", "Meu perfil"], !p.sistema && p.avisos && ["avisos", "Avisos por e-mail"], ["senha", "Alterar senha"],
     p.admin && ["hr"], p.admin && ["admin", "Administrador"], p.admin && ["uso", "Uso da plataforma"],
     p.admin && ["registro", "Registro de atividades"],
     ["hr"], ["sair", "Sair"],

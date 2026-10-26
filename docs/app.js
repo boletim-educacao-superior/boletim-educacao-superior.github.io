@@ -3,12 +3,12 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261026132611"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261026134126"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
   // endereço do GitHub Pages (usuario.github.io/repositorio).
-  repositorio: "",
+  repositorio: "boletim-educacao-superior/boletim-educacao-superior.github.io",
   arquivoWorkflow: "coleta.yml",
 };
 
@@ -700,7 +700,7 @@ function proximaColeta(ag) {
 function configurarBotaoColeta() {
   let repo = CONFIG.repositorio;
   const m = location.hostname.match(/^([^.]+)\.github\.io$/);
-  if (!repo && m) repo = `${m[1]}/${location.pathname.split("/").filter(Boolean)[0] || ""}`;
+  if (!repo && m) repo = `${m[1]}/${location.pathname.split("/").filter(Boolean)[0] || `${m[1]}.github.io`}`;
   const btn = $("btn-coletar");
   if (repo && !repo.endsWith("/")) btn.href = `https://github.com/${repo}/actions/workflows/${CONFIG.arquivoWorkflow}`;
   else btn.hidden = true;

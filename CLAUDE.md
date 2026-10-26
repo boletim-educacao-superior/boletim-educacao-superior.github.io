@@ -5,6 +5,9 @@ Nome trocado em 23/10/2026 a pedido do Diego: primeiro "Observatório", depois (
 como subtítulo — trocado depois por **"Centro de Inovação em Ensino e Aprendizagem (CINEA) - NED (PUC Minas)"**.
 Endereço trocado no mesmo dia para **…/boletim-educacao-superior/** (repositório renomeado); o antigo
 **…/radar-educacao-superior/** virou um repositório só com uma página que redireciona (mantém #seção e ?parâmetros).
+Em 26/10/2026 ganhou **domínio próprio**, https://boletim-educacao-superior.github.io/ (o Diego queria mandar o link
+para pessoas de fora sem ligação com o projeto de certificados): repositório transferido para a organização
+`boletim-educacao-superior` e renomeado para `boletim-educacao-superior.github.io`; os dois endereços antigos redirecionam.
 Os nomes internos (pasta local, pacote `radar/`, planilha, pasta do Drive) continuam "Radar".
 Desde a mesma data, "Lida" também é compartilhada pela equipe (como Sinalizada e Sem relevância).
 
@@ -26,9 +29,9 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 ## Onde está cada coisa
 | Parte | Local |
 |---|---|
-| Repositório | https://github.com/certificacao-cinea/boletim-educacao-superior (público, org `certificacao-cinea`, escolhida pelo Diego) |
-| Painel | https://certificacao-cinea.github.io/boletim-educacao-superior/ (GitHub Pages, pasta `docs/`) |
-| Redirecionamento | https://github.com/certificacao-cinea/radar-educacao-superior (só `index.html` que manda para o endereço novo; não pôr código nem dados) |
+| Repositório | https://github.com/boletim-educacao-superior/boletim-educacao-superior.github.io (público; organização própria, criada pelo Diego em 26/10/2026, dona = conta pessoal Diegoeduardosc) |
+| Painel | https://boletim-educacao-superior.github.io/ (GitHub Pages na raiz do domínio, pasta `docs/`) |
+| Redirecionamentos | https://github.com/certificacao-cinea/radar-educacao-superior e https://github.com/certificacao-cinea/boletim-educacao-superior (só `index.html`/`404.html` que mandam para o domínio novo; não pôr código nem dados) |
 | Coleta | GitHub Actions `.github/workflows/coleta.yml` (manual + todo dia às 4h de Brasília, desde 23/10/2026; antes: dias úteis 8h/12h/17h) |
 | Fontes e regras | `config/fontes.toml`, `config/regras.toml` |
 | Pasta no Drive (cineaned) | **Radar da Educação Superior**, `1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe`: script de acesso e planilha da equipe (pedido do Diego: centralizar tudo do Radar) |

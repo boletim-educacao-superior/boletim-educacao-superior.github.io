@@ -10,6 +10,7 @@ Inovação em Ensino e Aprendizagem), no NED (Núcleo de Educação Digital) da
 Prograd — PUC Minas. Apoia a atividade *"Articulação com instituições e
 entidades da educação superior"* e a preparação dos cursos para avaliações do MEC.
 
+- **Endereço:** https://boletim-educacao-superior.github.io/
 - **Custo:** zero (GitHub Actions + GitHub Pages, plano gratuito).
 - **Dependências:** nenhuma além do Python 3.11+. Não usa banco de dados.
 - **Painel web:** página estática com filtros, busca, "novos desde a última
