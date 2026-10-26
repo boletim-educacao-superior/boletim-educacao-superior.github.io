@@ -82,7 +82,7 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - **Modelos de e-mail** (26/10/2026): todos saem do molde `emailHtml_` no Acesso.gs (cores do painel, tema claro;
   tabelas e estilos na linha, para Gmail/Outlook) + versão em texto. Modelos: `emailCodigo_` (cadastro / primeiro acesso /
   troca de senha, escolhido pelo servidor), `emailBoasVindas_`, `emailAviso_` (na hora, resumo semanal, exemplo).
-  Prévia de todos: `node acesso/teste/previa-emails.js` → `acesso/teste/previa-emails.html` (fora do git).
+  Sem "Por que é urgente" nos avisos (pedido do Diego, 26/10/2026). Prévia de todos: `node acesso/teste/previa-emails.js` → `acesso/teste/previa-emails.html` (fora do git).
   O simulador do Google dos testes fica em `acesso/teste/ambiente.js`.
 - Ajustes de 26/10/2026 (pedido do Diego): todo mundo abre em "Urgente e alta" + "Últimos 30 dias", urgentes primeiro
   (filtros não são guardados entre visitas); legenda "Indicadores dos últimos 30 dias. Para mudar, use o filtro "Período"";

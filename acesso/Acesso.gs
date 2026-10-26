@@ -1190,7 +1190,6 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
       '<div style="margin-bottom:6px">' + seloEmail_(it.prioridade) +
       '<span style="font-size:12px;color:' + c.suave + ';margin-left:8px">' + esc_(it.instituicao) + ' · ' + dataBr_(it.data) + (it.tipo ? ' · ' + esc_(it.tipo) : '') + '</span></div>' +
       '<a href="' + esc_(it.link) + '" style="font-size:16px;line-height:1.4;font-weight:600;color:' + c.marca + ';text-decoration:none">' + esc_(it.titulo) + '</a>' +
-      (it.motivo_urgencia ? '<div style="font-size:13px;margin-top:6px;color:' + c.urgente + '"><b>Por que é urgente:</b> ' + esc_(it.motivo_urgencia) + '</div>' : '') +
       (resumo ? '<div style="font-size:14px;line-height:1.5;margin-top:6px;color:' + c.texto + '">' + esc_(resumo) + '</div>' : '') +
       '</td></tr></table>';
   }).join('');
@@ -1204,7 +1203,7 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
   const texto = [ola, '', (exemplo ? 'Este é um EXEMPLO do aviso que você escolheu.\n\n' : '') + intro, '']
     .concat(itens.map(function (it) {
       return '• [' + ROTULO_PRIORIDADE[it.prioridade] + '] ' + it.instituicao + ' · ' + dataBr_(it.data) + '\n  ' + it.titulo +
-        (it.motivo_urgencia ? '\n  Por que é urgente: ' + it.motivo_urgencia : '') + '\n  ' + it.link + '\n';
+        '\n  ' + it.link + '\n';
     }))
     .concat(['Ver tudo no painel: ' + ENDERECO_PAINEL, '',
       'Você recebe este e-mail porque escolheu, em "Meu perfil" no Boletim, receber avisos (' + escolha + ').',
