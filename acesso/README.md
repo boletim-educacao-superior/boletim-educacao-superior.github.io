@@ -68,6 +68,23 @@ O clasp precisa estar logado na conta cineaned (`clasp show-authorized-user`). S
 **Cuidado:** o `clasp create`/`clasp pull` troca o `appsscript.json` pelo padrão do Google (fuso de Nova York, sem
 permissões nem configuração de App da Web). Confira o arquivo antes de fazer `push`.
 
+## Modelos de e-mail
+
+Todos os e-mails seguem o mesmo visual (o do painel): cabeçalho com o nome do Boletim e o CINEA, título, conteúdo,
+botão e rodapé. Ficam no `Acesso.gs`, seção "e-mails (padrão visual)":
+
+| Modelo | Quando sai |
+|---|---|
+| Código: cadastro novo | quem criou a própria conta |
+| Código: primeiro acesso | quem foi cadastrado por um administrador e ainda não tem senha |
+| Código: troca de senha | "Esqueci a senha" |
+| Boas-vindas | administrador cadastra alguém (ou "Reenviar boas-vindas") |
+| Aviso na hora | depois da coleta, para quem marcou "Na hora" |
+| Resumo semanal | segundas, 8h, só para quem teve novidade |
+| Exemplo | "Enviar um exemplo para mim", em Meu perfil |
+
+Para ver todos antes de publicar: `node acesso/teste/previa-emails.js` e abra `acesso/teste/previa-emails.html`.
+
 ## Testes
 
 - `node acesso/teste/testar.js`: simula os serviços do Google e confere 51 regras (senhas, códigos, bloqueios,

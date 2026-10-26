@@ -306,12 +306,9 @@ function pedirCodigo_(email) {
   lim.salvar();
   const codigo = ('00000' + (parseInt(Utilities.getUuid().replace(/-/g, '').slice(0, 12), 16) % 1000000)).slice(-6);
   cache.put('codigo:' + email, JSON.stringify({ h: hmac_(email + '|' + codigo), erros: 0 }), CODIGO_MINUTOS * 60);
-  MailApp.sendEmail(email, NOME_SISTEMA + ': código ' + codigo,
-    'Seu código para criar ou trocar a senha do ' + NOME_SISTEMA + ' (CINEA) é:\n\n' + codigo +
-    '\n\nEle vale por ' + CODIGO_MINUTOS + ' minutos e só deve ser digitado em ' + ENDERECO_PAINEL +
-    '\nNão repasse este código a ninguém: a equipe do CINEA nunca pede este código por telefone, mensagem ou e-mail.' +
-    '\nSe você não pediu este código, ignore este e-mail: sua senha continua a mesma.',
-    { name: REMETENTE });
+  const sen = senhaDe_(ss, email) || {}, quem = membro_(ss, email).p;
+  const motivo = sen.senha ? 'senha' : quem && quem.cadastrado_por === 'autocadastro' ? 'cadastro' : 'primeiro';
+  enviarEmail_(email, emailCodigo_(motivo, quem ? quem.nome : '', codigo));
   registrar_(ss, 'codigo_enviado', 'Pediu código para criar ou trocar a senha');
   return { ok: true };
 }
@@ -555,16 +552,7 @@ function api_enviarBoasVindas_(ss, email) {
   if (!m.p) throw falha_('Pessoa não encontrada.');
   if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) throw falha_('O limite de e-mails de hoje foi atingido. Tente amanhã.');
   const quem = perfil_(ss, USUARIO_ATUAL_).nome;
-  MailApp.sendEmail(email, 'Você agora tem acesso ao ' + NOME_SISTEMA,
-    'Olá, ' + m.p.nome + '!\n\n' + quem + ' liberou seu acesso ao ' + NOME_SISTEMA + ' do CINEA: o painel que acompanha ' +
-    'comunicados, notícias, editais e atos oficiais do MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial.\n\n' +
-    'Para entrar pela primeira vez:\n' +
-    '1. Abra ' + ENDERECO_PAINEL + '\n' +
-    '2. Clique em "Primeiro acesso" e digite este e-mail (' + email + ').\n' +
-    '3. Você vai receber um código de 6 dígitos. Digite o código e crie sua senha.\n\n' +
-    'Depois disso, é só entrar com e-mail e senha. Se esquecer a senha, use "Esqueci a senha".\n\n' +
-    'CINEA · Núcleo de Educação Digital · PUC Minas',
-    { name: REMETENTE });
+  enviarEmail_(email, emailBoasVindas_(m.p.nome, quem, email));
   m.p.boasvindas_em = agora_();
   salvarCampos_(m.tab, m.p, ['boasvindas_em']);
   registrar_(ss, 'boasvindas_enviado', email);
@@ -997,6 +985,33 @@ function enviarFila_(ss, dados) {
   if (semCota) registrar_(ss, 'avisos_adiados', semCota + ' aviso(s) esperando a cota de e-mail de amanhã');
 }
 
+/** Gatilhos dos avisos (configurar chama; rodar de novo não duplica). */
+function instalarGatilhos_() {
+  const existentes = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+  if (existentes.indexOf('verificarAvisos') < 0)
+    ScriptApp.newTrigger('verificarAvisos').timeBased().everyMinutes(AVISOS_MINUTOS).create();
+  if (existentes.indexOf('resumoSemanal') < 0)
+    ScriptApp.newTrigger('resumoSemanal').timeBased().onWeekDay(ScriptApp.WeekDay[RESUMO_DIA]).atHour(RESUMO_HORA).create();
+}
+
+// ======================================================================= e-mails (padrão visual) --
+//
+// Todos os e-mails do Boletim saem do mesmo molde (emailHtml_), com as cores do painel (docs/estilo.css, tema claro):
+// cabeçalho com o nome e o CINEA, título, conteúdo, botão, observação e rodapé. HTML em tabelas e estilos na linha,
+// que é o que Gmail e Outlook entendem. Cada e-mail também tem a versão em texto puro.
+// Modelos (montados aqui, enviados por quem chama):
+//   emailCodigo_      código de 6 dígitos: cadastro novo, primeiro acesso ou troca de senha
+//   emailBoasVindas_  administrador liberou o acesso
+//   emailAviso_       aviso na hora, resumo semanal e o exemplo pedido em Meu perfil
+// Prévia de todos: node acesso/teste/previa-emails.js (gera acesso/teste/previa-emails.html).
+
+const COR_EMAIL = {
+  fundo: '#f5f6f8', superficie: '#ffffff', borda: '#dfe3ea', texto: '#1b2230', suave: '#5b6578',
+  marca: '#1f4e8c', marcaFundo: '#e8eff9', urgente: '#b42318', urgenteFundo: '#fdecea', alta: '#b54708', altaFundo: '#fef3e2'
+};
+const FONTE_EMAIL = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const ASSINATURA_EMAIL = 'Centro de Inovação em Ensino e Aprendizagem (CINEA) - NED (PUC Minas)';
+
 function esc_(t) {
   return String(t || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
 }
@@ -1009,23 +1024,184 @@ function contagem_(itens) {
   return partes.join(' e ');
 }
 
-/** Monta e manda um aviso (imediato ou resumo semanal) para uma pessoa. */
-function enviarAviso_(p, tipo, itens, exemplo, desde) {
+/** Parágrafo no padrão do corpo. */
+function pEmail_(html, extra) {
+  return '<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:' + COR_EMAIL.texto + ';' + (extra || '') + '">' + html + '</p>';
+}
+/** Selo de prioridade igual ao do painel (fundo claro, texto na cor da prioridade). */
+function seloEmail_(prioridade) {
+  const urg = prioridade === 'urgente';
+  return '<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.04em;' +
+    'text-transform:uppercase;background:' + (urg ? COR_EMAIL.urgenteFundo : COR_EMAIL.altaFundo) + ';color:' + (urg ? COR_EMAIL.urgente : COR_EMAIL.alta) + '">' +
+    (urg ? 'Urgente' : 'Alta') + '</span>';
+}
+/** Botão principal (tabela: o Outlook não respeita padding em links soltos). */
+function botaoEmail_(texto, url) {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 18px"><tr>' +
+    '<td style="background:' + COR_EMAIL.marca + ';border-radius:8px">' +
+    '<a href="' + esc_(url) + '" style="display:inline-block;padding:11px 22px;font-family:' + FONTE_EMAIL + ';font-size:15px;font-weight:600;color:#ffffff;text-decoration:none">' +
+    esc_(texto) + '</a></td></tr></table>';
+}
+/** Caixa de destaque (observações, aviso de exemplo). tom: 'info' (azul) ou 'atencao' (laranja). */
+function notaEmail_(html, tom) {
+  const at = tom === 'atencao';
+  return '<div style="margin:0 0 16px;padding:11px 14px;border-radius:8px;font-size:13px;line-height:1.5;background:' +
+    (at ? COR_EMAIL.altaFundo : COR_EMAIL.marcaFundo) + ';color:' + COR_EMAIL.texto + '">' + html + '</div>';
+}
+/** Lista numerada de passos. */
+function passosEmail_(passos) {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;width:100%">' +
+    passos.map(function (t, i) {
+      return '<tr><td style="width:30px;vertical-align:top;padding:0 0 10px">' +
+        '<span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;text-align:center;font-size:12px;font-weight:700;' +
+        'background:' + COR_EMAIL.marcaFundo + ';color:' + COR_EMAIL.marca + '">' + (i + 1) + '</span></td>' +
+        '<td style="vertical-align:top;padding:1px 0 10px;font-size:15px;line-height:1.5;color:' + COR_EMAIL.texto + '">' + t + '</td></tr>';
+    }).join('') + '</table>';
+}
+
+/**
+ * Molde de todos os e-mails. o = { previa, titulo, corpo (HTML), rodape (HTML, opcional) }.
+ * previa = texto que o Gmail mostra ao lado do assunto, antes de abrir.
+ */
+function emailHtml_(o) {
+  const c = COR_EMAIL;
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<meta name="color-scheme" content="light"><title>' + esc_(o.titulo) + '</title></head>' +
+    '<body style="margin:0;padding:0;background:' + c.fundo + '">' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">' + esc_(o.previa || '') + '</div>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' + c.fundo + '"><tr><td align="center" style="padding:24px 12px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;font-family:' + FONTE_EMAIL + '">' +
+    // cabeçalho: como o topo do painel
+    '<tr><td style="background:' + c.superficie + ';border:1px solid ' + c.borda + ';border-bottom:0;border-top:4px solid ' + c.marca + ';border-radius:12px 12px 0 0;padding:20px 28px 16px">' +
+    '<a href="' + esc_(ENDERECO_PAINEL) + '" style="text-decoration:none"><span style="font-size:19px;font-weight:700;color:' + c.texto + '">' + esc_(NOME_SISTEMA) + '</span></a>' +
+    '<div style="font-size:12px;color:' + c.suave + ';margin-top:2px">' + esc_(ASSINATURA_EMAIL) + '</div></td></tr>' +
+    // conteúdo
+    '<tr><td style="background:' + c.superficie + ';border:1px solid ' + c.borda + ';border-top:1px solid ' + c.borda + ';border-radius:0 0 12px 12px;padding:24px 28px 10px">' +
+    '<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;font-weight:700;color:' + c.texto + '">' + esc_(o.titulo) + '</h1>' +
+    o.corpo + '</td></tr>' +
+    // rodapé
+    '<tr><td style="padding:16px 28px 8px;font-size:12px;line-height:1.55;color:' + c.suave + '">' +
+    (o.rodape ? o.rodape + '<br><br>' : '') +
+    esc_(NOME_SISTEMA) + ' · <a href="' + esc_(ENDERECO_PAINEL) + '" style="color:' + c.suave + '">' + esc_(ENDERECO_PAINEL.replace(/^https:\/\//, '').replace(/\/$/, '')) + '</a><br>' +
+    'Monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.<br>' +
+    esc_(ASSINATURA_EMAIL) + '</td></tr>' +
+    '</table></td></tr></table></body></html>';
+}
+
+/** Rodapé em texto puro, igual para todos. */
+function rodapeTexto_() {
+  return '\n\n--\n' + NOME_SISTEMA + ' · ' + ENDERECO_PAINEL + '\n' + ASSINATURA_EMAIL;
+}
+
+/** Envia um e-mail montado por um dos modelos ({ assunto, texto, html }). */
+function enviarEmail_(para, e) {
+  MailApp.sendEmail(para, e.assunto, e.texto, { name: REMETENTE, htmlBody: e.html });
+}
+
+// ------------------------------------------------------------------- modelo: código --
+
+/**
+ * Código de 6 dígitos. motivo: 'cadastro' (criou a conta agora), 'primeiro' (cadastrado pelo administrador, ainda
+ * sem senha) ou 'senha' (já tem senha: "Esqueci a senha").
+ */
+function emailCodigo_(motivo, nome, codigo) {
+  const t = {
+    cadastro: { assunto: 'confirme seu cadastro', titulo: 'Confirme seu e-mail',
+                intro: 'Recebemos o seu cadastro no ' + NOME_SISTEMA + '. Para confirmar que este e-mail é seu, digite o código abaixo na tela de cadastro e crie a sua senha.' },
+    primeiro: { assunto: 'seu primeiro acesso', titulo: 'Crie a sua senha',
+                intro: 'Use o código abaixo na tela de primeiro acesso do ' + NOME_SISTEMA + ' para criar a sua senha.' },
+    senha:    { assunto: 'troca de senha', titulo: 'Troque a sua senha',
+                intro: 'Recebemos um pedido para trocar a senha do ' + NOME_SISTEMA + '. Digite o código abaixo na tela "Esqueci a senha" e escolha uma senha nova.' }
+  }[motivo] || null;
+  const m = t || { assunto: 'código de acesso', titulo: 'Seu código de acesso', intro: 'Use o código abaixo no ' + NOME_SISTEMA + '.' };
+  const ola = nome ? 'Olá, ' + nome.split(' ')[0] + '!' : 'Olá!';
+  const seguranca = 'Não repasse este código a ninguém: a equipe do CINEA nunca pede o código por telefone, mensagem ou e-mail.' +
+    (motivo === 'senha' ? ' Se você não pediu a troca, ignore este e-mail: sua senha continua a mesma.'
+                        : ' Se você não pediu este código, ignore este e-mail.');
+  const corpo =
+    pEmail_(esc_(ola) + ' ' + esc_(m.intro)) +
+    '<div style="margin:4px 0 18px;padding:16px;border-radius:10px;text-align:center;background:' + COR_EMAIL.marcaFundo + '">' +
+    '<div style="font-size:12px;color:' + COR_EMAIL.suave + ';margin-bottom:4px">Seu código</div>' +
+    '<div style="font-family:Consolas,\'Courier New\',monospace;font-size:34px;font-weight:700;letter-spacing:10px;color:' + COR_EMAIL.marca + '">' + esc_(codigo) + '</div>' +
+    '<div style="font-size:12px;color:' + COR_EMAIL.suave + ';margin-top:4px">Vale por ' + CODIGO_MINUTOS + ' minutos</div></div>' +
+    pEmail_('Digite o código só no endereço oficial: <a href="' + esc_(ENDERECO_PAINEL) + '" style="color:' + COR_EMAIL.marca + '">' +
+            esc_(ENDERECO_PAINEL.replace(/^https:\/\//, '').replace(/\/$/, '')) + '</a>') +
+    notaEmail_(esc_(seguranca), 'atencao');
+  return {
+    assunto: codigo + ' é o seu código do ' + NOME_SISTEMA,
+    texto: ola + '\n\n' + m.intro + '\n\nSeu código: ' + codigo + '\nEle vale por ' + CODIGO_MINUTOS + ' minutos e só deve ser digitado em ' +
+      ENDERECO_PAINEL + '\n\n' + seguranca + rodapeTexto_(),
+    html: emailHtml_({ previa: 'Código ' + codigo + ', válido por ' + CODIGO_MINUTOS + ' minutos.', titulo: m.titulo, corpo: corpo,
+                       rodape: 'Você recebeu este e-mail porque este endereço foi usado no ' + esc_(NOME_SISTEMA) + '.' })
+  };
+}
+
+// --------------------------------------------------------------- modelo: boas-vindas --
+
+function emailBoasVindas_(nome, quem, email) {
+  const passos = [
+    'Abra o Boletim pelo botão abaixo.',
+    'Clique em <b>Entrar</b> e depois em <b>Primeiro acesso</b>, com este e-mail (' + esc_(email) + ').',
+    'Você vai receber um código de 6 dígitos. Digite o código e crie a sua senha.'
+  ];
+  const corpo =
+    pEmail_('Olá, ' + esc_(nome.split(' ')[0]) + '! ' + esc_(quem) + ' liberou o seu acesso ao ' + esc_(NOME_SISTEMA) +
+            ', o painel do CINEA que reúne comunicados, notícias, editais e atos oficiais da educação superior, já com a triagem do que é urgente.') +
+    pEmail_('<b>Para entrar pela primeira vez:</b>', 'margin-bottom:10px') +
+    passosEmail_(passos) +
+    botaoEmail_('Abrir o Boletim', ENDERECO_PAINEL) +
+    notaEmail_('Depois do primeiro acesso, é só entrar com e-mail e senha. Em <b>Meu perfil</b> você escolhe receber por e-mail ' +
+               'as notícias urgentes na hora ou um resumo semanal.');
+  return {
+    assunto: 'Seu acesso ao ' + NOME_SISTEMA + ' está liberado',
+    texto: 'Olá, ' + nome + '!\n\n' + quem + ' liberou o seu acesso ao ' + NOME_SISTEMA + ' do CINEA: o painel que acompanha ' +
+      'comunicados, notícias, editais e atos oficiais do MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial.\n\n' +
+      'Para entrar pela primeira vez:\n1. Abra ' + ENDERECO_PAINEL + '\n2. Clique em "Entrar" e depois em "Primeiro acesso", com este e-mail (' + email + ').\n' +
+      '3. Você vai receber um código de 6 dígitos. Digite o código e crie a sua senha.\n\n' +
+      'Depois disso, é só entrar com e-mail e senha. Se esquecer a senha, use "Esqueci a senha".' + rodapeTexto_(),
+    html: emailHtml_({ previa: quem + ' liberou o seu acesso. Veja como entrar pela primeira vez.', titulo: 'Seu acesso está liberado', corpo: corpo,
+                       rodape: 'Você recebeu este e-mail porque um administrador do CINEA cadastrou este endereço no ' + esc_(NOME_SISTEMA) + '.' })
+  };
+}
+
+// ------------------------------------------------------------------- modelo: avisos --
+
+/** Aviso na hora, resumo semanal ou exemplo (Meu perfil). itens = notícias do avisos.json. */
+function emailAviso_(p, tipo, itens, exemplo, desde) {
   itens = itens.slice().sort(function (x, y) {
     return (x.prioridade === y.prioridade ? 0 : x.prioridade === 'urgente' ? -1 : 1) || (y.data > x.data ? 1 : y.data < x.data ? -1 : 0);
   });
-  const email = p.email.toLowerCase(), semanal = tipo === 'semanal';
+  const c = COR_EMAIL, email = p.email.toLowerCase(), semanal = tipo === 'semanal';
   const hoje = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM');
   const inicio = Utilities.formatDate(new Date(desde ? Date.parse(desde) : Date.now() - 7 * DIA_MS), 'America/Sao_Paulo', 'dd/MM');
-  const assunto = (exemplo ? '[Exemplo] ' : '') + NOME_SISTEMA + ' · ' +
-    (semanal ? 'Resumo da semana (' + inicio + ' a ' + hoje + '): ' : 'Novidade: ') + contagem_(itens);
   const cancelar = ENDERECO_PAINEL + '#parar-avisos=' + chaveAvisos_(email);
   const escolha = descreverAvisos_(avisosDe_(p));
+  const titulo = semanal ? 'Resumo da semana' : (itens.some(function (it) { return it.prioridade === 'urgente'; }) ? 'Notícia urgente no Boletim' : 'Novidade no Boletim');
   const intro = semanal
-    ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + ':'
-    : 'A última coleta do Boletim encontrou ' + contagem_(itens) + ':';
+    ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + '.'
+    : 'A última coleta do Boletim encontrou ' + contagem_(itens) + '.';
+  const ola = 'Olá, ' + p.nome.split(' ')[0] + '!';
 
-  const texto = ['Olá, ' + p.nome + '!', '', (exemplo ? 'Este é um EXEMPLO do aviso que você escolheu.\n\n' : '') + intro, '']
+  const cartoes = itens.map(function (it) {
+    const borda = it.prioridade === 'urgente' ? c.urgente : c.alta;
+    const resumo = it.resumo ? it.resumo.slice(0, 280) + (it.resumo.length > 280 ? '…' : '') : '';
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;border:1px solid ' + c.borda +
+      ';border-left:4px solid ' + borda + ';border-radius:8px"><tr><td style="padding:12px 14px">' +
+      '<div style="margin-bottom:6px">' + seloEmail_(it.prioridade) +
+      '<span style="font-size:12px;color:' + c.suave + ';margin-left:8px">' + esc_(it.instituicao) + ' · ' + dataBr_(it.data) + (it.tipo ? ' · ' + esc_(it.tipo) : '') + '</span></div>' +
+      '<a href="' + esc_(it.link) + '" style="font-size:16px;line-height:1.4;font-weight:600;color:' + c.marca + ';text-decoration:none">' + esc_(it.titulo) + '</a>' +
+      (it.motivo_urgencia ? '<div style="font-size:13px;margin-top:6px;color:' + c.urgente + '"><b>Por que é urgente:</b> ' + esc_(it.motivo_urgencia) + '</div>' : '') +
+      (resumo ? '<div style="font-size:14px;line-height:1.5;margin-top:6px;color:' + c.texto + '">' + esc_(resumo) + '</div>' : '') +
+      '</td></tr></table>';
+  }).join('');
+
+  const corpo =
+    (exemplo ? notaEmail_('<b>Este é um exemplo</b> do aviso que você escolheu, com as notícias mais recentes. Os avisos de verdade chegam sozinhos.', 'atencao') : '') +
+    pEmail_(esc_(ola) + ' ' + esc_(intro)) +
+    cartoes +
+    botaoEmail_('Ver tudo no Boletim', ENDERECO_PAINEL);
+
+  const texto = [ola, '', (exemplo ? 'Este é um EXEMPLO do aviso que você escolheu.\n\n' : '') + intro, '']
     .concat(itens.map(function (it) {
       return '• [' + ROTULO_PRIORIDADE[it.prioridade] + '] ' + it.instituicao + ' · ' + dataBr_(it.data) + '\n  ' + it.titulo +
         (it.motivo_urgencia ? '\n  Por que é urgente: ' + it.motivo_urgencia : '') + '\n  ' + it.link + '\n';
@@ -1033,42 +1209,27 @@ function enviarAviso_(p, tipo, itens, exemplo, desde) {
     .concat(['Ver tudo no painel: ' + ENDERECO_PAINEL, '',
       'Você recebe este e-mail porque escolheu, em "Meu perfil" no Boletim, receber avisos (' + escolha + ').',
       'Para mudar: entre no Boletim e abra Meu perfil > Avisos por e-mail.',
-      'Para parar de receber todos os avisos: ' + cancelar, '',
-      'CINEA · Núcleo de Educação Digital · PUC Minas']).join('\n');
+      'Para parar de receber todos os avisos: ' + cancelar]).join('\n') + rodapeTexto_();
 
-  const cor = { urgente: '#b42318', alta: '#b54708' };
-  const html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1d2433;max-width:640px;line-height:1.45">' +
-    '<p style="margin:0 0 4px;font-size:13px;color:#5b6475">' + esc_(NOME_SISTEMA) + ' · CINEA - NED (PUC Minas)</p>' +
-    '<h2 style="margin:0 0 12px;font-size:20px">' + (semanal ? 'Resumo da semana' : 'Novidade no Boletim') + '</h2>' +
-    (exemplo ? '<p style="background:#fff4e5;padding:8px 10px;border-radius:6px;font-size:14px">Este é um <b>exemplo</b> do aviso que você escolheu.</p>' : '') +
-    '<p>Olá, ' + esc_(p.nome) + '! ' + esc_(intro) + '</p>' +
-    itens.map(function (it) {
-      return '<div style="border-left:4px solid ' + cor[it.prioridade] + ';padding:6px 0 6px 12px;margin:0 0 14px">' +
-        '<div style="font-size:12px;color:' + cor[it.prioridade] + ';font-weight:bold;text-transform:uppercase">' +
-        esc_(ROTULO_PRIORIDADE[it.prioridade]) + '</div>' +
-        '<a href="' + esc_(it.link) + '" style="font-size:16px;color:#1d4ed8;font-weight:bold;text-decoration:none">' + esc_(it.titulo) + '</a>' +
-        '<div style="font-size:13px;color:#5b6475">' + esc_(it.instituicao) + ' · ' + dataBr_(it.data) + (it.tipo ? ' · ' + esc_(it.tipo) : '') + '</div>' +
-        (it.motivo_urgencia ? '<div style="font-size:13px;margin-top:4px"><b>Por que é urgente:</b> ' + esc_(it.motivo_urgencia) + '</div>' : '') +
-        (it.resumo ? '<div style="font-size:14px;margin-top:4px">' + esc_(it.resumo.slice(0, 300)) + (it.resumo.length > 300 ? '…' : '') + '</div>' : '') +
-        '</div>';
-    }).join('') +
-    '<p><a href="' + esc_(ENDERECO_PAINEL) + '" style="display:inline-block;background:#1d4ed8;color:#fff;padding:9px 16px;border-radius:6px;text-decoration:none">Abrir o Boletim</a></p>' +
-    '<hr style="border:0;border-top:1px solid #e3e6ec;margin:20px 0 10px">' +
-    '<p style="font-size:12px;color:#5b6475">Você recebe este e-mail porque escolheu, em "Meu perfil" no Boletim, receber avisos (' + esc_(escolha) + '). ' +
-    'Para mudar, entre no Boletim e abra <b>Meu perfil &gt; Avisos por e-mail</b>. ' +
-    '<a href="' + esc_(cancelar) + '" style="color:#5b6475">Parar de receber todos os avisos</a>.</p>' +
-    '<p style="font-size:12px;color:#5b6475">CINEA · Núcleo de Educação Digital · PUC Minas</p></div>';
-
-  MailApp.sendEmail(email, assunto, texto, { name: REMETENTE, htmlBody: html });
+  return {
+    // Uma notícia só: o título dela vai no assunto (fica claro na caixa de entrada sem abrir).
+    assunto: (exemplo ? '[Exemplo] ' : '') + (semanal
+      ? 'Resumo da semana (' + inicio + ' a ' + hoje + '): ' + contagem_(itens)
+      : (titulo === 'Notícia urgente no Boletim' ? 'Urgente: ' : 'Novidade: ') +
+        (itens.length === 1 ? (itens[0].titulo.length > 90 ? itens[0].titulo.slice(0, 89) + '…' : itens[0].titulo) : contagem_(itens))),
+    texto: texto,
+    html: emailHtml_({
+      previa: itens[0] ? itens[0].titulo : intro, titulo: titulo, corpo: corpo,
+      rodape: 'Você recebe este e-mail porque escolheu, em Meu perfil, receber avisos (' + esc_(escolha) + '). ' +
+        'Para mudar, entre no Boletim e abra <b>Meu perfil › Avisos por e-mail</b>. ' +
+        '<a href="' + esc_(cancelar) + '" style="color:' + c.suave + '">Parar de receber todos os avisos</a>.'
+    })
+  };
 }
 
-/** Gatilhos dos avisos (configurar chama; rodar de novo não duplica). */
-function instalarGatilhos_() {
-  const existentes = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
-  if (existentes.indexOf('verificarAvisos') < 0)
-    ScriptApp.newTrigger('verificarAvisos').timeBased().everyMinutes(AVISOS_MINUTOS).create();
-  if (existentes.indexOf('resumoSemanal') < 0)
-    ScriptApp.newTrigger('resumoSemanal').timeBased().onWeekDay(ScriptApp.WeekDay[RESUMO_DIA]).atHour(RESUMO_HORA).create();
+/** Monta e manda um aviso (imediato ou resumo semanal) para uma pessoa. */
+function enviarAviso_(p, tipo, itens, exemplo, desde) {
+  enviarEmail_(p.email.toLowerCase(), emailAviso_(p, tipo, itens, exemplo, desde));
 }
 
 const API_ = {

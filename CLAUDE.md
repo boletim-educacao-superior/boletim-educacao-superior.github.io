@@ -79,6 +79,11 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   marca o ponto de partida) e `resumoSemanal`. Sem relevância não entra. Sem cota (reserva de 30 dos certificados), o
   aviso espera na fila `AVISOS_FILA`. Rodapé tem link `#parar-avisos=<HMAC do e-mail>`: o painel confirma e chama
   `cancelarAvisos` (sem login). "Enviar um exemplo para mim": até 3 por dia. A issue no GitHub continua existindo.
+- **Modelos de e-mail** (26/10/2026): todos saem do molde `emailHtml_` no Acesso.gs (cores do painel, tema claro;
+  tabelas e estilos na linha, para Gmail/Outlook) + versão em texto. Modelos: `emailCodigo_` (cadastro / primeiro acesso /
+  troca de senha, escolhido pelo servidor), `emailBoasVindas_`, `emailAviso_` (na hora, resumo semanal, exemplo).
+  Prévia de todos: `node acesso/teste/previa-emails.js` → `acesso/teste/previa-emails.html` (fora do git).
+  O simulador do Google dos testes fica em `acesso/teste/ambiente.js`.
 - Filtros iniciais: visitante sempre "Urgente e alta" + "Últimos 12 meses"; quem entrou, "Urgente" + período salvo.
   Cartões do Início seguem o período; a legenda acima dá as datas ("Indicadores de … a …").
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
