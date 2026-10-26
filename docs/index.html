@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261026143616">
+<link rel="stylesheet" href="estilo.css?v=20261026145142">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261026143616";</script>
+<script>window.RADAR_VERSAO = "20261026145142";</script>
 </head>
 <body class="bloqueado">
 
@@ -127,20 +127,7 @@
     <h2 id="visao-titulo" class="visao-titulo">Início</h2>
     <p id="visao-explica" class="explica"></p>
   </div>
-  <div class="linha-periodo">
-    <p class="resumo-periodo" id="resumo-periodo"></p>
-    <!-- O que é Urgente e Alta: discreto, abre ao clicar (pedido do Diego, 26/10/2026). Resume [urgencia] e os pesos de config/regras.toml -->
-    <button type="button" class="botao-info" id="btn-info-prioridade" aria-expanded="false" aria-controls="info-prioridade"
-            title="O que significa Urgente e Alta" aria-label="O que significa Urgente e Alta">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
-    </button>
-    <div class="info-pop" id="info-prioridade" role="note" hidden>
-      <p><span class="selo-legenda selo-urgente">Urgente</span> Pede atenção imediata: ato oficial que cita a PUC Minas, norma nova
-        sobre EAD, mudança nas regras da educação superior (DCNs, avaliação, ENADE, carga horária a distância) ou prazo de órgão oficial.</p>
-      <p><span class="selo-legenda selo-alta">Alta</span> Tema importante para acompanhar: EAD e educação digital, regulação e
-        avaliação de cursos, currículo, formação docente, fomento e editais.</p>
-    </div>
-  </div>
+  <p class="resumo-periodo" id="resumo-periodo"></p>
   <section class="resumo" aria-label="Resumo">
     <!-- Os números seguem o período escolhido no filtro, informado na legenda acima (#resumo-periodo) -->
     <button class="cartao cartao-urgente" data-atalho="urgente"><span class="num" id="n-urgente">–</span><span class="rot">Urgentes</span></button>
@@ -155,12 +142,26 @@
       <button type="submit" class="btn btn-buscar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> Buscar</button>
     </form>
     <div class="linha-filtros">
-      <label>Prioridade
+      <!-- O (i) ao lado de "Prioridade" explica Urgente e Alta, discreto (pedido do Diego, 26/10/2026).
+           Resume [urgencia] e os pesos de config/regras.toml -->
+      <div class="campo-filtro">
+        <span class="rotulo-filtro"><label for="f-prioridade">Prioridade</label>
+        <button type="button" class="botao-info" id="btn-info-prioridade" aria-expanded="false" aria-controls="info-prioridade"
+                title="O que significa Urgente e Alta" aria-label="O que significa Urgente e Alta">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+        </button>
+        </span>
         <select id="f-prioridade">
           <option value="urgente">Urgente</option>
           <option value="alta+">Urgente e alta</option>
         </select>
-      </label>
+        <div class="info-pop" id="info-prioridade" role="note" hidden>
+          <p><span class="selo-legenda selo-urgente">Urgente</span> Pede atenção imediata: ato oficial que cita a PUC Minas, norma nova
+            sobre EAD, mudança nas regras da educação superior (DCNs, avaliação, ENADE, carga horária a distância) ou prazo de órgão oficial.</p>
+          <p><span class="selo-legenda selo-alta">Alta</span> Tema importante para acompanhar: EAD e educação digital, regulação e
+            avaliação de cursos, currículo, formação docente, fomento e editais.</p>
+        </div>
+      </div>
       <label>Setor do CINEA <select id="f-setor"><option value="">Todos</option></select></label>
       <label>Tema <select id="f-tema"><option value="">Todos</option></select></label>
       <label>Tipo <select id="f-tipo"><option value="">Todos</option></select></label>
@@ -399,7 +400,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261026143616"></script>
-<script src="app.js?v=20261026143616"></script>
+<script src="acesso.js?v=20261026145142"></script>
+<script src="app.js?v=20261026145142"></script>
 </body>
 </html>

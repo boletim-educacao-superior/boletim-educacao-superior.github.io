@@ -174,7 +174,7 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 
 @media (max-width: 720px) {
   .resumo { grid-template-columns: repeat(2, 1fr); }
-  .linha-filtros label { flex: 1 1 140px; }
+  .linha-filtros label, .linha-filtros .campo-filtro { flex: 1 1 140px; }
   .linha-filtros select { min-width: 0; width: 100%; }
   .orgao { flex-basis: 100%; white-space: normal; }
 }
@@ -471,18 +471,18 @@ body:not(.visitante) .convite-topo { display: none; }
 }
 .resumo-periodo { margin: 0 0 8px; font-size: .84rem; color: var(--texto-suave); }
 .resumo-periodo b { color: var(--texto); font-weight: 600; }
-#pagina-radar:not(.visao-inicio) .linha-periodo { display: none; }
+#pagina-radar:not(.visao-inicio) .resumo-periodo { display: none; }
 
-/* "O que é Urgente e Alta": ícone (i) discreto ao lado da legenda do período; abre um balão ao clicar */
-.linha-periodo { position: relative; display: flex; align-items: center; gap: 6px; margin: 0 0 8px; }
-.linha-periodo .resumo-periodo { margin: 0; }
+/* Filtro Prioridade com o (i) "O que é Urgente e Alta": mesmo visual dos outros filtros; balão ao clicar */
+.campo-filtro { position: relative; display: flex; flex-direction: column; gap: 3px; font-size: .78rem; color: var(--texto-suave); }
+.rotulo-filtro { display: flex; align-items: center; gap: 2px; height: 1.5em; }
 .botao-info {
-  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; flex: none;
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; flex: none;
   border: 0; border-radius: 50%; background: none; color: var(--texto-suave); cursor: pointer; opacity: .75;
 }
 .botao-info:hover, .botao-info[aria-expanded="true"], .botao-info:focus-visible { opacity: 1; color: var(--marca); background: var(--fundo); }
 .info-pop {
-  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: min(460px, calc(100vw - 32px));
+  position: absolute; z-index: 20; top: 22px; left: 0; width: min(460px, calc(100vw - 32px));
   background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 14px;
   box-shadow: 0 12px 32px rgba(16, 24, 40, .16); display: flex; flex-direction: column; gap: 8px;
 }
