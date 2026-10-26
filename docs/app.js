@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261026173811"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261026174113"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -13,7 +13,11 @@ const CONFIG = {
 };
 
 const PRIORIDADES = { urgente: 0, alta: 1, media: 2, baixa: 3 };
-const PRIORIDADE_MINIMA = "alta"; // o que for abaixo disso (média, baixa) não aparece no painel
+// O painel carrega até a média; a baixa nunca aparece. A média só entra quando a pessoa escolhe
+// "Urgente, alta e média" no filtro (pedido do Diego, 26/10/2026): o padrão, os cartões, os contadores do menu
+// e os avisos por e-mail continuam só com urgente e alta.
+const PRIORIDADE_MINIMA = "media";
+const ateAlta = (it) => PRIORIDADES[it.prioridade] <= PRIORIDADES.alta;
 const ROTULO_PRIORIDADE = { urgente: "Urgente", alta: "Alta", media: "Média", baixa: "Baixa" };
 // Nomes completos dos setores do CINEA (os itens trazem a forma curta, de config/regras.toml).
 const NOME_SETOR = {
@@ -231,7 +235,8 @@ function marcarMenu(visao) {
 }
 
 function atualizarContadores() {
-  const conta = (v) => estado.itens.filter(VISOES[v].filtro).length;
+  // Relevantes e Sem relevância contam tudo o que foi marcado; Não lidas e Lidas, só urgente e alta (o padrão).
+  const conta = (v) => estado.itens.filter((it) => VISOES[v].filtro(it) && (VISOES[v].semPrioridade || ateAlta(it))).length;
   for (const v of ["sinalizadas", "nao-lidas", "lidas", "sem-relevancia"]) {
     const n = conta(v);
     $(`c-${v}`).textContent = n ? n : "";
@@ -239,10 +244,12 @@ function atualizarContadores() {
 }
 
 // ----------------------------------------------------------------- filtros --
+/** Quantas notícias urgentes e de prioridade alta há em cada valor (o padrão do painel). Valores que só existem na
+ *  média entram no fim com 0, para o filtro funcionar também com "Urgente, alta e média". */
 function contar(chave) {
   const c = new Map();
   for (const it of estado.itens) {
-    for (const v of [].concat(it[chave] || [])) c.set(v, (c.get(v) || 0) + 1);
+    for (const v of [].concat(it[chave] || [])) c.set(v, (c.get(v) || 0) + (ateAlta(it) ? 1 : 0));
   }
   return [...c.entries()].sort((a, b) => b[1] - a[1]);
 }
@@ -251,7 +258,7 @@ function montarFiltros() {
   for (const [sel, chave] of [["f-setor", "setores"], ["f-tema", "temas"], ["f-tipo", "tipo"]]) {
     for (const [v, n] of contar(chave)) {
       const o = document.createElement("option");
-      o.value = v; o.textContent = `${NOME_SETOR[v] && chave === "setores" ? NOME_SETOR[v] : v} (${n})`;
+      o.value = v; o.textContent = `${NOME_SETOR[v] && chave === "setores" ? NOME_SETOR[v] : v}${n ? ` (${n})` : ""}`;
       $(sel).appendChild(o);
     }
   }
@@ -260,7 +267,7 @@ function montarFiltros() {
     const b = document.createElement("button");
     b.className = "chip"; b.type = "button"; b.dataset.valor = v;
     b.setAttribute("aria-pressed", "false");
-    b.innerHTML = `${v}<span class="qtd">${n}</span>`;
+    b.innerHTML = n ? `${v}<span class="qtd">${n}</span>` : v;
     b.addEventListener("click", () => {
       estado.instituicoes.has(v) ? estado.instituicoes.delete(v) : estado.instituicoes.add(v);
       b.setAttribute("aria-pressed", String(estado.instituicoes.has(v)));
@@ -422,7 +429,7 @@ function render() {
  */
 function preencherCartoes() {
   const periodo = $("f-periodo").value, limite = limitePeriodo(periodo);
-  const validos = estado.itens.filter((it) => marca(it) !== "irrelevante");
+  const validos = estado.itens.filter((it) => marca(it) !== "irrelevante" && ateAlta(it));
   const conta = (lista) => lista.filter((it) => !limite || (it.data || "") >= limite).length;
   $("n-urgente").textContent = conta(validos.filter((it) => it.prioridade === "urgente"));
   $("n-alta").textContent = conta(validos.filter((it) => it.prioridade === "alta"));
@@ -435,7 +442,7 @@ function preencherCartoes() {
   $("resumo-periodo").innerHTML = `Indicadores <b>${NOME_PERIODO[periodo] || `de todo o histórico (desde ${formatarData(maisAntigo)})`}</b>. ` +
     'Para mudar, use o filtro "Período".';
   if (logado()) {
-    $("n-novos").textContent = estado.itens.filter(ehNovo).length;
+    $("n-novos").textContent = estado.itens.filter((it) => ehNovo(it) && ateAlta(it)).length;
     $("n-novos-det").textContent = estado.ultimaVisita
       ? `desde ${estado.ultimaVisita.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`
       : "esta é a sua primeira visita";

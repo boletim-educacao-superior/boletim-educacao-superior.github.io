@@ -505,6 +505,7 @@ body:not(.visitante) .convite-topo { display: none; }
 }
 .selo-urgente { background: var(--urgente-fundo); color: var(--urgente); }
 .selo-alta { background: var(--alta-fundo); color: var(--alta); }
+.selo-media { background: var(--media-fundo); color: var(--media); }
 
 /* Só administradores (botão "Verificar novas notícias") */
 body:not(.perfil-admin) .so-admin { display: none !important; }

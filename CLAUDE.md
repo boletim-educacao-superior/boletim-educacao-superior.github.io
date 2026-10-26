@@ -79,6 +79,9 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   marca o ponto de partida) e `resumoSemanal`. Sem relevância não entra. Sem cota (reserva de 30 dos certificados), o
   aviso espera na fila `AVISOS_FILA`. Rodapé tem link `#parar-avisos=<HMAC do e-mail>`: o painel confirma e chama
   `cancelarAvisos` (sem login). "Enviar um exemplo para mim": até 3 por dia. A issue no GitHub continua existindo.
+- **Prioridade média como opção** (26/10/2026): o painel carrega até a média (`PRIORIDADE_MINIMA = "media"`), mas ela só
+  aparece com "Urgente, alta e média" no filtro. Padrão, cartões, contadores do menu, números dos filtros e avisos por e-mail
+  continuam só com urgente e alta (`ateAlta` em app.js). Em 30 dias a média somava ~46 itens (vs. 37 urgente+alta).
 - **"Sinalizadas" virou "Relevantes"** (26/10/2026, par com "Sem relevância"): só os textos mudaram. Por dentro a marca
   continua `sinalizada` (planilha, servidor, visão `sinalizadas`); o endereço novo é #relevantes e #sinalizadas ainda
   funciona (`APELIDO_VISAO` em app.js). Botão da notícia: "☆ Relevante" / "★ Relevante".
