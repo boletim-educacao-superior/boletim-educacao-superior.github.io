@@ -1010,7 +1010,7 @@ const COR_EMAIL = {
   marca: '#1f4e8c', marcaFundo: '#e8eff9', urgente: '#b42318', urgenteFundo: '#fdecea', alta: '#b54708', altaFundo: '#fef3e2'
 };
 const FONTE_EMAIL = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const ASSINATURA_EMAIL = 'Centro de Inovação em Ensino e Aprendizagem (CINEA) - NED (PUC Minas)';
+const ASSINATURA_EMAIL = ['Centro de Inovação em Ensino e Aprendizagem (CINEA)', 'Núcleo de Educação Digital (NED) - PUC Minas'];
 
 function esc_(t) {
   return String(t || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
@@ -1074,7 +1074,7 @@ function emailHtml_(o) {
     // cabeçalho: como o topo do painel
     '<tr><td style="background:' + c.superficie + ';border:1px solid ' + c.borda + ';border-bottom:0;border-top:4px solid ' + c.marca + ';border-radius:12px 12px 0 0;padding:20px 28px 16px">' +
     '<a href="' + esc_(ENDERECO_PAINEL) + '" style="text-decoration:none"><span style="font-size:19px;font-weight:700;color:' + c.texto + '">' + esc_(NOME_SISTEMA) + '</span></a>' +
-    '<div style="font-size:12px;color:' + c.suave + ';margin-top:2px">' + esc_(ASSINATURA_EMAIL) + '</div></td></tr>' +
+    '<div style="font-size:12px;color:' + c.suave + ';margin-top:2px">' + ASSINATURA_EMAIL.map(esc_).join('<br>') + '</div></td></tr>' +
     // conteúdo
     '<tr><td style="background:' + c.superficie + ';border:1px solid ' + c.borda + ';border-top:1px solid ' + c.borda + ';border-radius:0 0 12px 12px;padding:24px 28px 10px">' +
     '<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;font-weight:700;color:' + c.texto + '">' + esc_(o.titulo) + '</h1>' +
@@ -1084,13 +1084,13 @@ function emailHtml_(o) {
     (o.rodape ? o.rodape + '<br><br>' : '') +
     esc_(NOME_SISTEMA) + ' · <a href="' + esc_(ENDERECO_PAINEL) + '" style="color:' + c.suave + '">' + esc_(ENDERECO_PAINEL.replace(/^https:\/\//, '').replace(/\/$/, '')) + '</a><br>' +
     'Monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.<br>' +
-    esc_(ASSINATURA_EMAIL) + '</td></tr>' +
+    ASSINATURA_EMAIL.map(esc_).join('<br>') + '</td></tr>' +
     '</table></td></tr></table></body></html>';
 }
 
 /** Rodapé em texto puro, igual para todos. */
 function rodapeTexto_() {
-  return '\n\n--\n' + NOME_SISTEMA + ' · ' + ENDERECO_PAINEL + '\n' + ASSINATURA_EMAIL;
+  return '\n\n--\n' + NOME_SISTEMA + ' · ' + ENDERECO_PAINEL + '\n' + ASSINATURA_EMAIL.join('\n');
 }
 
 /** Envia um e-mail montado por um dos modelos ({ assunto, texto, html }). */

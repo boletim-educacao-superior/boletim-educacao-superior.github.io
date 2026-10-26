@@ -84,8 +84,12 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   troca de senha, escolhido pelo servidor), `emailBoasVindas_`, `emailAviso_` (na hora, resumo semanal, exemplo).
   Prévia de todos: `node acesso/teste/previa-emails.js` → `acesso/teste/previa-emails.html` (fora do git).
   O simulador do Google dos testes fica em `acesso/teste/ambiente.js`.
-- Filtros iniciais: visitante sempre "Urgente e alta" + "Últimos 12 meses"; quem entrou, "Urgente" + período salvo.
-  Cartões do Início seguem o período; a legenda acima dá as datas ("Indicadores de … a …").
+- Ajustes de 26/10/2026 (pedido do Diego): todo mundo abre em "Urgente e alta" + "Últimos 30 dias", urgentes primeiro
+  (filtros não são guardados entre visitas); legenda "Indicadores dos últimos 30 dias. Para mudar, use o filtro "Período"";
+  legenda de Urgente/Alta abaixo dos cartões; texto do Início pensado para quem é de fora; "Coletar agora" virou
+  **"Verificar novas notícias"** e só aparece para administradores (classe `so-admin` + `body.perfil-admin`);
+  assinatura em duas linhas: "Centro de Inovação em Ensino e Aprendizagem (CINEA)" / "Núcleo de Educação Digital (NED) - PUC Minas"
+  (no site e nos e-mails).
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261026134126"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261026140916"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -191,6 +191,7 @@ function preencherConta(perfil) {
   tag.textContent = ROTULO_PERFIL(perfil);
   tag.dataset.perfil = perfil.admin ? "admin" : perfil.tipo === "usuario" ? "usuario" : "equipe";
   document.body.classList.toggle("perfil-usuario", perfil.tipo === "usuario");
+  document.body.classList.toggle("perfil-admin", !!perfil.admin);
   $a("sigla-topo").textContent = iniciais(perfil.nome || perfil.email);
   $a("sigla-topo").title = `${perfil.nome} · Meu perfil`;
 }

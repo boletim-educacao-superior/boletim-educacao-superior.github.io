@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261026134126"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261026140916"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -42,7 +42,9 @@ const $ = (id) => document.getElementById(id);
 const marca = (it) => estado.marcas.get(it.id)?.tipo;
 const VISOES = {
   "inicio": {
-    titulo: "Início", explica: "Tudo o que o Boletim coletou, menos o que a equipe marcou como sem relevância.",
+    titulo: "Início",
+    explica: "As notícias mais importantes para a educação superior, coletadas todos os dias de MEC, INEP, CNE, CAPES, " +
+      "SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.",
     filtro: (it) => marca(it) !== "irrelevante",
   },
   "sinalizadas": {
@@ -296,38 +298,18 @@ function aplicarAtalho(nome) {
   }
   estado.somenteNovos = nome === "novos";
   $("f-prioridade").value = nome === "urgente" ? "urgente" : "alta+";
-  if (nome === "limpar") $("f-periodo").value = "30";
+  if (nome === "limpar") $("f-periodo").value = PERIODO_INICIAL;
   estado.pagina = 1;
   render();
 }
 
-function salvarFiltros() {
-  gravarLocal("radar.filtros", {
-    prioridade: $("f-prioridade").value, periodo: $("f-periodo").value, setor: $("f-setor").value,
-    rotina: $("f-rotina").checked, instituicoes: [...estado.instituicoes],
-  });
-}
-// O sistema sempre abre mostrando os urgentes (pedido do Diego); a pessoa muda a prioridade se quiser.
-// Os demais filtros (período, setor, instituições...) voltam como estavam na última visita.
-const PRIORIDADE_INICIAL = "urgente";
+// Todo mundo (com ou sem login) abre igual: urgente e alta dos últimos 30 dias, urgentes primeiro
+// (pedido do Diego, 26/10/2026). Os filtros não são guardados entre uma visita e outra.
+const PRIORIDADE_INICIAL = "alta+";
+const PERIODO_INICIAL = "30";
 function restaurarFiltros() {
-  // Visitante (sem login) sempre abre em "Urgente e alta" nos últimos 12 meses (pedido do Diego, 23/10/2026).
-  if (!logado()) {
-    $("f-prioridade").value = "alta+";
-    $("f-periodo").value = "365";
-    return;
-  }
   $("f-prioridade").value = PRIORIDADE_INICIAL;
-  const f = lerLocal("radar.filtros", null);
-  if (!f) return;
-  $("f-periodo").value = f.periodo ?? "30";
-  // Só restaura o setor se ele ainda existir nos dados.
-  if ([...$("f-setor").options].some((o) => o.value === f.setor)) $("f-setor").value = f.setor;
-  $("f-rotina").checked = f.rotina ?? true;
-  for (const v of f.instituicoes || []) {
-    const chip = document.querySelector(`.chip[data-valor="${CSS.escape(v)}"]`);
-    if (chip) { estado.instituicoes.add(v); chip.setAttribute("aria-pressed", "true"); }
-  }
+  $("f-periodo").value = PERIODO_INICIAL;
 }
 
 function semAcento(s) {
@@ -346,7 +328,7 @@ function filtrar() {
   const limite = limitePeriodo(dias);
   const maxPrio = { urgente: 0, "alta+": 1, "media+": 2 }[prio] ?? 3;
 
-  return estado.itens.filter((it) => {
+  const lista = estado.itens.filter((it) => {
     if (!visao.filtro(it)) return false;
     if (estado.somenteNovos && !ehNovo(it)) return false;
     if (PRIORIDADES[it.prioridade] > maxPrio) return false;
@@ -359,6 +341,8 @@ function filtrar() {
     if (busca && !semAcento(`${it.titulo} ${it.resumo} ${it.orgao} ${it.fonte}`).includes(busca)) return false;
     return true;
   });
+  // Urgentes primeiro, depois alta; dentro de cada uma, da mais recente para a mais antiga (os itens já vêm por data).
+  return visao.semPrioridade ? lista : lista.sort((a, b) => PRIORIDADES[a.prioridade] - PRIORIDADES[b.prioridade]);
 }
 
 // -------------------------------------------------------------- renderização --
@@ -369,7 +353,6 @@ function formatarData(iso) {
 }
 
 function render() {
-  salvarFiltros();
   atualizarContadores();
   const visiveis = filtrar();
   preencherCartoes();
@@ -414,16 +397,13 @@ function preencherCartoes() {
   $("n-urgente").textContent = conta(validos.filter((it) => it.prioridade === "urgente"));
   $("n-alta").textContent = conta(validos.filter((it) => it.prioridade === "alta"));
   $("n-total").textContent = conta(validos);
-  // Legenda única, com as datas do período (como em relatório): "Indicadores de 24/09/2026 a 23/10/2026 (últimos 30 dias)"
+  // Legenda simples (pedido do Diego, 26/10/2026): "Indicadores dos últimos 30 dias. Para mudar, use o filtro "Período"."
   const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999-12-31");
-  const hoje = new Date().toLocaleDateString("sv-SE");
-  const NOME_PERIODO = { "7": "últimos 7 dias", "30": "últimos 30 dias", "90": "últimos 90 dias", "180": "últimos 6 meses",
-                         "365": "últimos 12 meses",
-                         "ano": `ano de ${new Date().getFullYear()}` };
-  $("resumo-periodo").innerHTML = `Indicadores de <b>${formatarData(limite || maisAntigo)}</b> a <b>${formatarData(hoje)}</b> ` +
-    `(${NOME_PERIODO[periodo] || "todo o período disponível"})` +
-    (limite && limite < maisAntigo ? `; o histórico começa em ${formatarData(maisAntigo)}` : "") +
-    '. Para mudar, use o filtro "Período".';
+  const NOME_PERIODO = { "7": "dos últimos 7 dias", "30": "dos últimos 30 dias", "90": "dos últimos 90 dias",
+                         "180": "dos últimos 6 meses", "365": "dos últimos 12 meses",
+                         "ano": `de ${new Date().getFullYear()} (desde janeiro)` };
+  $("resumo-periodo").innerHTML = `Indicadores <b>${NOME_PERIODO[periodo] || `de todo o histórico (desde ${formatarData(maisAntigo)})`}</b>. ` +
+    'Para mudar, use o filtro "Período".';
   if (logado()) {
     $("n-novos").textContent = estado.itens.filter(ehNovo).length;
     $("n-novos-det").textContent = estado.ultimaVisita

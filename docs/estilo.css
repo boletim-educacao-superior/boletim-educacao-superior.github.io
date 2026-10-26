@@ -472,6 +472,21 @@ body:not(.visitante) .convite-topo { display: none; }
 .resumo-periodo { margin: 0 0 8px; font-size: .84rem; color: var(--texto-suave); }
 .resumo-periodo b { color: var(--texto); font-weight: 600; }
 #pagina-radar:not(.visao-inicio) .resumo-periodo { display: none; }
+
+/* Legenda das prioridades (abaixo dos cartões) */
+.legenda-prioridade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; margin: -4px 0 14px; }
+.legenda-prioridade p { margin: 0; font-size: .8rem; line-height: 1.45; color: var(--texto-suave); }
+.selo-legenda {
+  display: inline-block; border-radius: 5px; padding: 0 7px; margin-right: 4px; font-weight: 600; font-size: .7rem;
+  text-transform: uppercase; letter-spacing: .03em; vertical-align: 1px;
+}
+.selo-urgente { background: var(--urgente-fundo); color: var(--urgente); }
+.selo-alta { background: var(--alta-fundo); color: var(--alta); }
+#pagina-radar:not(.visao-inicio) .legenda-prioridade { display: none; }
+@media (max-width: 720px) { .legenda-prioridade { grid-template-columns: minmax(0, 1fr); } }
+
+/* Só administradores (botão "Verificar novas notícias") */
+body:not(.perfil-admin) .so-admin { display: none !important; }
 .convite-conta { margin-top: 6px; padding: 12px; border-radius: 9px; background: var(--media-fundo); display: flex; flex-direction: column; gap: 8px; }
 .convite-conta p { margin: 0; font-size: .85rem; }
 .convite-conta .btn-sec { background: var(--superficie); font-weight: 600; color: var(--marca); border-color: var(--marca); }
@@ -556,3 +571,7 @@ i.seg-publico, .seg-publico { background: var(--barra-publico); }
   font-size: .8rem; padding: 5px 9px; border-radius: 6px; opacity: 0; transition: opacity .1s; max-width: 280px;
 }
 .dica-flutuante.visivel { opacity: 1; }
+
+/* Assinatura do CINEA em duas linhas: menor no celular e na tela de entrada, para cada linha caber inteira */
+.portaria-marca .sub { font-size: .8rem; }
+@media (max-width: 720px) { .topo .sub { font-size: .78rem; } }
