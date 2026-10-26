@@ -49,7 +49,7 @@ window.SimuladorAcesso = (() => {
   const pessoa = (e) => equipe.find((p) => p.email === String(e).toLowerCase());
   const reg = (q, acao, detalhe = "") => registro.unshift({ quando: agora(), quem: q, acao, detalhe });
   const tipoDe = (p) => (p.admin ? "admin" : p.perfil === "usuario" ? "usuario" : "equipe");
-  const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, tipo: tipoDe(p), cadastrado_em: p.cadastrado_em,
+  const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, tipo: tipoDe(p), avisos: p.avisos || { imediato: [], semanal: [] }, cadastrado_em: p.cadastrado_em,
                            cadastrado_por: "cineaned@gmail.com", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso,
                            // Simulação: a "visita anterior" foi há 3 dias (para o cartão de novidades ter números)
                            visita_anterior: new Date(Date.now() - 3 * 864e5).toLocaleString("sv-SE").slice(0, 19) });
@@ -97,6 +97,18 @@ window.SimuladorAcesso = (() => {
           p.senha = nova; reg(p.email, "senha_alterada"); return sessaoNova(p);
         },
         equipe: () => { admin(); return lista(); },
+        salvarAvisos: (imediato, semanal) => {
+          const so = (l) => ["urgente", "alta"].filter((x) => (l || []).includes(x));
+          p.avisos = { imediato: so(imediato), semanal: so(semanal) };
+          reg(p.email, "avisos_alterados", JSON.stringify(p.avisos));
+          return perfil(p);
+        },
+        testarAvisos: () => {
+          const a = p.avisos || { imediato: [], semanal: [] };
+          if (!a.imediato.length && !a.semanal.length) throw new Error("Escolha pelo menos um aviso e salve antes de pedir o exemplo.");
+          reg(p.email, "aviso_exemplo", "(simulado: nenhum e-mail sai)");
+          return { para: p.email, itens: 3 };
+        },
         salvarMembro: (email, nome, adm, boas, perf) => {
           admin(); email = String(email).toLowerCase();
           if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(email)) throw new Error("Digite um e-mail válido.");
@@ -186,6 +198,13 @@ window.SimuladorAcesso = (() => {
     if (String(nome || "").trim().length < 3) return falha("Digite seu nome.");
     if (!p) { equipe.push({ email, nome: nome.trim(), admin: false, senha: "", perfil: "usuario", cadastrado_em: agora(), ultimo_acesso: "" }); reg(email, "autocadastro", email); }
     return acoes.pedirCodigo({ email });
+  };
+  acoes.cancelarAvisos = ({ chave }) => {
+    if (!/^[A-Za-z0-9_-]{32}$/.test(chave || "")) return falha("Link inválido. Para mudar os avisos, entre e abra \"Meu perfil\".");
+    const p = equipe.find((x) => x.avisos && (x.avisos.imediato.length || x.avisos.semanal.length));
+    if (!p) return falha("Link inválido ou de uma conta que não existe mais.");
+    p.avisos = { imediato: [], semanal: [] };
+    return { ok: true, dados: { nome: p.nome } };
   };
   acoes.publico = () => ({ ok: true, dados: { irrelevantes: marcas.filter((m) => m.tipo === "irrelevante").map((m) => m.id) } });
   acoes.evento = (c) => {

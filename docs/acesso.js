@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261024002203"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261026132611"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -305,7 +305,7 @@ function abrirSenha() {
 }
 
 // ------------------------------------------------------------ meu perfil --
-async function abrirPerfil() {
+async function abrirPerfil(focoAvisos = false) {
   limparMsgs();
   const dlg = $a("dlg-perfil");
   const mostrar = (p) => {
@@ -321,9 +321,11 @@ async function abrirPerfil() {
     $a("mp-por").title = p.cadastrado_por || "";
     $a("mp-senha-em").value = p.senha_em ? dataCurta(p.senha_em).slice(0, 10) : "—";
     $a("mp-salvar").disabled = true;
+    mostrarAvisos(p);
   };
   mostrar(Acesso.perfil);
   dlg.showModal();
+  if (focoAvisos) $a("mp-avisos").scrollIntoView({ block: "nearest" });
   try { const p = await api("perfil"); preencherConta(p); mostrar(p); } catch (e) { msg($a("form-perfil"), e.message); }
 }
 $a("mp-nome").addEventListener("input", () => {
@@ -343,8 +345,60 @@ $a("form-perfil").addEventListener("submit", async (ev) => {
   } catch (e) { msg(form, e.message); }
 });
 $a("mp-trocar-senha").addEventListener("click", () => { $a("dlg-perfil").close(); abrirSenha(); });
-$a("usuario-nome").addEventListener("click", abrirPerfil);
-$a("sigla-topo").addEventListener("click", abrirPerfil);
+$a("usuario-nome").addEventListener("click", () => abrirPerfil());
+$a("sigla-topo").addEventListener("click", () => abrirPerfil());
+
+// ------------------------------------------------ avisos por e-mail --
+// Cada pessoa escolhe: urgente e/ou alta, na hora (depois de cada coleta) e/ou no resumo semanal.
+// Quem manda é o servidor de acesso (gatilhos verificarAvisos e resumoSemanal no Acesso.gs).
+const caixasAvisos = () => [...document.querySelectorAll("#mp-avisos input[type=checkbox]")];
+const AVISOS_VAZIO = { imediato: [], semanal: [] };
+function lerCaixasAvisos() {
+  const a = { imediato: [], semanal: [] };
+  caixasAvisos().forEach((c) => { if (c.checked) a[c.dataset.tipo].push(c.value); });
+  return a;
+}
+const mesmosAvisos = (x, y) => x.imediato.join() === y.imediato.join() && x.semanal.join() === y.semanal.join();
+function msgAvisos(texto, tipo = "erro") { const m = $a("mp-avisos-msg"); m.textContent = texto; m.className = `msg msg-${tipo}`; }
+function mostrarAvisos(p) {
+  const a = p.avisos || AVISOS_VAZIO;
+  $a("mp-avisos").hidden = !!p.sistema;  // a conta do sistema não tem e-mail próprio para receber
+  caixasAvisos().forEach((c) => (c.checked = (a[c.dataset.tipo] || []).includes(c.value)));
+  $a("mp-avisos-email").textContent = p.email;
+  $a("mp-avisos-salvar").disabled = true;
+}
+caixasAvisos().forEach((c) => c.addEventListener("change", () => {
+  $a("mp-avisos-salvar").disabled = mesmosAvisos(lerCaixasAvisos(), Acesso.perfil.avisos || AVISOS_VAZIO);
+}));
+$a("mp-avisos-salvar").addEventListener("click", async (ev) => {
+  const a = lerCaixasAvisos();
+  try {
+    const p = await ocupado(ev.currentTarget, () => api("salvarAvisos", a.imediato, a.semanal), "Salvando…");
+    preencherConta(p);
+    mostrarAvisos(p);
+    msgAvisos(a.imediato.length || a.semanal.length
+      ? "Avisos salvos. Use \"Enviar um exemplo para mim\" para ver como o e-mail chega."
+      : "Pronto: você não vai receber avisos por e-mail.", "ok");
+  } catch (e) { msgAvisos(e.message); }
+});
+$a("mp-avisos-exemplo").addEventListener("click", async (ev) => {
+  if (!$a("mp-avisos-salvar").disabled) return msgAvisos("Salve as suas escolhas antes de pedir o exemplo.", "info");
+  try {
+    const r = await ocupado(ev.currentTarget, () => api("testarAvisos"), "Enviando…");
+    msgAvisos(`Enviamos um exemplo com ${r.itens} notícia(s) para ${r.para}. Se não chegar em alguns minutos, confira o spam.`, "ok");
+  } catch (e) { msgAvisos(e.message); }
+});
+
+/** Link "parar de receber" do rodapé dos avisos (…#parar-avisos=chave): confirma e cancela, sem precisar entrar. */
+async function pararAvisos(chave) {
+  const sim = await confirmar("Parar de receber todos os avisos do Boletim por e-mail? Você pode voltar a escolher quando quiser em Meu perfil.", "Parar de receber");
+  if (!sim) return;
+  try {
+    await servidor("cancelarAvisos", { chave });
+    if (Acesso.perfil) Acesso.perfil.avisos = AVISOS_VAZIO;
+    aviso("Pronto: você não vai mais receber avisos do Boletim por e-mail.");
+  } catch (e) { aviso(e.message); }
+}
 
 // ------------------------------------------------- engrenagem (menu) --
 // Mesmo comportamento da engrenagem dos certificados: lista o que o perfil da pessoa pode ver.
@@ -359,7 +413,7 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
   if (jaAberto) return;
   const p = Acesso.perfil || {};
   const itens = [
-    ["perfil", "Meu perfil"], ["senha", "Alterar senha"],
+    ["perfil", "Meu perfil"], !p.sistema && ["avisos", "Avisos por e-mail"], ["senha", "Alterar senha"],
     p.admin && ["hr"], p.admin && ["admin", "Administrador"], p.admin && ["uso", "Uso da plataforma"],
     p.admin && ["registro", "Registro de atividades"],
     ["hr"], ["sair", "Sair"],
@@ -378,7 +432,7 @@ $a("botao-engrenagem").addEventListener("click", (ev) => {
     const b = e.target.closest("[data-ir]");
     if (!b) return;
     fecharMenu();
-    ({ perfil: abrirPerfil, senha: abrirSenha, admin: () => irParaAdmin(""), uso: () => irParaAdmin("uso"), registro: () => irParaAdmin("registro"), sair })[b.dataset.ir]();
+    ({ perfil: () => abrirPerfil(), avisos: () => abrirPerfil(true), senha: abrirSenha, admin: () => irParaAdmin(""), uso: () => irParaAdmin("uso"), registro: () => irParaAdmin("registro"), sair })[b.dataset.ir]();
   };
   m.onkeydown = (e) => {
     const bs = [...m.querySelectorAll("button")], i = bs.indexOf(document.activeElement);
@@ -457,6 +511,14 @@ async function carregarRegistro() {
   } catch (e) { corpo.innerHTML = `<tr><td colspan="3" class="erro">${esc(e.message)}</td></tr>`; }
 }
 
+/** "Avisos: na hora (urgente) · semanal (urgente e alta)" na lista da equipe; nada se a pessoa não escolheu. */
+function resumoAvisos(a) {
+  if (!a || (!a.imediato.length && !a.semanal.length)) return "";
+  const p = (l) => l.map((x) => (x === "urgente" ? "urgente" : "alta")).join(" e ");
+  const partes = [a.imediato.length && `na hora (${p(a.imediato)})`, a.semanal.length && `semanal (${p(a.semanal)})`].filter(Boolean);
+  return `<div class="detalhe">✉ Avisos: ${partes.join(" · ")}</div>`;
+}
+
 async function carregarEquipe(lista) {
   const corpo = $a("equipe-corpo");
   if (!lista) {
@@ -469,7 +531,7 @@ async function carregarEquipe(lista) {
     return `<tr data-email="${esc(p.email)}">
       <td><strong>${esc(p.nome)}</strong>${p.admin ? ' <span class="selo">admin</span>' : ""}${p.perfil === "usuario" ? ' <span class="selo selo-usuario" title="Criou a própria conta: marcações só dele(a)">usuário</span>' : ""}${eu ? ' <span class="selo selo-eu">você</span>' : ""}
         <div class="detalhe">${esc(p.email)}</div></td>
-      <td>${situacao}${p.boasvindas_em ? `<div class="detalhe">Boas-vindas em ${dataCurta(p.boasvindas_em)}</div>` : ""}</td>
+      <td>${situacao}${p.boasvindas_em ? `<div class="detalhe">Boas-vindas em ${dataCurta(p.boasvindas_em)}</div>` : ""}${resumoAvisos(p.avisos)}</td>
       <td class="nowrap">${dataCurta(p.ultimo_acesso)}</td>
       <td><div class="acoes-linha">
         ${p.perfil === "usuario"
@@ -536,6 +598,12 @@ document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
     aviso.hidden = false;
     aviso.textContent = "O acesso ao Boletim ainda não foi configurado. Fale com o administrador do sistema.";
     return;
+  }
+  // Link "parar de receber" dos e-mails: tira a chave do endereço antes de o painel ler a seção.
+  const parar = /^#parar-avisos=([A-Za-z0-9_-]{32})$/.exec(location.hash);
+  if (parar) {
+    history.replaceState(null, "", location.pathname + location.search);
+    setTimeout(() => pararAvisos(parar[1]), 300);
   }
   const s = lerSessao();
   if (!s) return abrirPublico();

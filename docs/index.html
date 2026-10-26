@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261024002203">
+<link rel="stylesheet" href="estilo.css?v=20261026132611">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261024002203";</script>
+<script>window.RADAR_VERSAO = "20261026132611";</script>
 </head>
 <body class="bloqueado">
 
@@ -44,7 +44,7 @@
       <!-- Cadastro aberto: qualquer pessoa cria a própria conta -->
       <div class="convite-conta">
         <p><b>Ainda não tem conta?</b> Crie a sua em 1 minuto e grátis: sinalize notícias para acompanhar,
-          marque o que já leu e veja o que é novo desde a sua última visita.</p>
+          marque o que já leu e receba por e-mail as notícias urgentes ou um resumo semanal.</p>
         <button type="button" class="btn-sec btn-largo" data-modo="cadastro">Criar minha conta</button>
       </div>
     </form>
@@ -84,7 +84,7 @@
         <!-- Visitante (sem login): só o botão Entrar. Quem entrou: nome, sigla e engrenagem. -->
         <!-- Visitante: convite para criar conta (em destaque) e entrar -->
         <div class="convite-topo">
-          <span class="convite-texto">Sinalize notícias, acompanhe o que leu e veja as novidades desde a sua última visita.</span>
+          <span class="convite-texto">Sinalize notícias, acompanhe o que leu e receba avisos por e-mail das notícias urgentes.</span>
           <div class="convite-botoes">
             <button type="button" class="btn" id="btn-criar-conta">Criar conta gratuita</button>
             <button type="button" class="btn-sec" id="btn-entrar" title="Já tenho conta">Entrar</button>
@@ -277,8 +277,8 @@
   </li>
 </template>
 
-<!-- Meu perfil: a pessoa vê os próprios dados e troca só o nome -->
-<dialog id="dlg-perfil" class="dialogo" aria-labelledby="mp-titulo">
+<!-- Meu perfil: a pessoa vê os próprios dados, troca o nome e escolhe os avisos por e-mail -->
+<dialog id="dlg-perfil" class="dialogo dialogo-perfil" aria-labelledby="mp-titulo">
   <form id="form-perfil" method="dialog" novalidate>
     <div class="perfil-cabeca">
       <div class="sigla sigla-grande" id="mp-sigla" aria-hidden="true"></div>
@@ -297,6 +297,36 @@
     </div>
     <p class="dica">Só um administrador muda o e-mail ou o perfil.</p>
     <p class="msg" role="alert"></p>
+    <fieldset class="avisos" id="mp-avisos">
+      <legend>Avisos por e-mail</legend>
+      <p class="dica">Marque o que você quer receber em <b id="mp-avisos-email"></b>. Sem nada marcado, nenhum e-mail chega.</p>
+      <table class="avisos-grade">
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr">Prioridade</span></th>
+            <th scope="col">Na hora<span>logo depois de cada coleta</span></th>
+            <th scope="col">Resumo semanal<span>segundas, 8h, só se houver novidade</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row"><span class="prio prio-urgente">Urgente</span></th>
+            <td><input type="checkbox" data-tipo="imediato" value="urgente" aria-label="Urgente: avisar na hora"></td>
+            <td><input type="checkbox" data-tipo="semanal" value="urgente" aria-label="Urgente: resumo semanal"></td>
+          </tr>
+          <tr>
+            <th scope="row"><span class="prio prio-alta">Alta</span></th>
+            <td><input type="checkbox" data-tipo="imediato" value="alta" aria-label="Prioridade alta: avisar na hora"></td>
+            <td><input type="checkbox" data-tipo="semanal" value="alta" aria-label="Prioridade alta: resumo semanal"></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="msg" id="mp-avisos-msg" role="status"></p>
+      <div class="avisos-acoes">
+        <button type="button" class="link" id="mp-avisos-exemplo">Enviar um exemplo para mim</button>
+        <button type="button" class="btn" id="mp-avisos-salvar" disabled>Salvar avisos</button>
+      </div>
+    </fieldset>
     <div class="dialogo-acoes">
       <button type="button" class="link acao-esquerda" id="mp-trocar-senha">Alterar senha</button>
       <button type="button" class="btn-sec" data-fechar>Fechar</button>
@@ -356,7 +386,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261024002203"></script>
-<script src="app.js?v=20261024002203"></script>
+<script src="acesso.js?v=20261026132611"></script>
+<script src="app.js?v=20261026132611"></script>
 </body>
 </html>

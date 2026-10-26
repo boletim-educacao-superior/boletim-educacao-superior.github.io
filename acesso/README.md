@@ -33,6 +33,12 @@ visitantes, dispositivos, seções, notícias, instituições e buscas.
   administrador, reenviam o e-mail de boas-vindas, apagam a senha de alguém e veem o registro de atividades.
 - **Cota de e-mail:** é a MESMA do sistema de certificados (mesma conta, ~100 por dia). O Radar não envia nada
   quando restam 30 ou menos (reserva para os certificados) e manda no máximo 20 códigos por dia.
+- **Avisos por e-mail:** cada pessoa escolhe em *Meu perfil* (urgente e/ou alta; na hora e/ou resumo semanal).
+  O coletor publica `dados/avisos.json`; o gatilho `verificarAvisos` (a cada 15 min) manda o aviso imediato quando
+  aparece notícia nova, e o `resumoSemanal` (segundas, 8h) manda o resumo da semana só para quem tem novidade.
+  Respeitam a reserva de 30 e-mails dos certificados: o que não couber no dia espera na fila (`AVISOS_FILA`).
+  O rodapé de cada aviso tem o link "parar de receber". Os gatilhos são criados pelo `configurar()`
+  (confira em *Acionadores*, o ícone de relógio no editor).
 - **Segredo:** o código está num repositório público, então o segredo fica só nas propriedades do script
   (`SEGREDO`, criado por `configurar()`). Nunca escreva segredos no `Acesso.gs`.
 

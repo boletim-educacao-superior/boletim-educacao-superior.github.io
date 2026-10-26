@@ -270,6 +270,20 @@ body.visitante .conta { align-items: flex-start; }
 .perfil-cabeca .detalhe { color: var(--texto-suave); font-size: .85rem; overflow-wrap: anywhere; }
 .perfil-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .dialogo input[readonly] { opacity: .8; }
+.dialogo-perfil { width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+
+/* Avisos por e-mail (Meu perfil): prioridades nas linhas, frequência nas colunas */
+.avisos { border: 1px solid var(--borda); border-radius: 10px; padding: 10px 14px 12px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.avisos legend { font-weight: 600; font-size: .92rem; padding: 0 4px; }
+.avisos-grade { border-collapse: collapse; width: 100%; font-size: .88rem; }
+.avisos-grade th, .avisos-grade td { padding: 7px 6px; border-bottom: 1px solid var(--borda); text-align: center; }
+.avisos-grade tbody tr:last-child th, .avisos-grade tbody tr:last-child td { border-bottom: 0; }
+.avisos-grade thead th { font-weight: 600; vertical-align: bottom; }
+.avisos-grade thead th span { display: block; font-weight: 400; font-size: .75rem; color: var(--texto-suave); }
+.avisos-grade tbody th { text-align: left; font-weight: 500; }
+.avisos-grade input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--marca); }
+.avisos-acoes { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .acao-esquerda { margin-right: auto; }
 
 @media (max-width: 720px) {

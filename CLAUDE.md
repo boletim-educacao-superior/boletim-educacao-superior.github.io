@@ -67,6 +67,15 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   admin · equipe (cadastrada pelo admin, marca para todos) · usuario (coluna `perfil`='usuario': sinaliza e marca lidas só
   para si, aba `Pessoais`; não marca sem relevância; não vê "Coletar agora"). Admin promove ("Tornar equipe CINEA") ou rebaixa.
   Visitante vê as abas da equipe com cadeado (convite para criar conta).
+- **Avisos por e-mail** (pedido do Diego, 26/10/2026): cada pessoa com conta escolhe em Meu perfil (ou engrenagem ›
+  Avisos por e-mail) uma grade prioridade × frequência: urgente e/ou alta, **na hora** (depois de cada coleta) e/ou
+  **resumo semanal** (segundas, 8h, só se houver novidade). Colunas `avisos_imediato` / `avisos_semanal` da Equipe
+  ("urgente,alta"). O coletor grava `docs/dados/avisos.json` (urgente e alta, 35 dias); o Apps Script lê esse arquivo
+  (UrlFetchApp, escopo `script.external_request`) em dois gatilhos criados por `configurar()` (escopo `script.scriptapp`):
+  `verificarAvisos` a cada 15 min (manda o que tem `visto_em` maior que a propriedade `AVISOS_ULTIMO`; na primeira vez só
+  marca o ponto de partida) e `resumoSemanal`. Sem relevância não entra. Sem cota (reserva de 30 dos certificados), o
+  aviso espera na fila `AVISOS_FILA`. Rodapé tem link `#parar-avisos=<HMAC do e-mail>`: o painel confirma e chama
+  `cancelarAvisos` (sem login). "Enviar um exemplo para mim": até 3 por dia. A issue no GitHub continua existindo.
 - Filtros iniciais: visitante sempre "Urgente e alta" + "Últimos 12 meses"; quem entrou, "Urgente" + período salvo.
   Cartões do Início seguem o período; a legenda acima dá as datas ("Indicadores de … a …").
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
@@ -78,8 +87,7 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - Para saber se o `configurar()` rodou: a planilha aparece na pasta; enquanto a cineaned não autorizar, o `/exec` responde "Acesso negado".
 
 ## Pendências
-Ver `BACKLOG.md`. Principal: resumo semanal e alerta de urgentes por e-mail (proposto e adiado pelo Diego em 23/10/2026;
-hoje ninguém recebe notícias por e-mail).
+Ver `BACKLOG.md`. Os avisos por e-mail foram feitos em 26/10/2026; falta o domínio próprio (organização no GitHub).
 
 ## Lições aprendidas
 - Os portais gov.br do MEC e do CNE bloqueiam robôs (F5). Por isso a coleta usa o RSS do Google Notícias por site.

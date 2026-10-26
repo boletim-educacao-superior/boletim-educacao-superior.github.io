@@ -26,9 +26,10 @@ const ADMINS_INICIAIS = [{ email: 'diegoeduardo@pucminas.br', nome: 'Diego Eduar
 const ABAS = {
   // senha = hash (nunca a senha); senha_em = quando foi criada ou trocada
   // visita_anterior = início da visita passada (para "novos desde a sua última visita")
+  // avisos_imediato / avisos_semanal = prioridades escolhidas em "Meu perfil" para os avisos por e-mail ("urgente,alta")
   // perfil: em branco = equipe do CINEA (cadastrada pelo admin); 'usuario' = criou a própria conta (cadastro aberto).
   Equipe: ['email', 'nome', 'admin', 'cadastrado_por', 'cadastrado_em', 'boasvindas_em', 'senha', 'senha_em', 'ultimo_acesso',
-           'visita_anterior', 'perfil'],
+           'visita_anterior', 'perfil', 'avisos_imediato', 'avisos_semanal'],
   Registro: ['quando', 'quem', 'acao', 'detalhe'],
   // Marcações da equipe (compartilhadas): notícia sinalizada ou sem relevância, com quem marcou e por quê
   Marcacoes: ['item_id', 'tipo', 'por', 'em', 'motivo', 'titulo', 'link'],
@@ -71,7 +72,8 @@ function falha_(mensagem) { const e = new Error(mensagem); e.paraUsuario = true;
 
 /**
  * Rodar UMA vez no editor, logado como cineaned: cria a planilha, o segredo e os administradores iniciais,
- * guarda o script e a planilha na pasta do Radar e autoriza o envio de e-mail. Pode rodar de novo sem estragar nada.
+ * guarda o script e a planilha na pasta do Radar, autoriza o envio de e-mail e cria os gatilhos dos avisos por e-mail
+ * (verificarAvisos a cada 15 min e resumoSemanal às segundas). Pode rodar de novo sem estragar nada.
  */
 function configurar() {
   const props = PropertiesService.getScriptProperties();
@@ -95,6 +97,7 @@ function configurar() {
     if (equipe.linhas.some(function (p) { return p.email === a.email; })) return;
     equipe.sh.appendRow(linhaEquipe_({ email: a.email, nome: a.nome, admin: true, cadastrado_por: CONTA_SISTEMA, cadastrado_em: agora_() }));
   });
+  instalarGatilhos_();
   Logger.log('Pronto. Pasta: ' + pasta.getUrl() + ' · Planilha: ' + ss.getUrl() +
              ' · e-mails que ainda podem sair hoje: ' + MailApp.getRemainingDailyQuota());
 }
@@ -461,7 +464,7 @@ function perfil_(ss, email) {
            tipo: tipoDe_(ss, email),
            cadastrado_em: m ? m.cadastrado_em : '', cadastrado_por: m ? m.cadastrado_por : '',
            senha_em: m ? m.senha_em : prop_('SENHA_SISTEMA_EM') || '', ultimo_acesso: m ? m.ultimo_acesso : '',
-           visita_anterior: m ? m.visita_anterior : '' };
+           visita_anterior: m ? m.visita_anterior : '', avisos: avisosDe_(m) };
 }
 
 function exigirAdmin_(ss) {
@@ -486,7 +489,8 @@ function api_equipe_(ss) {
   return lerAba_(ss, 'Equipe').linhas.map(function (p) {
     return { email: p.email, nome: p.nome, admin: verdadeiro_(p.admin), cadastrado_por: p.cadastrado_por,
              cadastrado_em: p.cadastrado_em, boasvindas_em: p.boasvindas_em, tem_senha: !!p.senha,
-             senha_em: p.senha_em, ultimo_acesso: p.ultimo_acesso, perfil: p.perfil === 'usuario' ? 'usuario' : 'equipe' };
+             senha_em: p.senha_em, ultimo_acesso: p.ultimo_acesso, perfil: p.perfil === 'usuario' ? 'usuario' : 'equipe',
+             avisos: avisosDe_(p) };
   }).sort(function (a, b) {  // equipe do CINEA primeiro, depois quem se cadastrou sozinho
     return (a.perfil === b.perfil ? 0 : a.perfil === 'equipe' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR');
   });
@@ -813,11 +817,264 @@ function marcarPessoal_(ss, ids, tipo, ativo) {
   });
 }
 
+// ======================================================================= avisos por e-mail --
+//
+// Cada pessoa com conta escolhe em "Meu perfil" o que quer receber (pedido do Diego, 26/10/2026):
+//   imediato = logo depois de cada coleta, só as notícias novas;  semanal = resumo da semana, só se houver novidade.
+// Em cada um, as prioridades: urgente, alta ou as duas. O coletor publica dados/avisos.json (só urgente e alta)
+// e dois gatilhos deste script (criados por configurar) leem esse arquivo: verificarAvisos e resumoSemanal.
+// Quem não conseguiu receber por causa da cota de e-mail fica numa fila e recebe na próxima conferência.
+
+const PRIORIDADES_AVISO = ['urgente', 'alta'];
+const ENDERECO_AVISOS = ENDERECO_PAINEL + 'dados/avisos.json';
+const AVISOS_MINUTOS = 15;        // de quanto em quanto tempo o servidor confere se houve coleta nova
+const RESUMO_DIA = 'MONDAY';      // resumo semanal: segunda-feira...
+const RESUMO_HORA = 8;            // ...às 8h (Brasília)
+const FILA_MAX = 300;             // e-mails esperando cota, no máximo
+const TESTES_AVISO_DIA = 3;       // "Enviar um exemplo para mim", por pessoa
+const ROTULO_PRIORIDADE = { urgente: 'Urgente', alta: 'Prioridade alta' };
+
+function listaAvisos_(v) {
+  const l = Array.isArray(v) ? v.map(String) : String(v || '').split(',').map(function (x) { return x.trim(); });
+  return PRIORIDADES_AVISO.filter(function (p) { return l.indexOf(p) >= 0; });
+}
+function avisosDe_(p) {
+  return { imediato: listaAvisos_(p && p.avisos_imediato), semanal: listaAvisos_(p && p.avisos_semanal) };
+}
+function descreverAvisos_(a) {
+  const d = function (l) { return l.length ? l.map(function (p) { return ROTULO_PRIORIDADE[p].toLowerCase(); }).join(' e ') : 'nada'; };
+  return 'imediato: ' + d(a.imediato) + ' · semanal: ' + d(a.semanal);
+}
+/** Identificador do link "parar de receber": não mostra o e-mail e só o servidor sabe gerar. */
+function chaveAvisos_(email) { return hmac_('avisos|' + email).slice(0, 32); }
+/** Mesmo formato do coletor (visto_em): "2026-10-26T07:00:00+00:00", para comparar como texto. */
+function isoUtc_(ms) { return new Date(ms).toISOString().slice(0, 19) + '+00:00'; }
+
+function api_salvarAvisos_(ss, imediato, semanal) {
+  const m = membro_(ss, USUARIO_ATUAL_);
+  if (!m.p) throw falha_('A conta do sistema não recebe avisos. Entre com o seu e-mail para escolher.');
+  const novo = { imediato: listaAvisos_(imediato), semanal: listaAvisos_(semanal) };
+  const antes = descreverAvisos_(avisosDe_(m.p));
+  m.p.avisos_imediato = novo.imediato.join(','); m.p.avisos_semanal = novo.semanal.join(',');
+  salvarCampos_(m.tab, m.p, ['avisos_imediato', 'avisos_semanal']);
+  registrar_(ss, 'avisos_alterados', antes + ' → ' + descreverAvisos_(novo));
+  return perfil_(ss, USUARIO_ATUAL_);
+}
+
+/** "Enviar um exemplo para mim": as últimas notícias que a pessoa receberia, marcadas como exemplo. */
+function api_testarAvisos_(ss) {
+  const m = membro_(ss, USUARIO_ATUAL_);
+  if (!m.p) throw falha_('A conta do sistema não recebe avisos.');
+  const a = avisosDe_(m.p), prioridades = listaAvisos_(a.imediato.concat(a.semanal));
+  if (!prioridades.length) throw falha_('Escolha pelo menos um aviso e salve antes de pedir o exemplo.');
+  const cache = CacheService.getScriptCache(), chave = 'teste-aviso:' + USUARIO_ATUAL_;
+  const n = parseInt(cache.get(chave), 10) || 0;
+  if (n >= TESTES_AVISO_DIA) throw falha_('Você já pediu ' + TESTES_AVISO_DIA + ' exemplos hoje. Tente amanhã.');
+  if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) throw falha_('O limite de e-mails de hoje do sistema foi atingido. Tente amanhã.');
+  const irr = irrelevantes_();
+  const itens = lerAvisos_().itens.filter(function (it) { return prioridades.indexOf(it.prioridade) >= 0 && !irr[it.id]; })
+    .sort(function (x, y) { return y.visto_em < x.visto_em ? -1 : 1; }).slice(0, 3);
+  if (!itens.length) throw falha_('Não há notícias recentes com essas prioridades para montar o exemplo.');
+  cache.put(chave, String(n + 1), 24 * 60 * 60);
+  enviarAviso_(m.p, a.imediato.length ? 'imediato' : 'semanal', itens, true);
+  registrar_(ss, 'aviso_exemplo', 'Pediu um exemplo do aviso por e-mail');
+  return { para: USUARIO_ATUAL_, itens: itens.length };
+}
+
+/** Link "parar de receber" do rodapé dos avisos: abre o painel, que confirma e chama esta ação (sem login). */
+function cancelarAvisos_(chave) {
+  chave = String(chave || '');
+  if (!/^[A-Za-z0-9_-]{32}$/.test(chave)) throw falha_('Link inválido. Para mudar os avisos, entre e abra "Meu perfil".');
+  const ss = planilha_(), tab = lerAba_(ss, 'Equipe');
+  const p = tab.linhas.filter(function (x) { return chaveAvisos_(x.email.toLowerCase()) === chave; })[0];
+  if (!p) throw falha_('Link inválido ou de uma conta que não existe mais.');
+  USUARIO_ATUAL_ = p.email.toLowerCase();
+  const tinha = avisosDe_(p);
+  p.avisos_imediato = ''; p.avisos_semanal = '';
+  salvarCampos_(tab, p, ['avisos_imediato', 'avisos_semanal']);
+  registrar_(ss, 'avisos_cancelados', 'Parou de receber pelo link do e-mail (tinha ' + descreverAvisos_(tinha) + ')');
+  return { nome: p.nome };
+}
+
+function lerAvisos_() {
+  const r = UrlFetchApp.fetch(ENDERECO_AVISOS + '?t=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
+  if (r.getResponseCode() !== 200) throw new Error('avisos.json respondeu ' + r.getResponseCode());
+  const d = JSON.parse(r.getContentText());
+  return { gerado_em: String(d.gerado_em || ''), itens: Array.isArray(d.itens) ? d.itens : [] };
+}
+function irrelevantes_() {
+  const m = {};
+  publico_().irrelevantes.forEach(function (id) { m[id] = true; });
+  return m;
+}
+/** Pessoas com senha criada que escolheram algo neste tipo de aviso. */
+function assinantes_(ss, tipo) {
+  return lerAba_(ss, 'Equipe').linhas.filter(function (p) { return p.senha && avisosDe_(p)[tipo].length; });
+}
+
+/** Gatilho a cada 15 min: se houve coleta nova, avisa na hora quem pediu. */
+function verificarAvisos() {
+  USUARIO_ATUAL_ = 'avisos automáticos';
+  try {
+    comTrava_(function () {
+      const props = PropertiesService.getScriptProperties(), ss = planilha_(), dados = lerAvisos_();
+      const ultimo = prop_('AVISOS_ULTIMO');
+      const maisNovo = dados.itens.reduce(function (m, it) { return it.visto_em > m ? it.visto_em : m; }, ultimo || '');
+      if (!ultimo) {  // primeira conferência: só marca o ponto de partida (não manda o histórico)
+        props.setProperty('AVISOS_ULTIMO', maisNovo || isoUtc_(Date.now()));
+        return;
+      }
+      const irr = irrelevantes_();
+      const novos = dados.itens.filter(function (it) { return it.visto_em > ultimo && !irr[it.id]; });
+      if (novos.length) {
+        const fila = filaAvisos_();
+        assinantes_(ss, 'imediato').forEach(function (p) {
+          const quer = avisosDe_(p).imediato;
+          const ids = novos.filter(function (it) { return quer.indexOf(it.prioridade) >= 0; }).map(function (it) { return it.id; });
+          if (ids.length) fila.push({ email: p.email.toLowerCase(), tipo: 'imediato', ids: ids });
+        });
+        gravarFila_(fila);
+      }
+      props.setProperty('AVISOS_ULTIMO', maisNovo);
+      enviarFila_(ss, dados);
+    });
+  } catch (e) { console.error(e); }
+}
+
+/** Gatilho semanal (segunda, 8h): resumo dos últimos 7 dias, só para quem tem novidade. */
+function resumoSemanal() {
+  USUARIO_ATUAL_ = 'avisos automáticos';
+  try {
+    comTrava_(function () {
+      const ss = planilha_(), dados = lerAvisos_(), desde = isoUtc_(Date.now() - 7 * DIA_MS), irr = irrelevantes_();
+      const daSemana = dados.itens.filter(function (it) { return it.visto_em >= desde && !irr[it.id]; });
+      const fila = filaAvisos_();
+      assinantes_(ss, 'semanal').forEach(function (p) {
+        const quer = avisosDe_(p).semanal;
+        const ids = daSemana.filter(function (it) { return quer.indexOf(it.prioridade) >= 0; }).map(function (it) { return it.id; });
+        if (ids.length) fila.push({ email: p.email.toLowerCase(), tipo: 'semanal', ids: ids, desde: desde });
+      });
+      gravarFila_(fila);
+      enviarFila_(ss, dados);
+    });
+  } catch (e) { console.error(e); }
+}
+
+function filaAvisos_() {
+  try { return JSON.parse(prop_('AVISOS_FILA') || '[]'); } catch (e) { return []; }
+}
+function gravarFila_(fila) {
+  // Uma propriedade guarda até 9 KB: além do limite, saem os pedidos mais antigos.
+  fila = fila.slice(-FILA_MAX);
+  let t = JSON.stringify(fila);
+  while (t.length > 8500 && fila.length) { fila.shift(); t = JSON.stringify(fila); }
+  PropertiesService.getScriptProperties().setProperty('AVISOS_FILA', t);
+}
+
+/** Manda o que está na fila enquanto houver cota (a reserva dos certificados nunca é usada). */
+function enviarFila_(ss, dados) {
+  const fila = filaAvisos_();
+  if (!fila.length) return;
+  const porId = {}, pessoas = {};
+  dados.itens.forEach(function (it) { porId[it.id] = it; });
+  lerAba_(ss, 'Equipe').linhas.forEach(function (p) { pessoas[p.email.toLowerCase()] = p; });
+  const restam = [];
+  let enviados = 0, semCota = 0;
+  fila.forEach(function (pedido) {
+    const p = pessoas[pedido.email];
+    if (!p || !p.senha) return;                          // saiu da equipe ou apagaram a senha
+    const quer = avisosDe_(p)[pedido.tipo];               // pode ter mudado de ideia enquanto esperava
+    const itens = pedido.ids.map(function (id) { return porId[id]; })
+      .filter(function (it) { return it && quer.indexOf(it.prioridade) >= 0; });
+    if (!itens.length) return;
+    if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) { semCota++; restam.push(pedido); return; }
+    try { enviarAviso_(p, pedido.tipo, itens, false, pedido.desde); enviados++; }
+    catch (e) { console.error(e); if ((pedido.erros = (pedido.erros || 0) + 1) < 3) restam.push(pedido); }
+  });
+  gravarFila_(restam);
+  if (enviados) registrar_(ss, 'avisos_enviados', enviados + ' e-mail(s) de aviso');
+  if (semCota) registrar_(ss, 'avisos_adiados', semCota + ' aviso(s) esperando a cota de e-mail de amanhã');
+}
+
+function esc_(t) {
+  return String(t || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+}
+function dataBr_(d) { return /^\d{4}-\d{2}-\d{2}/.test(d || '') ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : ''; }
+function contagem_(itens) {
+  const nU = itens.filter(function (it) { return it.prioridade === 'urgente'; }).length, nA = itens.length - nU;
+  const partes = [];
+  if (nU) partes.push(nU + (nU > 1 ? ' notícias urgentes' : ' notícia urgente'));
+  if (nA) partes.push(nA + (nA > 1 ? ' notícias' : ' notícia') + ' de prioridade alta');
+  return partes.join(' e ');
+}
+
+/** Monta e manda um aviso (imediato ou resumo semanal) para uma pessoa. */
+function enviarAviso_(p, tipo, itens, exemplo, desde) {
+  itens = itens.slice().sort(function (x, y) {
+    return (x.prioridade === y.prioridade ? 0 : x.prioridade === 'urgente' ? -1 : 1) || (y.data > x.data ? 1 : y.data < x.data ? -1 : 0);
+  });
+  const email = p.email.toLowerCase(), semanal = tipo === 'semanal';
+  const hoje = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM');
+  const inicio = Utilities.formatDate(new Date(desde ? Date.parse(desde) : Date.now() - 7 * DIA_MS), 'America/Sao_Paulo', 'dd/MM');
+  const assunto = (exemplo ? '[Exemplo] ' : '') + NOME_SISTEMA + ' · ' +
+    (semanal ? 'Resumo da semana (' + inicio + ' a ' + hoje + '): ' : 'Novidade: ') + contagem_(itens);
+  const cancelar = ENDERECO_PAINEL + '#parar-avisos=' + chaveAvisos_(email);
+  const escolha = descreverAvisos_(avisosDe_(p));
+  const intro = semanal
+    ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + ':'
+    : 'A última coleta do Boletim encontrou ' + contagem_(itens) + ':';
+
+  const texto = ['Olá, ' + p.nome + '!', '', (exemplo ? 'Este é um EXEMPLO do aviso que você escolheu.\n\n' : '') + intro, '']
+    .concat(itens.map(function (it) {
+      return '• [' + ROTULO_PRIORIDADE[it.prioridade] + '] ' + it.instituicao + ' · ' + dataBr_(it.data) + '\n  ' + it.titulo +
+        (it.motivo_urgencia ? '\n  Por que é urgente: ' + it.motivo_urgencia : '') + '\n  ' + it.link + '\n';
+    }))
+    .concat(['Ver tudo no painel: ' + ENDERECO_PAINEL, '',
+      'Você recebe este e-mail porque escolheu, em "Meu perfil" no Boletim, receber avisos (' + escolha + ').',
+      'Para mudar: entre no Boletim e abra Meu perfil > Avisos por e-mail.',
+      'Para parar de receber todos os avisos: ' + cancelar, '',
+      'CINEA · Núcleo de Educação Digital · PUC Minas']).join('\n');
+
+  const cor = { urgente: '#b42318', alta: '#b54708' };
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1d2433;max-width:640px;line-height:1.45">' +
+    '<p style="margin:0 0 4px;font-size:13px;color:#5b6475">' + esc_(NOME_SISTEMA) + ' · CINEA - NED (PUC Minas)</p>' +
+    '<h2 style="margin:0 0 12px;font-size:20px">' + (semanal ? 'Resumo da semana' : 'Novidade no Boletim') + '</h2>' +
+    (exemplo ? '<p style="background:#fff4e5;padding:8px 10px;border-radius:6px;font-size:14px">Este é um <b>exemplo</b> do aviso que você escolheu.</p>' : '') +
+    '<p>Olá, ' + esc_(p.nome) + '! ' + esc_(intro) + '</p>' +
+    itens.map(function (it) {
+      return '<div style="border-left:4px solid ' + cor[it.prioridade] + ';padding:6px 0 6px 12px;margin:0 0 14px">' +
+        '<div style="font-size:12px;color:' + cor[it.prioridade] + ';font-weight:bold;text-transform:uppercase">' +
+        esc_(ROTULO_PRIORIDADE[it.prioridade]) + '</div>' +
+        '<a href="' + esc_(it.link) + '" style="font-size:16px;color:#1d4ed8;font-weight:bold;text-decoration:none">' + esc_(it.titulo) + '</a>' +
+        '<div style="font-size:13px;color:#5b6475">' + esc_(it.instituicao) + ' · ' + dataBr_(it.data) + (it.tipo ? ' · ' + esc_(it.tipo) : '') + '</div>' +
+        (it.motivo_urgencia ? '<div style="font-size:13px;margin-top:4px"><b>Por que é urgente:</b> ' + esc_(it.motivo_urgencia) + '</div>' : '') +
+        (it.resumo ? '<div style="font-size:14px;margin-top:4px">' + esc_(it.resumo.slice(0, 300)) + (it.resumo.length > 300 ? '…' : '') + '</div>' : '') +
+        '</div>';
+    }).join('') +
+    '<p><a href="' + esc_(ENDERECO_PAINEL) + '" style="display:inline-block;background:#1d4ed8;color:#fff;padding:9px 16px;border-radius:6px;text-decoration:none">Abrir o Boletim</a></p>' +
+    '<hr style="border:0;border-top:1px solid #e3e6ec;margin:20px 0 10px">' +
+    '<p style="font-size:12px;color:#5b6475">Você recebe este e-mail porque escolheu, em "Meu perfil" no Boletim, receber avisos (' + esc_(escolha) + '). ' +
+    'Para mudar, entre no Boletim e abra <b>Meu perfil &gt; Avisos por e-mail</b>. ' +
+    '<a href="' + esc_(cancelar) + '" style="color:#5b6475">Parar de receber todos os avisos</a>.</p>' +
+    '<p style="font-size:12px;color:#5b6475">CINEA · Núcleo de Educação Digital · PUC Minas</p></div>';
+
+  MailApp.sendEmail(email, assunto, texto, { name: REMETENTE, htmlBody: html });
+}
+
+/** Gatilhos dos avisos (configurar chama; rodar de novo não duplica). */
+function instalarGatilhos_() {
+  const existentes = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+  if (existentes.indexOf('verificarAvisos') < 0)
+    ScriptApp.newTrigger('verificarAvisos').timeBased().everyMinutes(AVISOS_MINUTOS).create();
+  if (existentes.indexOf('resumoSemanal') < 0)
+    ScriptApp.newTrigger('resumoSemanal').timeBased().onWeekDay(ScriptApp.WeekDay[RESUMO_DIA]).atHour(RESUMO_HORA).create();
+}
+
 const API_ = {
   marcacoes: api_marcacoes_, marcar: api_marcar_, marcarLidos: api_marcarLidos_,
   perfil: api_perfil_, salvarMeuNome: api_salvarMeuNome_, alterarSenha: api_alterarSenha_, equipe: api_equipe_, salvarMembro: api_salvarMembro_,
   removerMembro: api_removerMembro_, apagarSenha: api_apagarSenha_, enviarBoasVindas: api_enviarBoasVindas_,
-  registro: api_registro_, uso: api_uso_
+  registro: api_registro_, uso: api_uso_, salvarAvisos: api_salvarAvisos_, testarAvisos: api_testarAvisos_
 };
 
 // ======================================================================== porta de entrada --
@@ -830,7 +1087,7 @@ function doGet() {
 /**
  * Porta única do painel: POST com JSON { acao, ... }.
  *   pedirCodigo { email } · definirSenha { email, codigo, senha } · entrar { email, senha } · sair { sessao }
- *   api { nome, sessao, args }
+ *   cancelarAvisos { chave } · api { nome, sessao, args }
  * Resposta: { ok: true, dados } ou { ok: false, erro } (SESSAO_INVALIDA = pedir login de novo).
  */
 function doPost(e) {
@@ -859,6 +1116,8 @@ function executar_(p) {
       return publico_();
     case 'evento':   // uso do painel (equipe e visitantes); nunca devolve erro para a tela
       try { return evento_(p); } catch (e) { console.error(e); return false; }
+    case 'cancelarAvisos':  // link "parar de receber" dos e-mails de aviso (sem login)
+      return comTrava_(function () { return cancelarAvisos_(p.chave); });
     case 'sair':
       if (p.sessao) PropertiesService.getScriptProperties().deleteProperty('sessao:' + hmac_(p.sessao));
       return true;

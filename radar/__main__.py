@@ -7,7 +7,7 @@ Notícias e DOU aceitam período). Não envia alertas e não marca nada como "no
 2. Coleta todas as fontes ativas (uma falha não interrompe as outras)
 3. Junta com o histórico em docs/dados/itens.json, sem duplicar
 4. Reclassifica tudo (mudanças nas regras valem para o histórico)
-5. Grava itens.json e status.json (lidos pelo painel)
+5. Grava itens.json e status.json (lidos pelo painel) e avisos.json (lido pelo servidor dos e-mails)
 6. Envia alerta só para itens urgentes que apareceram nesta rodada
 """
 
@@ -32,6 +32,9 @@ LIMITE_GOOGLE = 95
 RAIZ = Path(__file__).resolve().parent.parent
 ARQ_ITENS = RAIZ / "docs" / "dados" / "itens.json"
 ARQ_STATUS = RAIZ / "docs" / "dados" / "status.json"
+# Só urgente e alta dos últimos dias: o servidor de acesso (Apps Script) lê este arquivo para mandar os avisos por e-mail.
+ARQ_AVISOS = RAIZ / "docs" / "dados" / "avisos.json"
+DIAS_AVISOS = 35
 # Texto integral dos atos do DOU: usado só na triagem, fica fora de docs/ para o painel carregar leve.
 ARQ_TEXTOS = RAIZ / "dados" / "textos_dou.json"
 ARQ_WORKFLOW = RAIZ / ".github" / "workflows" / "coleta.yml"
@@ -233,6 +236,15 @@ def main(argv):
     ARQ_TEXTOS.parent.mkdir(parents=True, exist_ok=True)
     ids = {it["id"] for it in itens}
     ARQ_TEXTOS.write_text(json.dumps({k: v for k, v in textos.items() if k in ids}, ensure_ascii=False), encoding="utf-8")
+    desde_avisos = (datetime.now(timezone.utc) - timedelta(days=DIAS_AVISOS)).isoformat(timespec="seconds")
+    ARQ_AVISOS.write_text(json.dumps({
+        "gerado_em": agora,
+        "itens": [
+            {k: it.get(k) for k in ("id", "instituicao", "titulo", "link", "data", "visto_em", "prioridade", "tipo", "motivo_urgencia")}
+            | {"resumo": (it.get("resumo") or "")[:400]}
+            for it in itens if it["prioridade"] in ("urgente", "alta") and (it.get("visto_em") or "") >= desde_avisos
+        ],
+    }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     ARQ_STATUS.write_text(json.dumps({
         "ultima_execucao": agora,
         "novos_nesta_execucao": len(novos),

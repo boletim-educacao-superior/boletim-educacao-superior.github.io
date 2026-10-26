@@ -1,6 +1,14 @@
 # Pendências do Boletim da Educação Superior
 
-## 1. Preferências e resumo por e-mail (adiado pelo Diego em 23/10/2026)
+## 1. Preferências e resumo por e-mail: FEITO em 26/10/2026
+
+Implementado como o Diego pediu: grade prioridade (urgente / alta) × frequência (na hora / resumo semanal) em
+Meu perfil. Detalhes no CLAUDE.md e em acesso/README.md. O texto abaixo é o histórico da proposta.
+
+Pendente: quando os avisos estiverem rodando bem, decidir se a issue de alerta no GitHub continua (`ALERTA_GITHUB=0`).
+Atenção à cota de e-mail (~100/dia, dividida com os certificados) se o número de assinantes crescer.
+
+## Histórico: proposta de 23/10/2026
 
 **Atualização (23/10/2026, noite):** com o cadastro aberto, a ideia do Diego é que **cada pessoa com conta** (equipe ou
 usuário) defina as próprias preferências e escolha receber um resumo **diário, semanal, mensal ou trimestral**

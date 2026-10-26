@@ -29,6 +29,10 @@ com todos), ver as abas da equipe e o "novos desde a sua última visita" (calcul
 Quem cadastra as pessoas é um administrador. A pessoa cadastrada recebe um e-mail de boas-vindas, clica em
 **Primeiro acesso**, recebe um código e cria a própria senha. "Esqueci a senha" funciona do mesmo jeito.
 
+**Avisos por e-mail:** quem tem conta escolhe em *Meu perfil › Avisos por e-mail* o que quer receber:
+notícias **urgentes** e/ou de **prioridade alta**, **na hora** (logo depois de cada coleta) e/ou num **resumo
+semanal** (segundas, 8h, só quando há novidade). Cada e-mail tem o link para parar de receber.
+
 Os administradores têm o **Uso da plataforma** (engrenagem › Uso da plataforma): acessos, mapa de calor por
 dia da semana e hora, equipe x visitantes, celular x computador, o que mais se abre e busca. Visitantes são
 contados por navegador (um número aleatório, sem nenhum dado pessoal).

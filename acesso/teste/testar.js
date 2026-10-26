@@ -8,7 +8,8 @@ const crypto = require("crypto");
 
 // ------------------------------------------------------------ simulador --
 function novoAmbiente() {
-  const props = {}, cache = {}, emails = [], planilhas = {}, pastas = {};
+  const props = {}, cache = {}, emails = [], planilhas = {}, pastas = {}, gatilhos = [];
+  const avisos = { gerado_em: "", itens: [] }, buscas = [];
   let relogio = Date.parse("2026-10-23T12:00:00Z");
 
   const toBytes = (v) => (Array.isArray(v) ? Buffer.from(v.map((b) => b & 255)) : Buffer.from(String(v), "utf8"));
@@ -83,7 +84,7 @@ function novoAmbiente() {
     MailApp: {
       cota: 100,
       getRemainingDailyQuota() { return this.cota; },
-      sendEmail(para, assunto, corpo) { this.cota--; emails.push({ para, assunto, corpo }); },
+      sendEmail(para, assunto, corpo, op) { this.cota--; emails.push({ para, assunto, corpo, html: (op || {}).htmlBody || "" }); },
     },
     ContentService: {
       MimeType: { JSON: "json" },
@@ -98,14 +99,28 @@ function novoAmbiente() {
         moveTo: (pasta) => { pastas[id] = pasta.getId(); },
       }),
     },
-    ScriptApp: { getScriptId: () => "script-radar" },
+    ScriptApp: {
+      getScriptId: () => "script-radar",
+      WeekDay: { MONDAY: "MONDAY" },
+      getProjectTriggers: () => gatilhos.map((g) => ({ getHandlerFunction: () => g.funcao })),
+      newTrigger: (funcao) => {
+        const g = { funcao };
+        const b = { timeBased: () => b, everyMinutes: (m) => { g.minutos = m; return b; }, onWeekDay: (d) => { g.dia = d; return b; },
+                    atHour: (h) => { g.hora = h; return b; }, create: () => { gatilhos.push(g); return g; } };
+        return b;
+      },
+    },
+    // O avisos.json publicado pelo coletor (o teste muda "avisos" para simular uma coleta nova).
+    UrlFetchApp: {
+      fetch: (url) => { buscas.push(url); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(avisos) }; },
+    },
   };
   vm.createContext(g);
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "Acesso.gs"), "utf8"), g);
 
   const chamar = (corpo) => JSON.parse(g.doPost({ postData: { contents: JSON.stringify(corpo) } }).texto);
   return {
-    g, props, emails, planilhas, pastas,
+    g, props, emails, planilhas, pastas, gatilhos, avisos, buscas,
     chamar,
     avancar: (min) => { relogio += min * 60e3; },
     ultimoCodigo: (para) => { const e = emails.filter((x) => x.para === para).pop(); return e && (e.assunto.match(/(\d{6})/) || [])[1]; },
@@ -137,13 +152,16 @@ cenario("Configuração", (a) => {
   a.g.configurar();
   conferir("cria segredo e planilha", !!a.props.SEGREDO && !!a.props.PLANILHA_ID);
   const equipe = a.aba("Equipe");
-  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior,perfil", equipe[0]);
+  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior,perfil,avisos_imediato,avisos_semanal", equipe[0]);
   conferir("Diego entra como administrador", equipe[1][0] === DIEGO && equipe[1][2] === true);
   const pasta = "1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe"; // PASTA_ID do Acesso.gs
   conferir("planilha vai para a pasta do Radar", a.pastas[a.props.PLANILHA_ID] === pasta, a.pastas);
   conferir("script vai para a pasta do Radar", a.pastas["script-radar"] === pasta, a.pastas);
   a.g.configurar();
   conferir("rodar de novo não duplica", a.aba("Equipe").length === 2);
+  conferir("cria os gatilhos dos avisos uma vez só", a.gatilhos.length === 2
+    && a.gatilhos.some((g) => g.funcao === "verificarAvisos" && g.minutos === 15)
+    && a.gatilhos.some((g) => g.funcao === "resumoSemanal" && g.dia === "MONDAY" && g.hora === 8), a.gatilhos);
 });
 
 cenario("Primeiro acesso, entrada e sessão", (a) => {
@@ -431,6 +449,92 @@ cenario("Erros internos não vazam", (a) => {
   a.g.SpreadsheetApp.openById = () => { throw new TypeError("detalhe interno do Google"); };
   const r2 = a.chamar({ acao: "entrar", email: DIEGO, senha: SENHA });
   conferir("erro interno vira mensagem genérica", !r2.ok && r2.erro === "Erro no servidor. Tente de novo em instantes.", r2);
+});
+
+cenario("Avisos por e-mail", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  a.api(adm, "salvarMembro", ANA, "Ana Teste", false, false);
+  const ana = primeiroAcesso(a, ANA, "anaradar2026").dados.sessao;
+  const item = (id, prioridade, visto) => ({ id, prioridade, visto_em: visto, data: visto.slice(0, 10), instituicao: "MEC",
+    titulo: "Notícia " + id + " <b>", link: "https://www.gov.br/" + id, tipo: "Portaria", resumo: "Resumo",
+    motivo_urgencia: prioridade === "urgente" ? "Mudança normativa" : "" });
+  const U1 = "a".repeat(16), A1 = "b".repeat(16), U2 = "c".repeat(16), A2 = "d".repeat(16);
+  a.avisos.itens = [item(U1, "urgente", "2026-10-20T07:00:00+00:00"), item(A1, "alta", "2026-10-20T07:00:00+00:00")];
+
+  let r = a.api(ana, "perfil");
+  conferir("perfil traz os avisos (nada escolhido)", r.ok && r.dados.avisos.imediato.length === 0 && r.dados.avisos.semanal.length === 0, r);
+  r = a.api(ana, "salvarAvisos", ["urgente", "xss"], ["urgente", "alta"]);
+  conferir("salva as escolhas e ignora prioridade inválida", r.ok && r.dados.avisos.imediato.join() === "urgente" && r.dados.avisos.semanal.join() === "urgente,alta", r);
+  r = a.api(adm, "salvarAvisos", [], ["alta"]);
+  conferir("cada pessoa escolhe a sua", r.ok && r.dados.avisos.semanal.join() === "alta");
+  conferir("lista da equipe mostra os avisos de cada um", a.api(adm, "equipe").dados.find((p) => p.email === ANA).avisos.imediato.join() === "urgente");
+
+  const antes = a.emails.length;
+  a.g.verificarAvisos();
+  conferir("primeira conferência só marca o ponto de partida (não manda o histórico)", a.emails.length === antes && a.props.AVISOS_ULTIMO === "2026-10-20T07:00:00+00:00", a.props.AVISOS_ULTIMO);
+  conferir("lê o avisos.json do painel sem cache", /dados\/avisos\.json\?t=\d+$/.test(a.buscas[0] || ""), a.buscas);
+
+  a.avisos.itens.push(item(U2, "urgente", "2026-10-26T07:00:00+00:00"), item(A2, "alta", "2026-10-26T07:00:00+00:00"));
+  a.g.verificarAvisos();
+  const novos = a.emails.slice(antes);
+  conferir("coleta nova: aviso imediato só para quem pediu", novos.length === 1 && novos[0].para === ANA, novos.map((e) => e.para));
+  conferir("o aviso traz só a prioridade escolhida e só o que é novo", novos[0] && /Notícia c{16}/.test(novos[0].corpo) && !/Notícia d{16}/.test(novos[0].corpo) && !/Notícia a{16}/.test(novos[0].corpo), novos[0] && novos[0].corpo);
+  conferir("assunto diz o que chegou", novos[0] && /Novidade: 1 notícia urgente$/.test(novos[0].assunto), novos[0] && novos[0].assunto);
+  conferir("HTML escapa o título", novos[0] && /Notícia c{16} &lt;b&gt;/.test(novos[0].html) && novos[0].html.indexOf("c".repeat(16) + " <b>") < 0);
+  a.g.verificarAvisos();
+  conferir("sem coleta nova, não repete", a.emails.length === antes + 1);
+
+  a.avancar(60 * 24 * 3);  // 26/10
+  const antesSemana = a.emails.length;
+  a.g.resumoSemanal();
+  const semana = a.emails.slice(antesSemana);
+  const daAna = semana.find((e) => e.para === ANA), doDiego = semana.find((e) => e.para === DIEGO);
+  conferir("resumo semanal para quem pediu, com as prioridades de cada um", semana.length === 2 && daAna && doDiego, semana.map((e) => e.para));
+  conferir("resumo da Ana: urgente e alta da semana", daAna && /Notícia a{16}/.test(daAna.corpo) && /Notícia d{16}/.test(daAna.corpo) && /Resumo da semana/.test(daAna.assunto), daAna && daAna.assunto);
+  conferir("resumo do Diego: só alta", doDiego && /Notícia b{16}/.test(doDiego.corpo) && !/Notícia a{16}/.test(doDiego.corpo));
+
+  a.avancar(60 * 24 * 14);  // duas semanas sem nada novo
+  const antesVazio = a.emails.length;
+  a.g.resumoSemanal();
+  conferir("semana sem novidade: nenhum resumo", a.emails.length === antesVazio);
+
+  // Notícia marcada como sem relevância pela equipe não vai no aviso.
+  const U3 = "e".repeat(16);
+  a.avisos.itens.push(item(U3, "urgente", "2026-11-09T07:00:00+00:00"));
+  a.api(adm, "marcar", U3, "irrelevante", true, "fora do escopo", "T", "https://x");
+  a.g.verificarAvisos();
+  conferir("sem relevância não gera aviso", a.emails.length === antesVazio);
+
+  // Cota: abaixo da reserva dos certificados, o aviso espera na fila.
+  const U4 = "f".repeat(16);
+  a.avisos.itens.push(item(U4, "urgente", "2026-11-09T08:00:00+00:00"));
+  a.g.MailApp.cota = 30;
+  a.g.verificarAvisos();
+  conferir("sem cota: não envia e guarda na fila", a.emails.length === antesVazio && JSON.parse(a.props.AVISOS_FILA).length === 1, a.props.AVISOS_FILA);
+  a.g.MailApp.cota = 100;
+  a.g.verificarAvisos();
+  conferir("com cota de volta: envia o que esperava", a.emails.length === antesVazio + 1 && /Notícia f{16}/.test(a.emails[a.emails.length - 1].corpo)
+    && JSON.parse(a.props.AVISOS_FILA).length === 0);
+
+  // Exemplo para mim
+  r = a.api(ana, "testarAvisos");
+  conferir("exemplo sai para a própria pessoa, marcado como exemplo", r.ok && a.emails[a.emails.length - 1].para === ANA && /^\[Exemplo\]/.test(a.emails[a.emails.length - 1].assunto), r);
+  a.api(ana, "testarAvisos"); a.api(ana, "testarAvisos");
+  r = a.api(ana, "testarAvisos");
+  conferir("no máximo 3 exemplos por dia", !r.ok && /3 exemplos/.test(r.erro), r);
+
+  // Parar de receber pelo link do e-mail
+  const link = (a.emails.filter((e) => e.para === ANA).pop().corpo.match(/#parar-avisos=([A-Za-z0-9_-]+)/) || [])[1];
+  conferir("rodapé tem o link para parar de receber, sem o e-mail", !!link && link.length === 32 && !/ana/i.test(link), link);
+  r = a.chamar({ acao: "cancelarAvisos", chave: "x".repeat(32) });
+  conferir("link inventado é recusado", !r.ok && /inválido/.test(r.erro), r);
+  r = a.chamar({ acao: "cancelarAvisos", chave: link });
+  conferir("link certo cancela todos os avisos da pessoa", r.ok && r.dados.nome === "Ana Teste"
+    && a.api(ana, "perfil").dados.avisos.imediato.length === 0 && a.api(ana, "perfil").dados.avisos.semanal.length === 0, r);
+  conferir("cancelamento entra no registro", a.aba("Registro").some((l) => l[2] === "avisos_cancelados" && l[1] === ANA));
+  r = a.api(ana, "testarAvisos");
+  conferir("sem nada escolhido, o exemplo pede para escolher", !r.ok && /Escolha pelo menos/.test(r.erro), r);
 });
 
 console.log(`\n${total - falhas} de ${total} verificações passaram.`);
