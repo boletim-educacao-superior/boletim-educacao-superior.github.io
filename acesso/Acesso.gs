@@ -588,7 +588,7 @@ function api_salvarMeuNome_(ss, nome) {
 // ===================================================================== marcações das notícias --
 
 const TIPOS_MARCA = ['sinalizada', 'irrelevante'];
-const ROTULO_MARCA = { sinalizada: 'Sinalizou', irrelevante: 'Marcou como sem relevância' };
+const ROTULO_MARCA = { sinalizada: 'Marcou como relevante', irrelevante: 'Marcou como sem relevância' };
 const ID_ITEM_RE = /^[a-f0-9]{16}$/;   // id gerado pelo coletor (radar/fontes.py: gerar_id)
 
 function mapaNomes_(ss) {

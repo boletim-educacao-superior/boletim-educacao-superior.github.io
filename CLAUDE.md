@@ -79,6 +79,11 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   marca o ponto de partida) e `resumoSemanal`. Sem relevância não entra. Sem cota (reserva de 30 dos certificados), o
   aviso espera na fila `AVISOS_FILA`. Rodapé tem link `#parar-avisos=<HMAC do e-mail>`: o painel confirma e chama
   `cancelarAvisos` (sem login). "Enviar um exemplo para mim": até 3 por dia. A issue no GitHub continua existindo.
+- **"Sinalizadas" virou "Relevantes"** (26/10/2026, par com "Sem relevância"): só os textos mudaram. Por dentro a marca
+  continua `sinalizada` (planilha, servidor, visão `sinalizadas`); o endereço novo é #relevantes e #sinalizadas ainda
+  funciona (`APELIDO_VISAO` em app.js). Botão da notícia: "☆ Relevante" / "★ Relevante".
+- Ícones (i) com balão (`ligarInfos` em app.js; `data-info` = id do balão no fim do index.html): no fim do menu (o que é
+  cada seção), no cartão Urgentes e no filtro Prioridade (os dois abrem a mesma legenda de Urgente/Alta).
 - **Administrador inscreve nos avisos** (26/10/2026, ex.: gestor que não entra na plataforma): no cadastro (grade "Avisos
   por e-mail", desmarcando boas-vindas) ou em "Avisos por e-mail" na linha da pessoa (`salvarAvisosDe`). Quem recebe não
   precisa ter senha. Coluna `avisos_por` = nome de quem inscreveu (vai no rodapé dos avisos); vazia quando a própria pessoa

@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261026145903"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261026173811"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -48,7 +48,7 @@ const VISOES = {
     filtro: (it) => marca(it) !== "irrelevante",
   },
   "sinalizadas": {
-    titulo: "Sinalizadas", explica: "Notícias que alguém da equipe marcou para acompanhar. Todos veem as mesmas.",
+    titulo: "Relevantes", explica: "Notícias que alguém da equipe marcou como relevantes para acompanhar. Todos veem as mesmas.",
     filtro: (it) => marca(it) === "sinalizada", semPeriodo: true, semPrioridade: true,
   },
   "nao-lidas": {
@@ -65,9 +65,9 @@ const VISOES = {
   },
 };
 
-// Para quem criou a própria conta (perfil Usuário), sinalizadas e lidas são pessoais.
+// Para quem criou a própria conta (perfil Usuário), relevantes e lidas são pessoais.
 const EXPLICA_USUARIO = {
-  "sinalizadas": "As notícias que você sinalizou para acompanhar (só você vê).",
+  "sinalizadas": "As notícias que você marcou como relevantes para acompanhar (só você vê).",
   "nao-lidas": "O que você ainda não abriu nem marcou como lido.",
   "lidas": "O que você já abriu ou marcou como lido (só você vê).",
   "sem-relevancia": "Notícias que a equipe do CINEA marcou como fora do escopo do Boletim.",
@@ -186,9 +186,12 @@ function registrarEvento(tipo, detalhe = "") {
 }
 
 // ------------------------------------------------------------------ páginas --
-// O endereço manda: #inicio, #sinalizadas, #nao-lidas, #lidas, #sem-relevancia ou #admin.
+// O endereço manda: #inicio, #relevantes, #nao-lidas, #lidas, #sem-relevancia ou #admin.
+// #sinalizadas (nome antigo de Relevantes) continua funcionando.
+const APELIDO_VISAO = { relevantes: "sinalizadas" };
 function irPara(hash) {
-  const nome = String(hash || "").replace(/^#/, "") || "inicio";
+  const bruto = String(hash || "").replace(/^#/, "") || "inicio";
+  const nome = APELIDO_VISAO[bruto] || bruto;
   const admin = nome === "admin" && Acesso.perfil?.admin;
   $("pagina-radar").hidden = admin;
   $("pagina-admin").hidden = !admin;
@@ -198,8 +201,8 @@ function irPara(hash) {
     return;
   }
   let visao = VISOES[nome] ? nome : "inicio";
-  if (visao !== "inicio" && !logado()) {  // Sinalizadas, Lidas etc. são da equipe
-    pedirLogin(`"${VISOES[visao].titulo}" é uma área para quem tem conta. Entre para acompanhar as notícias sinalizadas, lidas e sem relevância.`);
+  if (visao !== "inicio" && !logado()) {  // Relevantes, Lidas etc. são de quem tem conta
+    pedirLogin(`"${VISOES[visao].titulo}" é uma área para quem tem conta. Entre para acompanhar as notícias relevantes, lidas e sem relevância.`);
     visao = "inicio";
   }
   if (nome === "admin" && !admin) visao = "inicio";
@@ -272,7 +275,7 @@ function montarFiltros() {
   document.querySelectorAll("[data-atalho]").forEach((b) =>
     b.addEventListener("click", () => aplicarAtalho(b.dataset.atalho)));
   $("btn-limpar").addEventListener("click", () => aplicarAtalho("limpar"));
-  ligarInfoPrioridade();
+  ligarInfos();
   $("btn-csv").addEventListener("click", exportarCSV);
   $("btn-lertodos").addEventListener("click", () => marcarLidos(paginaAtual(filtrar()).map((it) => it.id), true));
   // Visitante: o cartão de novidades leva à entrada (não há registro de visita sem login).
@@ -288,13 +291,30 @@ function montarFiltros() {
   });
 }
 
-// Balão "O que significa Urgente e Alta": abre e fecha no (i); fecha ao clicar fora ou com Esc.
-function ligarInfoPrioridade() {
-  const b = $("btn-info-prioridade"), pop = $("info-prioridade");
-  const abrir = (sim) => { pop.hidden = !sim; b.setAttribute("aria-expanded", String(sim)); };
-  b.addEventListener("click", (e) => { e.stopPropagation(); abrir(pop.hidden); });
-  document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target)) abrir(false); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !pop.hidden) { abrir(false); b.focus(); } });
+// Balões dos (i) (data-info = id do balão): abrem logo abaixo do botão clicado, sem sair da tela;
+// fecham ao clicar fora, com Esc ou ao rolar a página. O mesmo balão serve a mais de um (i).
+function ligarInfos() {
+  let aberto = null;  // { pop, botao }
+  const fechar = () => {
+    if (!aberto) return;
+    aberto.pop.hidden = true; aberto.botao.setAttribute("aria-expanded", "false"); aberto = null;
+  };
+  document.querySelectorAll(".botao-info[data-info]").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const pop = $(b.dataset.info), mesmo = aberto && aberto.botao === b;
+    fechar();
+    if (mesmo) return;
+    pop.hidden = false;
+    const r = b.getBoundingClientRect(), largura = pop.offsetWidth;
+    pop.style.left = Math.max(16, Math.min(r.left - 8, innerWidth - largura - 16)) + "px";
+    pop.style.top = r.bottom + 6 + "px";
+    b.setAttribute("aria-expanded", "true");
+    aberto = { pop, botao: b };
+  }));
+  document.addEventListener("click", (e) => { if (aberto && !aberto.pop.contains(e.target)) fechar(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && aberto) { const b = aberto.botao; fechar(); b.focus(); } });
+  addEventListener("scroll", fechar, { passive: true });
+  addEventListener("resize", fechar);
 }
 
 function aplicarAtalho(nome) {
@@ -381,7 +401,7 @@ function render() {
     const li = document.createElement("li");
     li.className = "vazio";
     const vazio = {
-      "sinalizadas": 'Nenhuma notícia sinalizada. Use "☆ Sinalizar" numa notícia para a equipe acompanhar.',
+      "sinalizadas": 'Nenhuma notícia marcada como relevante. Use "☆ Relevante" numa notícia para a equipe acompanhar.',
       "sem-relevancia": "Nada foi marcado como sem relevância.",
       "lidas": "Você ainda não leu nenhuma notícia com esses filtros.",
       "nao-lidas": "Você já leu tudo o que aparece com esses filtros.",
@@ -489,7 +509,7 @@ function montarItem(it) {
   org.title = org.textContent;
   if (!logado()) {
     // Visitante: os botões aparecem com cadeado e explicam que é preciso entrar.
-    const precisa = { "btn-sinalizar": "Para sinalizar, você precisa estar logado. Não tem conta? Crie a sua, é grátis.",
+    const precisa = { "btn-sinalizar": "Para marcar como relevante, você precisa estar logado. Não tem conta? Crie a sua, é grátis.",
                       "btn-irrelevante": "Para marcar como sem relevância, você precisa estar logado.",
                       "btn-lido": "Para marcar como lida, você precisa estar logado. Não tem conta? Crie a sua, é grátis." };
     for (const [classe, texto] of Object.entries(precisa)) {
@@ -526,15 +546,15 @@ function pintarItem(el, it) {
   el.classList.toggle("irrelevante", m?.tipo === "irrelevante");
   const s = el.querySelector(".btn-sinalizar");
   if (!logado()) {  // visitante: rótulos fixos com cadeado; nada de nomes da equipe
-    s.textContent = "🔒 Sinalizar";
+    s.textContent = "🔒 Relevante";
     el.querySelector(".btn-irrelevante").textContent = "🔒 Sem relevância";
     el.querySelector(".btn-lido").textContent = "🔒 Marcar como lida";
     el.querySelector(".marca-info").textContent = "";
     return;
   }
-  s.textContent = m?.tipo === "sinalizada" ? "★ Sinalizada" : "☆ Sinalizar";
+  s.textContent = m?.tipo === "sinalizada" ? "★ Relevante" : "☆ Relevante";
   s.setAttribute("aria-pressed", String(m?.tipo === "sinalizada"));
-  s.title = m?.tipo === "sinalizada" ? "Tirar a sinalização (para toda a equipe)" : "Sinalizar para a equipe acompanhar";
+  s.title = m?.tipo === "sinalizada" ? "Desmarcar como relevante (para toda a equipe)" : "Marcar como relevante para a equipe acompanhar";
   el.querySelector(".btn-irrelevante").textContent = ehUsuario() ? "🔒 Sem relevância"
     : m?.tipo === "irrelevante" ? "↺ Desfazer “sem relevância”" : "Sem relevância";
   el.querySelector(".btn-lido").textContent = lido ? "Marcar como não lida" : "Marcar como lida";
@@ -545,7 +565,7 @@ function pintarItem(el, it) {
   const partes = [];
   if (m) partes.push(m.pendente ? "Salvando…"
     : m.tipo === "irrelevante" && !m.por ? "Marcada pela equipe como sem relevância"
-    : `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} por ${quem(m)}${quando(m)}${m.motivo ? ` · “${m.motivo}”` : ""}`);
+    : `${m.tipo === "sinalizada" ? "Relevante" : "Sem relevância"} por ${quem(m)}${quando(m)}${m.motivo ? ` · “${m.motivo}”` : ""}`);
   if (lido) { const l = estado.lidos.get(it.id); partes.push(`Lida por ${quem(l)}${quando(l)}`); }
   info.textContent = partes.join(" · ");
 }
@@ -566,7 +586,7 @@ async function alternarMarca(it, tipo, motivo = "") {
   repintar(it.id); atualizarContadores();
   try {
     aplicarMarcacoes(await api("marcar", it.id, tipo, ativo, motivo, it.titulo, it.link));
-    aviso(ativo ? (tipo === "sinalizada" ? (ehUsuario() ? "Sinalizada para você acompanhar." : "Sinalizada para a equipe.")
+    aviso(ativo ? (tipo === "sinalizada" ? (ehUsuario() ? "Marcada como relevante para você acompanhar." : "Marcada como relevante para a equipe.")
       : "Marcada como sem relevância.") : "Marcação desfeita.");
   } catch (e) {
     antes ? estado.marcas.set(it.id, antes) : estado.marcas.delete(it.id);
@@ -706,7 +726,7 @@ function exportarCSV() {
   const linhas = [cols.join(";")];
   for (const it of filtrar()) {
     const m = estado.marcas.get(it.id);
-    const linha = { ...it, marcacao: m ? `${m.tipo === "sinalizada" ? "Sinalizada" : "Sem relevância"} (${m.nome || m.por})` : "" };
+    const linha = { ...it, marcacao: m ? `${m.tipo === "sinalizada" ? "Relevante" : "Sem relevância"} (${m.nome || m.por})` : "" };
     linhas.push(cols.map((c) => {
       const v = Array.isArray(linha[c]) ? linha[c].join(", ") : linha[c] ?? "";
       return `"${String(v).replace(/"/g, '""')}"`;

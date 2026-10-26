@@ -484,13 +484,21 @@ body:not(.visitante) .convite-topo { display: none; }
   border: 0; border-radius: 50%; background: none; color: var(--texto-suave); cursor: pointer; opacity: .75;
 }
 .botao-info:hover, .botao-info[aria-expanded="true"], .botao-info:focus-visible { opacity: 1; color: var(--marca); background: var(--fundo); }
+/* Balões dos (i): posição calculada junto do botão (fixa na tela; fecha ao rolar) */
 .info-pop {
-  position: absolute; z-index: 20; top: 22px; left: 0; width: min(460px, calc(100vw - 32px));
+  position: fixed; z-index: 40; top: 0; left: 0; width: min(440px, calc(100vw - 32px));
   background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 14px;
   box-shadow: 0 12px 32px rgba(16, 24, 40, .16); display: flex; flex-direction: column; gap: 8px;
 }
 .info-pop[hidden] { display: none; }
 .info-pop p { margin: 0; font-size: .82rem; line-height: 1.45; color: var(--texto-suave); }
+.info-pop p b { color: var(--texto); font-weight: 600; }
+.info-pop .info-pop-nota { font-size: .76rem; border-top: 1px solid var(--borda); padding-top: 6px; }
+/* (i) no cartão de urgentes e no fim do menu */
+.cartao-caixa { position: relative; display: flex; }
+.cartao-caixa > .cartao { flex: 1; }
+.botao-info-cartao { position: absolute; top: 8px; right: 8px; }
+.menu-principal .botao-info-menu { align-self: center; margin-left: 2px; }
 .selo-legenda {
   display: inline-block; border-radius: 5px; padding: 0 7px; margin-right: 4px; font-weight: 600; font-size: .7rem;
   text-transform: uppercase; letter-spacing: .03em; vertical-align: 1px;
@@ -588,3 +596,13 @@ i.seg-publico, .seg-publico { background: var(--barra-publico); }
 /* Assinatura do CINEA em duas linhas: menor no celular e na tela de entrada, para cada linha caber inteira */
 .portaria-marca .sub { font-size: .8rem; }
 @media (max-width: 720px) { .topo .sub { font-size: .78rem; } }
+
+/* Celular, quem entrou: título ao lado da conta; a assinatura do CINEA desce e usa a largura toda (não quebra em 4 linhas) */
+@media (max-width: 720px) {
+  body:not(.visitante) .titulo-bloco { display: contents; }
+  body:not(.visitante) .titulo-bloco h1 { grid-column: 1; grid-row: 1; align-self: center; }
+  body:not(.visitante) .titulo-bloco .sub { grid-column: 1 / -1; grid-row: 2; margin-top: -6px; }
+  body:not(.visitante) .topo-acoes { grid-row: 3; }
+}
+/* O rótulo "Prioridade" dentro do campo não estica (no celular, os labels dos filtros ganham flex) */
+.linha-filtros .rotulo-filtro label { flex: none; }

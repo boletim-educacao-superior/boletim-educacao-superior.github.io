@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261026145903"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261026173811"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -119,7 +119,7 @@ function fecharPortaria() {
   document.body.classList.remove("bloqueado");
 }
 
-/** Leva à tela de entrada explicando o motivo ("Para sinalizar, você precisa estar logado."). */
+/** Leva à tela de entrada explicando o motivo ("Para marcar como relevante, você precisa estar logado."). */
 function pedirLogin(motivo) {
   mostrarPortaria("entrar");
   if (motivo) msg($a("form-entrar"), motivo, "info");
@@ -491,7 +491,7 @@ const ROTULO_ACAO = {
   senha_alterada: "Trocou a senha", senha_apagada: "Senha apagada pelo administrador", codigo_enviado: "Pediu código",
   membro_cadastrado: "Cadastrou pessoa", membro_alterado: "Alterou pessoa", membro_removido: "Removeu pessoa",
   boasvindas_enviado: "Enviou boas-vindas", nome_alterado: "Trocou o próprio nome",
-  item_sinalizada: "Sinalizou notícia", item_sinalizada_desfeito: "Tirou a sinalização",
+  item_sinalizada: "Marcou notícia como relevante", item_sinalizada_desfeito: "Desmarcou como relevante",
   item_irrelevante: "Marcou como sem relevância", item_irrelevante_desfeito: "Desfez “sem relevância”",
 };
 
@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
 // e o que mais se abre e busca. Escala de uma cor só (claro → escuro) no mapa; legenda e números sempre visíveis.
 const DIAS_SEMANA = [["Seg", 1], ["Ter", 2], ["Qua", 3], ["Qui", 4], ["Sex", 5], ["Sáb", 6], ["Dom", 0]];
 const NOME_DIA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-const NOME_VISAO = { inicio: "Início", sinalizadas: "Sinalizadas", "nao-lidas": "Não lidas", lidas: "Lidas",
+const NOME_VISAO = { inicio: "Início", sinalizadas: "Relevantes", relevantes: "Relevantes", "nao-lidas": "Não lidas", lidas: "Lidas",
                      "sem-relevancia": "Sem relevância", admin: "Administrador" };
 
 $a("uso-periodo").addEventListener("change", () => carregarUso());
