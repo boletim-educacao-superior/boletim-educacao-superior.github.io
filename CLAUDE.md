@@ -86,7 +86,7 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   O simulador do Google dos testes fica em `acesso/teste/ambiente.js`.
 - Ajustes de 26/10/2026 (pedido do Diego): todo mundo abre em "Urgente e alta" + "Últimos 30 dias", urgentes primeiro
   (filtros não são guardados entre visitas); legenda "Indicadores dos últimos 30 dias. Para mudar, use o filtro "Período"";
-  legenda de Urgente/Alta abaixo dos cartões; texto do Início pensado para quem é de fora; "Coletar agora" virou
+  o que é Urgente/Alta fica num ícone (i) discreto ao lado da legenda do período (balão ao clicar); texto do Início pensado para quem é de fora; "Coletar agora" virou
   **"Verificar novas notícias"** e só aparece para administradores (classe `so-admin` + `body.perfil-admin`);
   assinatura em duas linhas: "Centro de Inovação em Ensino e Aprendizagem (CINEA)" / "Núcleo de Educação Digital (NED) - PUC Minas"
   (no site e nos e-mails).

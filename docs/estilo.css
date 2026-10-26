@@ -471,19 +471,29 @@ body:not(.visitante) .convite-topo { display: none; }
 }
 .resumo-periodo { margin: 0 0 8px; font-size: .84rem; color: var(--texto-suave); }
 .resumo-periodo b { color: var(--texto); font-weight: 600; }
-#pagina-radar:not(.visao-inicio) .resumo-periodo { display: none; }
+#pagina-radar:not(.visao-inicio) .linha-periodo { display: none; }
 
-/* Legenda das prioridades (abaixo dos cartões) */
-.legenda-prioridade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; margin: -4px 0 14px; }
-.legenda-prioridade p { margin: 0; font-size: .8rem; line-height: 1.45; color: var(--texto-suave); }
+/* "O que é Urgente e Alta": ícone (i) discreto ao lado da legenda do período; abre um balão ao clicar */
+.linha-periodo { position: relative; display: flex; align-items: center; gap: 6px; margin: 0 0 8px; }
+.linha-periodo .resumo-periodo { margin: 0; }
+.botao-info {
+  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; flex: none;
+  border: 0; border-radius: 50%; background: none; color: var(--texto-suave); cursor: pointer; opacity: .75;
+}
+.botao-info:hover, .botao-info[aria-expanded="true"], .botao-info:focus-visible { opacity: 1; color: var(--marca); background: var(--fundo); }
+.info-pop {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: min(460px, calc(100vw - 32px));
+  background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 14px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, .16); display: flex; flex-direction: column; gap: 8px;
+}
+.info-pop[hidden] { display: none; }
+.info-pop p { margin: 0; font-size: .82rem; line-height: 1.45; color: var(--texto-suave); }
 .selo-legenda {
   display: inline-block; border-radius: 5px; padding: 0 7px; margin-right: 4px; font-weight: 600; font-size: .7rem;
   text-transform: uppercase; letter-spacing: .03em; vertical-align: 1px;
 }
 .selo-urgente { background: var(--urgente-fundo); color: var(--urgente); }
 .selo-alta { background: var(--alta-fundo); color: var(--alta); }
-#pagina-radar:not(.visao-inicio) .legenda-prioridade { display: none; }
-@media (max-width: 720px) { .legenda-prioridade { grid-template-columns: minmax(0, 1fr); } }
 
 /* Só administradores (botão "Verificar novas notícias") */
 body:not(.perfil-admin) .so-admin { display: none !important; }

@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261026140916"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261026143616"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -272,6 +272,7 @@ function montarFiltros() {
   document.querySelectorAll("[data-atalho]").forEach((b) =>
     b.addEventListener("click", () => aplicarAtalho(b.dataset.atalho)));
   $("btn-limpar").addEventListener("click", () => aplicarAtalho("limpar"));
+  ligarInfoPrioridade();
   $("btn-csv").addEventListener("click", exportarCSV);
   $("btn-lertodos").addEventListener("click", () => marcarLidos(paginaAtual(filtrar()).map((it) => it.id), true));
   // Visitante: o cartão de novidades leva à entrada (não há registro de visita sem login).
@@ -285,6 +286,15 @@ function montarFiltros() {
     estado.somenteNovos = false; estado.pagina = 1; render();
     $("contagem").scrollIntoView({ behavior: "smooth", block: "start" });
   });
+}
+
+// Balão "O que significa Urgente e Alta": abre e fecha no (i); fecha ao clicar fora ou com Esc.
+function ligarInfoPrioridade() {
+  const b = $("btn-info-prioridade"), pop = $("info-prioridade");
+  const abrir = (sim) => { pop.hidden = !sim; b.setAttribute("aria-expanded", String(sim)); };
+  b.addEventListener("click", (e) => { e.stopPropagation(); abrir(pop.hidden); });
+  document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target)) abrir(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !pop.hidden) { abrir(false); b.focus(); } });
 }
 
 function aplicarAtalho(nome) {
