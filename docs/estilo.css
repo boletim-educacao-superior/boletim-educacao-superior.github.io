@@ -493,6 +493,7 @@ body:not(.visitante) .convite-topo { display: none; }
 .info-pop[hidden] { display: none; }
 .info-pop p { margin: 0; font-size: .82rem; line-height: 1.45; color: var(--texto-suave); }
 .info-pop p b { color: var(--texto); font-weight: 600; }
+.info-pop .info-pop-titulo { color: var(--texto); font-weight: 600; font-size: .86rem; }
 .info-pop .info-pop-nota { font-size: .76rem; border-top: 1px solid var(--borda); padding-top: 6px; }
 /* (i) no cartão de urgentes e no fim do menu */
 .cartao-caixa { position: relative; display: flex; }
