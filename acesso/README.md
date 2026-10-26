@@ -79,6 +79,7 @@ botão e rodapé. Ficam no `Acesso.gs`, seção "e-mails (padrão visual)":
 | Código: primeiro acesso | quem foi cadastrado por um administrador e ainda não tem senha |
 | Código: troca de senha | "Esqueci a senha" |
 | Boas-vindas | administrador cadastra alguém (ou "Reenviar boas-vindas") |
+| Inscrição nos avisos | administrador inscreve alguém sem mandar boas-vindas (ex.: gestor que só quer os e-mails) |
 | Aviso na hora | depois da coleta, para quem marcou "Na hora" |
 | Resumo semanal | segundas, 8h, só para quem teve novidade |
 | Exemplo | "Enviar um exemplo para mim", em Meu perfil |

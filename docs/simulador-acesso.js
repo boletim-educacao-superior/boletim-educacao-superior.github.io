@@ -109,12 +109,22 @@ window.SimuladorAcesso = (() => {
           reg(p.email, "aviso_exemplo", "(simulado: nenhum e-mail sai)");
           return { para: p.email, itens: 3 };
         },
-        salvarMembro: (email, nome, adm, boas, perf) => {
+        salvarAvisosDe: (email, imediato, semanal) => {
+          admin();
+          const m = pessoa(email);
+          if (!m) throw new Error("Pessoa não encontrada.");
+          const so = (l) => ["urgente", "alta"].filter((x) => (l || []).includes(x));
+          m.avisos = { imediato: so(imediato), semanal: so(semanal) };
+          m.avisos_por = m.avisos.imediato.length || m.avisos.semanal.length ? p.nome : "";
+          reg(p.email, "avisos_de_outro", email);
+          return lista();
+        },
+        salvarMembro: (email, nome, adm, boas, perf, avisos) => {
           admin(); email = String(email).toLowerCase();
           if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(email)) throw new Error("Digite um e-mail válido.");
           const m = pessoa(email);
           if (m) { m.nome = nome; m.admin = adm; if (perf) m.perfil = perf === "usuario" ? "usuario" : ""; if (m.perfil === "usuario") m.admin = false; reg(p.email, "membro_alterado", email); }
-          else { equipe.push({ email, nome, admin: adm, senha: "", cadastrado_em: agora(), ultimo_acesso: "", boasvindas_em: boas ? agora() : "" }); reg(p.email, "membro_cadastrado", email); }
+          else { equipe.push({ email, nome, admin: adm, senha: "", cadastrado_em: agora(), ultimo_acesso: "", boasvindas_em: boas ? agora() : "", avisos: avisos || { imediato: [], semanal: [] }, avisos_por: avisos && (avisos.imediato.length || avisos.semanal.length) ? p.nome : "" }); reg(p.email, "membro_cadastrado", email); }
           return lista();
         },
         removerMembro: (email) => { admin(); equipe.splice(equipe.indexOf(pessoa(email)), 1); reg(p.email, "membro_removido", email); return lista(); },

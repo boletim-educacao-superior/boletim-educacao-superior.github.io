@@ -79,6 +79,10 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   marca o ponto de partida) e `resumoSemanal`. Sem relevância não entra. Sem cota (reserva de 30 dos certificados), o
   aviso espera na fila `AVISOS_FILA`. Rodapé tem link `#parar-avisos=<HMAC do e-mail>`: o painel confirma e chama
   `cancelarAvisos` (sem login). "Enviar um exemplo para mim": até 3 por dia. A issue no GitHub continua existindo.
+- **Administrador inscreve nos avisos** (26/10/2026, ex.: gestor que não entra na plataforma): no cadastro (grade "Avisos
+  por e-mail", desmarcando boas-vindas) ou em "Avisos por e-mail" na linha da pessoa (`salvarAvisosDe`). Quem recebe não
+  precisa ter senha. Coluna `avisos_por` = nome de quem inscreveu (vai no rodapé dos avisos); vazia quando a própria pessoa
+  escolhe. Sem boas-vindas, sai o e-mail `emailInscricao_`; com boas-vindas, ele já conta dos avisos.
 - **Modelos de e-mail** (26/10/2026): todos saem do molde `emailHtml_` no Acesso.gs (cores do painel, tema claro;
   tabelas e estilos na linha, para Gmail/Outlook) + versão em texto. Modelos: `emailCodigo_` (cadastro / primeiro acesso /
   troca de senha, escolhido pelo servidor), `emailBoasVindas_`, `emailAviso_` (na hora, resumo semanal, exemplo).

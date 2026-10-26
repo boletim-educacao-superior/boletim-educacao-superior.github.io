@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261026145142">
+<link rel="stylesheet" href="estilo.css?v=20261026145903">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261026145142";</script>
+<script>window.RADAR_VERSAO = "20261026145903";</script>
 </head>
 <body class="bloqueado">
 
@@ -229,6 +229,12 @@
       <label>Nome <input id="membro-nome" autocomplete="off" maxlength="120"></label>
       <label>E-mail <input id="membro-email" type="email" autocomplete="off"></label>
     </div>
+    <fieldset class="avisos avisos-cadastro">
+      <legend>Avisos por e-mail <span class="meta">(opcional)</span></legend>
+      <p class="dica">Para quem só quer receber os e-mails, sem entrar na plataforma (um gestor, por exemplo): marque os avisos
+        e desmarque "Enviar e-mail de boas-vindas". A pessoa recebe um e-mail explicando a inscrição e como parar de receber.</p>
+      <div class="grade-avisos" id="membro-avisos"></div>
+    </fieldset>
     <div class="linha-membro">
       <label class="check"><input id="membro-admin" type="checkbox"> Administrador</label>
       <label class="check"><input id="membro-boasvindas" type="checkbox" checked> Enviar e-mail de boas-vindas</label>
@@ -350,6 +356,21 @@
 </dialog>
 
 <!-- Alterar a própria senha -->
+<!-- Administrador: avisos por e-mail de outra pessoa -->
+<dialog id="dlg-avisos-membro" class="dialogo" aria-labelledby="am-titulo">
+  <form id="form-avisos-membro" method="dialog" novalidate>
+    <h2 id="am-titulo">Avisos por e-mail</h2>
+    <p class="dica" id="am-quem"></p>
+    <div class="grade-avisos" id="am-avisos"></div>
+    <label class="check"><input type="checkbox" id="am-avisar" checked> Avisar a pessoa por e-mail sobre a inscrição</label>
+    <p class="msg" role="alert"></p>
+    <div class="dialogo-acoes">
+      <button type="button" class="btn-sec" data-fechar>Cancelar</button>
+      <button type="submit" class="btn" id="am-salvar">Salvar avisos</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlg-senha" class="dialogo" aria-labelledby="dlg-senha-titulo">
   <form id="form-senha" method="dialog" novalidate>
     <h2 id="dlg-senha-titulo">Alterar senha</h2>
@@ -400,7 +421,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261026145142"></script>
-<script src="app.js?v=20261026145142"></script>
+<script src="acesso.js?v=20261026145903"></script>
+<script src="app.js?v=20261026145903"></script>
 </body>
 </html>

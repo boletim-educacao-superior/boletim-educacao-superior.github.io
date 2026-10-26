@@ -27,7 +27,7 @@ cenario("Configuração", (a) => {
   a.g.configurar();
   conferir("cria segredo e planilha", !!a.props.SEGREDO && !!a.props.PLANILHA_ID);
   const equipe = a.aba("Equipe");
-  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior,perfil,avisos_imediato,avisos_semanal", equipe[0]);
+  conferir("cabeçalho da Equipe", equipe[0].join() === "email,nome,admin,cadastrado_por,cadastrado_em,boasvindas_em,senha,senha_em,ultimo_acesso,visita_anterior,perfil,avisos_imediato,avisos_semanal,avisos_por", equipe[0]);
   conferir("Diego entra como administrador", equipe[1][0] === DIEGO && equipe[1][2] === true);
   const pasta = "1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe"; // PASTA_ID do Acesso.gs
   conferir("planilha vai para a pasta do Radar", a.pastas[a.props.PLANILHA_ID] === pasta, a.pastas);
@@ -429,6 +429,48 @@ cenario("Modelos de e-mail", (a) => {
   conferir("esqueci a senha: código com título de troca", e && /Troque a sua senha/.test(e.html) && /sua senha continua a mesma/.test(e.corpo));
   conferir("todos no molde do Boletim (cabeçalho, endereço e CINEA)", a.emails.every((x) => /<h1/.test(x.html)
     && x.html.indexOf("boletim-educacao-superior.github.io") > 0 && /CINEA/.test(x.html)), a.emails.length);
+});
+
+cenario("Administrador inscreve alguém nos avisos (gestor que não entra na plataforma)", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  const GESTOR = "gestor@pucminas.br";
+  const item = (id, prioridade, visto) => ({ id, prioridade, visto_em: visto, data: visto.slice(0, 10), instituicao: "CNE",
+    titulo: "Notícia " + id, link: "https://www.gov.br/" + id, tipo: "Resolução", resumo: "" });
+  a.avisos.itens = [item("1".repeat(16), "urgente", "2026-10-20T07:00:00+00:00")];
+  a.g.verificarAvisos();  // ponto de partida
+
+  const antes = a.emails.length;
+  let r = a.api(adm, "salvarMembro", GESTOR, "João Gestor", false, false, "", { imediato: ["urgente"], semanal: ["urgente", "alta"] });
+  conferir("cadastra já com os avisos", r.ok && r.dados.find((p) => p.email === GESTOR).avisos.semanal.join() === "urgente,alta", r);
+  const insc = a.emails.slice(antes);
+  conferir("sem boas-vindas: sai só o e-mail de inscrição", insc.length === 1 && /inscreveu você nos avisos/.test(insc[0].assunto), insc.map((e) => e.assunto));
+  conferir("inscrição explica o que vai receber e quem inscreveu", /Diego Eduardo/.test(insc[0].corpo) && /Na hora/.test(insc[0].corpo)
+    && /Resumo semanal/.test(insc[0].corpo) && /#parar-avisos=/.test(insc[0].corpo));
+  conferir("quem inscreveu fica guardado", r.dados.find((p) => p.email === GESTOR).avisos_por === "Diego Eduardo");
+
+  a.avisos.itens.push(item("2".repeat(16), "urgente", "2026-10-26T07:00:00+00:00"));
+  a.g.verificarAvisos();
+  const aviso = a.emails.filter((e) => e.para === GESTOR).pop();
+  conferir("recebe o aviso na hora mesmo sem senha", aviso && /Notícia 2{16}/.test(aviso.corpo), aviso && aviso.assunto);
+  conferir("rodapé diz quem inscreveu", aviso && /Diego Eduardo inscreveu você/.test(aviso.corpo) && /Diego Eduardo inscreveu você/.test(aviso.html));
+
+  r = a.api(adm, "salvarAvisosDe", GESTOR, [], ["urgente"], true);
+  conferir("administrador muda os avisos de outra pessoa", r.ok && r.dados.find((p) => p.email === GESTOR).avisos.imediato.length === 0, r);
+  conferir("mudança entra no registro", a.aba("Registro").some((l) => l[2] === "avisos_de_outro"));
+  const n = a.emails.length;
+  r = a.api(adm, "salvarAvisosDe", GESTOR, [], [], true);
+  conferir("tirar todos os avisos não manda e-mail", r.ok && a.emails.length === n);
+
+  a.api(adm, "salvarMembro", ANA, "Ana Teste", false, false);
+  const ana = primeiroAcesso(a, ANA, "anaradar2026").dados.sessao;
+  r = a.api(ana, "salvarAvisosDe", GESTOR, ["urgente"], [], true);
+  conferir("só administrador inscreve outra pessoa", !r.ok && /administradores/.test(r.erro), r);
+
+  const BV = "bv@pucminas.br", n2 = a.emails.length;
+  a.api(adm, "salvarMembro", BV, "Bia Boas", false, true, "", { imediato: ["urgente"], semanal: [] });
+  const bv = a.emails.slice(n2);
+  conferir("com boas-vindas: um e-mail só, que já conta dos avisos", bv.length === 1 && /liberado/.test(bv[0].assunto) && /também inscreveu você/.test(bv[0].html), bv.map((e) => e.assunto));
 });
 
 console.log(`\n${total - falhas} de ${total} verificações passaram.`);

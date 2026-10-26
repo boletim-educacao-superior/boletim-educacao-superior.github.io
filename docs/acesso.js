@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261026145142"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261026145903"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -350,6 +350,30 @@ $a("usuario-nome").addEventListener("click", () => abrirPerfil());
 $a("sigla-topo").addEventListener("click", () => abrirPerfil());
 
 // ------------------------------------------------ avisos por e-mail --
+/** Grade prioridade × frequência (a mesma de Meu perfil), para o cadastro e o diálogo do administrador. */
+function montarGradeAvisos(alvo, prefixo) {
+  const caixa = (tipo, valor, rotulo) => `<td><input type="checkbox" data-tipo="${tipo}" value="${valor}" aria-label="${rotulo}"></td>`;
+  alvo.innerHTML = `<table class="avisos-grade">
+    <thead><tr><th scope="col"><span class="sr">Prioridade</span></th>
+      <th scope="col">Na hora<span>logo depois de cada coleta</span></th>
+      <th scope="col">Resumo semanal<span>segundas, 8h, só se houver novidade</span></th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Urgente</th>${caixa("imediato", "urgente", "Urgente: avisar na hora")}${caixa("semanal", "urgente", "Urgente: resumo semanal")}</tr>
+      <tr><th scope="row">Alta</th>${caixa("imediato", "alta", "Prioridade alta: avisar na hora")}${caixa("semanal", "alta", "Prioridade alta: resumo semanal")}</tr>
+    </tbody></table>`;
+  alvo.dataset.prefixo = prefixo;
+}
+function lerGrade(alvo) {
+  const a = { imediato: [], semanal: [] };
+  alvo.querySelectorAll("input[type=checkbox]").forEach((c) => { if (c.checked) a[c.dataset.tipo].push(c.value); });
+  return a;
+}
+function marcarGrade(alvo, a) {
+  alvo.querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = ((a || {})[c.dataset.tipo] || []).includes(c.value)));
+}
+montarGradeAvisos($a("membro-avisos"), "membro");
+montarGradeAvisos($a("am-avisos"), "am");
+
 // Cada pessoa escolhe: urgente e/ou alta, na hora (depois de cada coleta) e/ou no resumo semanal.
 // Quem manda é o servidor de acesso (gatilhos verificarAvisos e resumoSemanal no Acesso.gs).
 const caixasAvisos = () => [...document.querySelectorAll("#mp-avisos input[type=checkbox]")];
@@ -514,11 +538,11 @@ async function carregarRegistro() {
 }
 
 /** "Avisos: na hora (urgente) · semanal (urgente e alta)" na lista da equipe; nada se a pessoa não escolheu. */
-function resumoAvisos(a) {
+function resumoAvisos(a, por) {
   if (!a || (!a.imediato.length && !a.semanal.length)) return "";
   const p = (l) => l.map((x) => (x === "urgente" ? "urgente" : "alta")).join(" e ");
   const partes = [a.imediato.length && `na hora (${p(a.imediato)})`, a.semanal.length && `semanal (${p(a.semanal)})`].filter(Boolean);
-  return `<div class="detalhe">✉ Avisos: ${partes.join(" · ")}</div>`;
+  return `<div class="detalhe">✉ Avisos: ${partes.join(" · ")}${por ? ` (inscrito por ${esc(por)})` : ""}</div>`;
 }
 
 async function carregarEquipe(lista) {
@@ -529,17 +553,20 @@ async function carregarEquipe(lista) {
   }
   corpo.innerHTML = lista.map((p) => {
     const eu = Acesso.perfil && p.email === Acesso.perfil.email;
-    const situacao = p.tem_senha ? `<span class="ok">Ativa</span>` : `<span class="pendente">Ainda não criou a senha</span>`;
+    const soEmails = !p.tem_senha && p.avisos && (p.avisos.imediato.length || p.avisos.semanal.length);
+    const situacao = p.tem_senha ? `<span class="ok">Ativa</span>`
+      : soEmails ? `<span class="ok">Recebe só os e-mails</span>` : `<span class="pendente">Ainda não criou a senha</span>`;
     return `<tr data-email="${esc(p.email)}">
       <td><strong>${esc(p.nome)}</strong>${p.admin ? ' <span class="selo">admin</span>' : ""}${p.perfil === "usuario" ? ' <span class="selo selo-usuario" title="Criou a própria conta: marcações só dele(a)">usuário</span>' : ""}${eu ? ' <span class="selo selo-eu">você</span>' : ""}
         <div class="detalhe">${esc(p.email)}</div></td>
-      <td>${situacao}${p.boasvindas_em ? `<div class="detalhe">Boas-vindas em ${dataCurta(p.boasvindas_em)}</div>` : ""}${resumoAvisos(p.avisos)}</td>
+      <td>${situacao}${p.boasvindas_em ? `<div class="detalhe">Boas-vindas em ${dataCurta(p.boasvindas_em)}</div>` : ""}${resumoAvisos(p.avisos, p.avisos_por)}</td>
       <td class="nowrap">${dataCurta(p.ultimo_acesso)}</td>
       <td><div class="acoes-linha">
         ${p.perfil === "usuario"
           ? '<button type="button" class="link" data-acao="promover" title="Passa a marcar notícias para toda a equipe">Tornar equipe CINEA</button>'
           : `<button type="button" class="link" data-acao="admin">${p.admin ? "Tirar admin" : "Tornar admin"}</button>`}
         ${p.perfil !== "usuario" && !p.admin && !eu ? '<button type="button" class="link" data-acao="rebaixar">Tornar usuário</button>' : ""}
+        <button type="button" class="link" data-acao="avisos">Avisos por e-mail</button>
         <button type="button" class="link" data-acao="boasvindas">Reenviar boas-vindas</button>
         ${p.tem_senha && !eu ? '<button type="button" class="link" data-acao="apagarSenha">Apagar senha</button>' : ""}
         ${eu ? "" : '<button type="button" class="link perigo" data-acao="remover">Remover</button>'}
@@ -558,6 +585,7 @@ async function acaoMembro(botao, lista) {
     apagarSenha: [`Apagar a senha de ${p.nome}? A pessoa sai de todos os navegadores e precisa fazer o "Primeiro acesso" de novo.`, "Apagar senha"],
   };
   const acao = botao.dataset.acao;
+  if (acao === "avisos") return abrirAvisosMembro(p);
   if (perguntas[acao] && !(await confirmar(...perguntas[acao]))) return;
   try {
     let nova;
@@ -575,16 +603,40 @@ async function acaoMembro(botao, lista) {
   } catch (e) { msg(form, e.message); }
 }
 
+/** Administrador: escolhe os avisos de outra pessoa (ex.: o gestor que só quer os e-mails). */
+let membroAvisos = null;
+function abrirAvisosMembro(p) {
+  limparMsgs();
+  membroAvisos = p;
+  $a("am-titulo").textContent = `Avisos por e-mail · ${p.nome}`;
+  $a("am-quem").textContent = `${p.email}. A pessoa recebe os avisos mesmo sem entrar na plataforma; cada e-mail tem o link para parar de receber.`;
+  marcarGrade($a("am-avisos"), p.avisos);
+  $a("am-avisar").checked = true;
+  $a("dlg-avisos-membro").showModal();
+}
+$a("form-avisos-membro").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const form = ev.currentTarget, a = lerGrade($a("am-avisos")), p = membroAvisos;
+  try {
+    const lista = await ocupado($a("am-salvar"), () => api("salvarAvisosDe", p.email, a.imediato, a.semanal, $a("am-avisar").checked), "Salvando…");
+    $a("dlg-avisos-membro").close();
+    msg($a("form-membro"), `Avisos de ${p.nome} salvos.`, "ok");
+    carregarEquipe(lista);
+  } catch (e) { msg(form, e.message); }
+});
+
 $a("form-membro").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const form = ev.currentTarget, nome = $a("membro-nome").value.trim(), email = $a("membro-email").value.trim();
   if (!nome || !email) return msg(form, "Preencha nome e e-mail.");
   try {
-    const boas = $a("membro-boasvindas").checked;
+    const boas = $a("membro-boasvindas").checked, avisos = lerGrade($a("membro-avisos"));
+    const comAvisos = avisos.imediato.length || avisos.semanal.length;
     const lista = await ocupado(form.querySelector("button[type=submit]"),
-      () => api("salvarMembro", email, nome, $a("membro-admin").checked, boas));
-    msg(form, `${nome} cadastrado(a).` + (boas ? " O e-mail de boas-vindas foi enviado." : ""), "ok");
+      () => api("salvarMembro", email, nome, $a("membro-admin").checked, boas, "", avisos));
+    msg(form, `${nome} cadastrado(a).` + (boas ? " O e-mail de boas-vindas foi enviado." : comAvisos ? " Enviamos um e-mail explicando a inscrição nos avisos." : ""), "ok");
     $a("membro-nome").value = ""; $a("membro-email").value = ""; $a("membro-admin").checked = false;
+    $a("membro-boasvindas").checked = true; marcarGrade($a("membro-avisos"), null);
     carregarEquipe(lista);
   } catch (e) { msg(form, e.message); }
 });

@@ -282,6 +282,9 @@ body.visitante .conta { align-items: flex-start; }
 .avisos-grade thead th span { display: block; font-weight: 400; font-size: .75rem; color: var(--texto-suave); }
 .avisos-grade tbody th { text-align: left; font-weight: 500; }
 .avisos-grade input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--marca); }
+.avisos-cadastro { margin: 10px 0; background: var(--fundo); }
+.avisos-cadastro .avisos-grade { max-width: 520px; }
+.avisos-cadastro .meta { font-weight: 400; color: var(--texto-suave); font-size: .8rem; }
 .avisos-acoes { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .acao-esquerda { margin-right: auto; }
