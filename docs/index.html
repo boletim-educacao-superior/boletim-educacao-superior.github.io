@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261027213813">
+<link rel="stylesheet" href="estilo.css?v=20261027214134">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261027213813";</script>
+<script>window.RADAR_VERSAO = "20261027214134";</script>
 </head>
 <body class="bloqueado">
 
@@ -180,7 +180,9 @@
       <input id="f-busca" type="search" placeholder="Buscar no título, resumo ou órgão…" aria-label="Buscar notícias">
       <button type="submit" class="btn btn-buscar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> Buscar</button>
     </form>
-    <div class="linha-filtros">
+    <!-- Filtros em grade (27/10/2026): os cinco campos dividem a largura por igual, as fontes numa linha com rótulo
+         e, no pé do quadro, a opção de rotina à esquerda e as ações à direita. -->
+    <div class="linha-filtros grade-filtros">
       <!-- O (i) ao lado de "Prioridade" explica Urgente e Alta, discreto (pedido do Diego, 26/10/2026).
            Resume [urgencia] e os pesos de config/regras.toml -->
       <div class="campo-filtro">
@@ -217,7 +219,10 @@
         </select>
       </label>
     </div>
-    <div id="f-instituicoes" class="chips" role="group" aria-label="Instituições"></div>
+    <div class="linha-fontes">
+      <span class="rotulo-fontes" id="rotulo-fontes">Fonte</span>
+      <div id="f-instituicoes" class="chips" role="group" aria-labelledby="rotulo-fontes"></div>
+    </div>
     <div class="linha-filtros opcoes">
       <span class="rotulo-filtro">
         <label class="check"><input type="checkbox" id="f-rotina" checked> Ocultar atos de rotina do DOU</label>
@@ -229,7 +234,6 @@
       <span class="espaco"></span>
       <button id="btn-limpar" class="link">Limpar filtros</button>
       <button id="btn-csv" class="link">Exportar CSV</button>
-      <button id="btn-lertodos" class="link so-equipe">Marcar esta página como lida</button>
     </div>
   </section>
 
@@ -521,7 +525,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261027213813"></script>
-<script src="app.js?v=20261027213813"></script>
+<script src="acesso.js?v=20261027214134"></script>
+<script src="app.js?v=20261027214134"></script>
 </body>
 </html>

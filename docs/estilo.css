@@ -116,6 +116,14 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
   background: var(--fundo); color: var(--texto); font: inherit; font-size: .9rem; min-width: 150px;
 }
 .linha-filtros label.check { flex-direction: row; align-items: center; gap: 6px; font-size: .88rem; color: var(--texto); }
+/* Os cinco campos em colunas iguais, sem sobra à direita */
+.grade-filtros { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 12px; }
+.grade-filtros select { min-width: 0; width: 100%; }
+/* Fontes: rótulo à esquerda, botões ao lado */
+.linha-fontes { display: flex; align-items: baseline; gap: 10px; }
+.rotulo-fontes { font-size: .78rem; color: var(--texto-suave); flex: none; }
+/* Pé do quadro: rotina à esquerda, ações à direita */
+.linha-filtros.opcoes { border-top: 1px solid var(--borda); padding-top: 10px; gap: 8px 18px; }
 .espaco { flex: 1; }
 .link { background: none; border: 0; color: var(--marca); cursor: pointer; padding: 0; font-size: .88rem; }
 .link:hover { text-decoration: underline; }
@@ -190,6 +198,10 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
   .resumo { grid-template-columns: repeat(2, 1fr); }
   .linha-filtros label, .linha-filtros .campo-filtro { flex: 1 1 140px; }
   .linha-filtros select { min-width: 0; width: 100%; }
+  .grade-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-filtros > :last-child { grid-column: 1 / -1; }  /* Período ocupa a linha toda */
+  .linha-fontes { flex-direction: column; gap: 4px; }
+  .opcoes .espaco { flex-basis: 100%; height: 0; }  /* rotina numa linha; Limpar e Exportar juntos embaixo */
   .orgao { flex-basis: 100%; white-space: normal; }
 }
 

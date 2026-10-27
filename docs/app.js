@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027213813"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027214134"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -303,7 +303,6 @@ function montarFiltros() {
   $("btn-limpar").addEventListener("click", () => aplicarAtalho("limpar"));
   ligarInfos();
   $("btn-csv").addEventListener("click", exportarCSV);
-  $("btn-lertodos").addEventListener("click", () => marcarLidos(paginaAtual(filtrar()).map((it) => it.id), true));
   // Visitante: o cartão de novidades leva à entrada (não há registro de visita sem login).
   if (!logado()) {
     $("n-novos-rot").textContent = "Entre para ver o que chegou desde a sua última visita";
