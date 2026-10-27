@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027212311"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027212524"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -353,7 +353,8 @@ function aplicarAtalho(nome) {
     return;
   }
   estado.somenteNovos = nome === "novos";
-  $("f-prioridade").value = nome === "urgente" || nome === "alta" ? nome : "alta+";  // cada cartão mostra só o que conta
+  // Cada cartão mostra só o que conta: "Notícias do período" inclui a média.
+  $("f-prioridade").value = nome === "urgente" || nome === "alta" ? nome : nome === "todos" ? "media+" : "alta+";
   if (nome === "limpar") $("f-periodo").value = PERIODO_INICIAL;
   estado.pagina = 1;
   render();
@@ -450,16 +451,21 @@ function render() {
  */
 function preencherCartoes() {
   const periodo = $("f-periodo").value, limite = limitePeriodo(periodo);
-  const validos = estado.itens.filter((it) => marca(it) !== "irrelevante" && ateAlta(it));
+  // "Notícias do período" conta tudo o que o painel mostra, média inclusive (pedido do Diego, 27/10/2026).
+  // Seguem também "Ocultar atos de rotina do DOU", para o número bater com a lista que o cartão abre.
+  const rotina = $("f-rotina").checked;
+  const todos = estado.itens.filter((it) => marca(it) !== "irrelevante"
+    && !(rotina && it.rotina && it.prioridade !== "urgente" && !marca(it)));
+  const validos = todos.filter(ateAlta);
   const conta = (lista) => lista.filter((it) => !limite || (it.data || "") >= limite).length;
   $("n-urgente").textContent = conta(validos.filter((it) => it.prioridade === "urgente"));
   $("n-alta").textContent = conta(validos.filter((it) => it.prioridade === "alta"));
-  $("n-total").textContent = conta(validos);
+  $("n-total").textContent = conta(todos);
   const PERIODO_CURTO = { "7": "últimos 7 dias", "30": "últimos 30 dias", "90": "últimos 90 dias", "180": "últimos 6 meses",
                           "365": "últimos 12 meses", "ano": "desde janeiro" };
-  $("n-total-rot").textContent = `Urgentes e de alta prioridade · ${PERIODO_CURTO[periodo] || "todo o histórico"}`;
+  $("n-total-rot").textContent = `Urgentes, alta e média prioridade · ${PERIODO_CURTO[periodo] || "todo o histórico"}`;
   // Legenda simples (pedido do Diego, 26/10/2026): "Indicadores dos últimos 30 dias. Para mudar, use o filtro "Período"."
-  const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999-12-31");
+  const maisAntigo = todos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999-12-31");
   const NOME_PERIODO = { "7": "dos últimos 7 dias", "30": "dos últimos 30 dias", "90": "dos últimos 90 dias",
                          "180": "dos últimos 6 meses", "365": "dos últimos 12 meses",
                          "ano": `de ${new Date().getFullYear()} (desde janeiro)` };

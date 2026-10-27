@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261027212311">
+<link rel="stylesheet" href="estilo.css?v=20261027212524">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261027212311";</script>
+<script>window.RADAR_VERSAO = "20261027212524";</script>
 </head>
 <body class="bloqueado">
 
@@ -139,7 +139,7 @@
          e do filtro, o número e uma linha que explica; cada um tem o seu (i). -->
     <div class="cartao-caixa">
       <button class="cartao cartao-total" data-atalho="todos"><span class="tit">Notícias do período</span>
-        <span class="num" id="n-total">–</span><span class="rot" id="n-total-rot">Urgentes e de alta prioridade</span></button>
+        <span class="num" id="n-total">–</span><span class="rot" id="n-total-rot">Urgentes, alta e média prioridade</span></button>
       <button type="button" class="botao-info botao-info-cartao" data-info="info-periodo" aria-expanded="false" aria-controls="info-periodo"
               title="Entenda este indicador" aria-label="Entenda o indicador Notícias do período">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
@@ -318,8 +318,8 @@
 </div>
 <div class="info-pop" id="info-periodo" role="note" hidden>
   <p class="info-pop-titulo">Notícias do período</p>
-  <p>Total de notícias <b>urgentes</b> e de <b>alta prioridade</b> publicadas no período escolhido no filtro "Período"
-    (padrão: últimos 30 dias).</p>
+  <p>Total de notícias <b>urgentes</b>, de <b>alta</b> e de <b>média prioridade</b> publicadas no período escolhido no
+    filtro "Período" (padrão: últimos 30 dias).</p>
   <p>As fontes são verificadas todos os dias: MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.</p>
   <p class="info-pop-nota">Clique no cartão para ver a lista completa.</p>
 </div>
@@ -495,7 +495,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261027212311"></script>
-<script src="app.js?v=20261027212311"></script>
+<script src="acesso.js?v=20261027212524"></script>
+<script src="app.js?v=20261027212524"></script>
 </body>
 </html>
