@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261027213529">
+<link rel="stylesheet" href="estilo.css?v=20261027213813">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261027213529";</script>
+<script>window.RADAR_VERSAO = "20261027213813";</script>
 </head>
 <body class="bloqueado">
 
@@ -219,7 +219,13 @@
     </div>
     <div id="f-instituicoes" class="chips" role="group" aria-label="Instituições"></div>
     <div class="linha-filtros opcoes">
-      <label class="check"><input type="checkbox" id="f-rotina" checked> Ocultar atos de rotina do DOU</label>
+      <span class="rotulo-filtro">
+        <label class="check"><input type="checkbox" id="f-rotina" checked> Ocultar atos de rotina do DOU</label>
+        <button type="button" class="botao-info" data-info="info-rotina" aria-expanded="false" aria-controls="info-rotina"
+                title="O que são atos de rotina" aria-label="O que são atos de rotina do DOU">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+        </button>
+      </span>
       <span class="espaco"></span>
       <button id="btn-limpar" class="link">Limpar filtros</button>
       <button id="btn-csv" class="link">Exportar CSV</button>
@@ -339,6 +345,15 @@
   <p id="proxima" hidden></p>
   <p class="info-pop-nota">Horário de Brasília. A atualização pode atrasar um pouco, conforme a disponibilidade do GitHub,
     onde a coleta roda.</p>
+</div>
+<!-- Resume [rotina] de config/regras.toml: mude junto. -->
+<div class="info-pop" id="info-rotina" role="note" hidden>
+  <p class="info-pop-titulo">Atos de rotina do DOU</p>
+  <p>São publicações do Diário Oficial do dia a dia da regulação, que tratam de <b>uma instituição específica</b>:
+    autorização, reconhecimento ou renovação de um curso, credenciamento de uma faculdade, decisões sobre recursos,
+    certificados de entidade beneficente (CEBAS) e similares.</p>
+  <p>Saem em grande quantidade e raramente mudam algo para o setor, por isso ficam ocultas. Desmarque a opção para vê-las.</p>
+  <p class="info-pop-nota">Atos de rotina classificados como urgentes e os que a equipe marcou continuam aparecendo.</p>
 </div>
 <div class="info-pop" id="info-menu" role="note" hidden>
   <p class="info-pop-titulo">Entenda o menu</p>
@@ -506,7 +521,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261027213529"></script>
-<script src="app.js?v=20261027213529"></script>
+<script src="acesso.js?v=20261027213813"></script>
+<script src="app.js?v=20261027213813"></script>
 </body>
 </html>
