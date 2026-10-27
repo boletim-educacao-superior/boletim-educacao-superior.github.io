@@ -88,8 +88,12 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
   display: flex; flex-direction: column; gap: 2px;
 }
 .cartao:hover { border-color: var(--marca); }
-.cartao .num { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.cartao .rot { color: var(--texto-suave); font-size: .82rem; }
+.cartao .tit {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--texto);
+  padding-right: 22px; /* espaço do (i) */
+}
+.cartao .num { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 2px; }
+.cartao .rot { color: var(--texto-suave); font-size: .8rem; line-height: 1.35; }
 .cartao .det { color: var(--texto-suave); font-size: .74rem; opacity: .85; }
 .cartao .det:empty { display: none; }
 .cartao-urgente .num { color: var(--urgente); }
@@ -521,10 +525,10 @@ body:not(.visitante) .convite-topo { display: none; }
 .info-pop p b { color: var(--texto); font-weight: 600; }
 .info-pop .info-pop-titulo { color: var(--texto); font-weight: 600; font-size: .86rem; }
 .info-pop .info-pop-nota { font-size: .76rem; border-top: 1px solid var(--borda); padding-top: 6px; }
-/* (i) no cartão de urgentes e no fim do menu */
+/* (i) nos cartões do Início e no fim do menu */
 .cartao-caixa { position: relative; display: flex; }
 .cartao-caixa > .cartao { flex: 1; }
-.botao-info-cartao { position: absolute; top: 8px; right: 8px; }
+.botao-info-cartao { position: absolute; top: 9px; right: 8px; }
 .menu-principal .botao-info-menu { align-self: center; margin-left: 2px; }
 .selo-legenda {
   display: inline-block; border-radius: 5px; padding: 0 7px; margin-right: 4px; font-weight: 600; font-size: .7rem;

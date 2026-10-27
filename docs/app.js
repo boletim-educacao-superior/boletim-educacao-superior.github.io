@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027192615"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027211647"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -306,7 +306,7 @@ function montarFiltros() {
   $("btn-lertodos").addEventListener("click", () => marcarLidos(paginaAtual(filtrar()).map((it) => it.id), true));
   // Visitante: o cartão de novidades leva à entrada (não há registro de visita sem login).
   if (!logado()) {
-    $("n-novos-rot").textContent = "Entre para ver o que é novo desde a sua última visita";
+    $("n-novos-rot").textContent = "Entre para ver o que chegou desde a sua última visita";
     $("n-novos").textContent = "🔒";
   }
   // Botão "Buscar" (e Enter): a busca já filtra enquanto se digita; o botão confirma e leva ao resultado.
@@ -453,6 +453,9 @@ function preencherCartoes() {
   $("n-urgente").textContent = conta(validos.filter((it) => it.prioridade === "urgente"));
   $("n-alta").textContent = conta(validos.filter((it) => it.prioridade === "alta"));
   $("n-total").textContent = conta(validos);
+  const PERIODO_CURTO = { "7": "últimos 7 dias", "30": "últimos 30 dias", "90": "últimos 90 dias", "180": "últimos 6 meses",
+                          "365": "últimos 12 meses", "ano": "desde janeiro" };
+  $("n-total-rot").textContent = `Urgentes e de alta prioridade · ${PERIODO_CURTO[periodo] || "todo o histórico"}`;
   // Legenda simples (pedido do Diego, 26/10/2026): "Indicadores dos últimos 30 dias. Para mudar, use o filtro "Período"."
   const maisAntigo = validos.reduce((m, it) => (it.data && it.data < m ? it.data : m), "9999-12-31");
   const NOME_PERIODO = { "7": "dos últimos 7 dias", "30": "dos últimos 30 dias", "90": "dos últimos 90 dias",

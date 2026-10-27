@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261027192615">
+<link rel="stylesheet" href="estilo.css?v=20261027211647">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261027192615";</script>
+<script>window.RADAR_VERSAO = "20261027211647";</script>
 </head>
 <body class="bloqueado">
 
@@ -135,16 +135,40 @@
   <p class="resumo-periodo" id="resumo-periodo"></p>
   <section class="resumo" aria-label="Resumo">
     <!-- Os números seguem o período escolhido no filtro, informado na legenda acima (#resumo-periodo) -->
+    <!-- Cartões pensados para quem só recebeu o link (pedido do Diego, 27/10/2026): título com o mesmo nome dos selos
+         e do filtro, o número e uma linha que explica; cada um tem o seu (i). -->
     <div class="cartao-caixa">
-      <button class="cartao cartao-urgente" data-atalho="urgente"><span class="num" id="n-urgente">–</span><span class="rot">Urgentes</span></button>
-      <button type="button" class="botao-info botao-info-cartao" data-info="info-prioridade" aria-expanded="false" aria-controls="info-prioridade"
-              title="Entenda as classificações" aria-label="Entenda as classificações de prioridade">
+      <button class="cartao cartao-total" data-atalho="todos"><span class="tit">Notícias do período</span>
+        <span class="num" id="n-total">–</span><span class="rot" id="n-total-rot">Urgentes e de alta prioridade</span></button>
+      <button type="button" class="botao-info botao-info-cartao" data-info="info-periodo" aria-expanded="false" aria-controls="info-periodo"
+              title="Entenda este indicador" aria-label="Entenda o indicador Notícias do período">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
       </button>
     </div>
-    <button class="cartao cartao-alta" data-atalho="alta"><span class="num" id="n-alta">–</span><span class="rot">Prioridade alta</span></button>
-    <button class="cartao cartao-novo" data-atalho="novos"><span class="num" id="n-novos">–</span><span class="rot" id="n-novos-rot">Novos desde sua última visita</span><span class="det" id="n-novos-det"></span></button>
-    <button class="cartao" data-atalho="todos"><span class="num" id="n-total">–</span><span class="rot">Urgentes e alta</span></button>
+    <div class="cartao-caixa">
+      <button class="cartao cartao-urgente" data-atalho="urgente"><span class="tit">Urgentes</span>
+        <span class="num" id="n-urgente">–</span><span class="rot">Novas normas, prazos oficiais e menções à PUC Minas</span></button>
+      <button type="button" class="botao-info botao-info-cartao" data-info="info-prioridade" aria-expanded="false" aria-controls="info-prioridade"
+              title="Entenda este indicador" aria-label="Entenda as classificações de prioridade">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      </button>
+    </div>
+    <div class="cartao-caixa">
+      <button class="cartao cartao-alta" data-atalho="alta"><span class="tit">Alta prioridade</span>
+        <span class="num" id="n-alta">–</span><span class="rot">Assuntos que afetam diretamente a educação superior</span></button>
+      <button type="button" class="botao-info botao-info-cartao" data-info="info-prioridade" aria-expanded="false" aria-controls="info-prioridade"
+              title="Entenda este indicador" aria-label="Entenda as classificações de prioridade">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      </button>
+    </div>
+    <div class="cartao-caixa">
+      <button class="cartao cartao-novo" data-atalho="novos"><span class="tit">Novas para você</span>
+        <span class="num" id="n-novos">–</span><span class="rot" id="n-novos-rot">Publicadas desde o seu último acesso</span><span class="det" id="n-novos-det"></span></button>
+      <button type="button" class="botao-info botao-info-cartao" data-info="info-novas" aria-expanded="false" aria-controls="info-novas"
+              title="Entenda este indicador" aria-label="Entenda o indicador Novas para você">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      </button>
+    </div>
   </section>
 
   <section class="filtros" aria-label="Filtros">
@@ -273,14 +297,31 @@
 </main>
 
 <!-- Balões dos (i): abrem junto do botão que foi clicado (app.js: ligarInfos) -->
+<!-- Balões dos (i). Urgente e Alta resumem [urgencia] e os pesos de config/regras.toml: mude junto. -->
 <div class="info-pop" id="info-prioridade" role="note" hidden>
   <p class="info-pop-titulo">Entenda as classificações</p>
-  <p><span class="selo-legenda selo-urgente">Urgente</span> Pede atenção imediata: ato oficial que cita a PUC Minas, norma nova
-    sobre EAD, mudança nas regras da educação superior (DCNs, avaliação, ENADE, carga horária a distância) ou prazo de órgão oficial.</p>
-  <p><span class="selo-legenda selo-alta">Alta</span> Tema importante para acompanhar: EAD e educação digital, regulação e
-    avaliação de cursos, currículo, formação docente, fomento e editais.</p>
+  <p>Cada notícia recebe um selo de prioridade, dado automaticamente pelas palavras do texto.</p>
+  <p><span class="selo-legenda selo-urgente">Urgente</span> Novas normas, prazos oficiais e menções à PUC Minas: ato oficial
+    que cita a PUC Minas, norma nova sobre EAD, mudança nas regras da educação superior (DCNs, avaliação, ENADE, carga horária
+    a distância) ou prazo de órgão oficial.</p>
+  <p><span class="selo-legenda selo-alta">Alta</span> Assuntos que afetam diretamente a educação superior: EAD e educação
+    digital, regulação e avaliação de cursos, currículo, formação docente, fomento e editais.</p>
   <p><span class="selo-legenda selo-media">Média</span> Assunto ligado à educação superior, de interesse mais geral.
     Só aparece quando você escolhe "Urgente, alta e média" no filtro Prioridade.</p>
+  <p class="info-pop-nota">Clique no cartão para ver só as notícias daquela prioridade.</p>
+</div>
+<div class="info-pop" id="info-periodo" role="note" hidden>
+  <p class="info-pop-titulo">Notícias do período</p>
+  <p>Total de notícias <b>urgentes</b> e de <b>alta prioridade</b> publicadas no período escolhido no filtro "Período"
+    (padrão: últimos 30 dias).</p>
+  <p>As fontes são verificadas todos os dias: MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.</p>
+  <p class="info-pop-nota">Clique no cartão para ver a lista completa.</p>
+</div>
+<div class="info-pop" id="info-novas" role="note" hidden>
+  <p class="info-pop-titulo">Novas para você</p>
+  <p>Notícias urgentes e de alta prioridade que chegaram desde o seu último acesso, para você ver só o que mudou.</p>
+  <p class="info-pop-nota">Para isso o Boletim precisa saber quando foi a sua última visita, por isso é preciso entrar
+    (a conta é gratuita).</p>
 </div>
 <div class="info-pop" id="info-menu" role="note" hidden>
   <p class="info-pop-titulo">Entenda o menu</p>
@@ -448,7 +489,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261027192615"></script>
-<script src="app.js?v=20261027192615"></script>
+<script src="acesso.js?v=20261027211647"></script>
+<script src="app.js?v=20261027211647"></script>
 </body>
 </html>
