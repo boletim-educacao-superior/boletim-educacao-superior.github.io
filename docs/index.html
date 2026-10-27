@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261026211113">
+<link rel="stylesheet" href="estilo.css?v=20261027145243">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261026211113";</script>
+<script>window.RADAR_VERSAO = "20261027145243";</script>
 </head>
 <body class="bloqueado">
 
@@ -292,8 +292,9 @@
 </div>
 
 <footer class="rodape">
-  Triagem automática por palavras-chave. Confira sempre a fonte original antes de encaminhar.
-  "Relevante", "Sem relevância" e "Lida" são compartilhadas: o que alguém da equipe marca aparece para todos.
+  <p>Triagem automática por palavras-chave. Confira sempre a fonte original antes de encaminhar.</p>
+  <p class="credito">Desenvolvido pelo departamento de Tecnologia e Experiência de Aprendizagem do
+    Centro de Inovação em Ensino e Aprendizagem (CINEA) · PUC Minas.</p>
 </footer>
 
 <template id="tpl-item">
@@ -304,6 +305,7 @@
       <span class="item-tipo"></span>
       <time class="item-data"></time>
       <span class="novo">novo</span>
+      <span class="selo-lida" title="Você (ou alguém da equipe) já abriu esta notícia">✓ Lida</span>
     </div>
     <h2 class="item-titulo"><a target="_blank" rel="noopener"></a></h2>
     <p class="motivo"></p>
@@ -446,7 +448,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261026211113"></script>
-<script src="app.js?v=20261026211113"></script>
+<script src="acesso.js?v=20261027145243"></script>
+<script src="app.js?v=20261027145243"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261026211113"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027145243"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -226,12 +226,30 @@ window.addEventListener("hashchange", () => {
   registrarEvento("visao", String(location.hash || "#inicio").slice(1));
 });
 
+// Largura de celular: menu rolando para o lado e paginação compacta.
+const CELULAR = matchMedia("(max-width: 720px)");
+CELULAR.addEventListener?.("change", () => painelIniciado && render());
+const MENU = document.querySelector(".menu-principal");
+function bordasMenu() {
+  const fim = MENU.scrollWidth - MENU.clientWidth;
+  MENU.classList.toggle("tem-antes", MENU.scrollLeft > 4);
+  MENU.classList.toggle("tem-mais", MENU.scrollLeft < fim - 4);
+}
+MENU.addEventListener("scroll", bordasMenu, { passive: true });
+window.addEventListener("resize", bordasMenu);
+
 function marcarMenu(visao) {
   document.querySelectorAll(".menu-principal [data-visao]").forEach((a) => {
     const atual = a.dataset.visao === visao;
     a.classList.toggle("ativo", atual);
     atual ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current");
+    // No celular o menu rola para o lado: traz a aba aberta para a vista, sem mexer na página.
+    if (atual && CELULAR.matches) {
+      const nav = a.parentElement;
+      nav.scrollLeft = Math.max(0, a.offsetLeft - (nav.clientWidth - a.offsetWidth) / 2);
+    }
   });
+  bordasMenu();
 }
 
 function atualizarContadores() {
@@ -241,6 +259,7 @@ function atualizarContadores() {
     const n = conta(v);
     $(`c-${v}`).textContent = n ? n : "";
   }
+  bordasMenu();  // os números mudam a largura das abas
 }
 
 // ----------------------------------------------------------------- filtros --
@@ -464,17 +483,18 @@ function montarPaginacao(paginas) {
   const nav = $("paginacao");
   nav.hidden = paginas <= 1;
   if (paginas <= 1) { nav.replaceChildren(); return; }
-  const p = estado.pagina;
-  const numeros = [...new Set([1, p - 2, p - 1, p, p + 1, p + 2, paginas])].filter((n) => n >= 1 && n <= paginas).sort((a, b) => a - b);
+  const p = estado.pagina, raio = CELULAR.matches ? 1 : 2;  // no celular, só as vizinhas, para caber numa linha
+  const numeros = [...new Set([1, paginas, ...Array.from({ length: 2 * raio + 1 }, (_, i) => p - raio + i)])].filter((n) => n >= 1 && n <= paginas).sort((a, b) => a - b);
   const botao = (rotulo, destino, extra = "") =>
     `<button type="button" class="pag${extra}" data-pagina="${destino}"${destino === p && !extra ? ' aria-current="page"' : ""}` +
+    `${extra ? ` aria-label="${destino < p ? "Página anterior" : "Próxima página"}"` : ""}` +
     `${destino < 1 || destino > paginas ? " disabled" : ""}>${rotulo}</button>`;
-  let html = botao("‹ Anterior", p - 1, " pag-seta");
+  let html = botao('<span class="pag-longo">‹ Anterior</span><span class="pag-curto">‹</span>', p - 1, " pag-seta");
   numeros.forEach((n, i) => {
     if (i && n - numeros[i - 1] > 1) html += '<span class="pag-reticencias">…</span>';
     html += botao(String(n), n);
   });
-  html += botao("Próxima ›", p + 1, " pag-seta");
+  html += botao('<span class="pag-longo">Próxima ›</span><span class="pag-curto">›</span>', p + 1, " pag-seta");
   nav.innerHTML = html;
   nav.querySelectorAll("[data-pagina]").forEach((b) => b.addEventListener("click", () => {
     estado.pagina = Number(b.dataset.pagina);

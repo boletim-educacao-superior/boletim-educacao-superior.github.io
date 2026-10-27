@@ -133,7 +133,8 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 .item.p-urgente { border-left-color: var(--urgente); }
 .item.p-alta { border-left-color: var(--alta); }
 .item.p-media { border-left-color: var(--media); }
-.item.lido { opacity: .6; }
+/* Lida: tudo esmaecido, menos o selo "Lida", que precisa ser visto */
+.item.lido > :not(.item-cab), .item.lido .item-cab > :not(.selo-lida) { opacity: .6; }
 .item-cab { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: .8rem; color: var(--texto-suave); }
 .badge-prio, .badge-inst, .novo {
   border-radius: 5px; padding: 1px 7px; font-weight: 600; font-size: .74rem; text-transform: uppercase; letter-spacing: .03em;
@@ -145,6 +146,12 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 .badge-inst { background: var(--fundo); color: var(--texto); border: 1px solid var(--borda); }
 .novo { background: var(--novo-fundo); color: var(--novo); display: none; }
 .item.e-novo .novo { display: inline; }
+/* Notícia já aberta: além do cinza, um selo "Lida" no canto do cabeçalho. */
+.selo-lida {
+  display: none; margin-left: auto; border-radius: 5px; padding: 1px 7px; font-weight: 600; font-size: .74rem;
+  color: var(--marca); background: var(--superficie); border: 1px solid var(--marca);
+}
+.item.lido .selo-lida { display: inline; }
 .item-titulo { font-size: 1rem; margin: 6px 0 2px; line-height: 1.35; overflow-wrap: anywhere; }
 .item-titulo a { color: var(--texto); text-decoration: none; }
 .item-titulo a:hover { color: var(--marca); text-decoration: underline; }
@@ -171,6 +178,8 @@ h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.01em; }
 .ok { color: var(--novo); }
 
 .rodape { color: var(--texto-suave); font-size: .8rem; padding-bottom: 28px; }
+.rodape p { margin: 0 0 4px; }
+.rodape .credito { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--borda); }
 
 @media (max-width: 720px) {
   .resumo { grid-template-columns: repeat(2, 1fr); }
@@ -418,8 +427,17 @@ body.visitante .conta { align-items: flex-start; }
 .sanfona > .tabela-rolagem { padding: 0 16px 14px; }
 
 @media (max-width: 720px) {
-  .menu-principal { padding: 0 8px; }
-  .menu-principal a { padding: 8px 9px 9px; font-size: .84rem; }
+  /* Celular: o menu fica numa linha só e rola para o lado (a aba aberta é trazida para a vista). */
+  .menu-principal {
+    position: relative; padding: 0 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .menu-principal::-webkit-scrollbar { display: none; }
+  /* Esmaece a borda do lado em que ainda há abas escondidas */
+  .menu-principal.tem-mais { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); }
+  .menu-principal.tem-antes { -webkit-mask-image: linear-gradient(to left, #000 82%, transparent); mask-image: linear-gradient(to left, #000 82%, transparent); }
+  .menu-principal.tem-mais.tem-antes { -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
+  .menu-principal a { padding: 8px 9px 9px; font-size: .84rem; white-space: nowrap; flex: none; }
+  .menu-principal .botao-info-menu, .menu-principal #btn-coletar { flex: none; white-space: nowrap; }
 }
 
 /* ----------------------------------------------------------------- tema --- */
@@ -442,10 +460,18 @@ body.visitante .conta { align-items: flex-start; }
 .pag[aria-current="page"] { background: var(--marca); border-color: var(--marca); color: var(--marca-contraste); font-weight: 700; }
 .pag:disabled { opacity: .4; cursor: default; }
 .pag-reticencias { color: var(--texto-suave); padding: 0 2px; }
+.paginacao { flex-wrap: nowrap; }
+.pag-seta .pag-curto { display: none; }
+@media (max-width: 720px) {
+  /* Celular: setas sem texto e só as páginas vizinhas, para caber numa linha */
+  .paginacao { gap: 4px; }
+  .pag { min-width: 34px; padding: 0 8px; }
+  .pag-seta .pag-longo { display: none; }
+  .pag-seta .pag-curto { display: inline; }
+}
 
 @media (max-width: 720px) {
   .topo-acoes { align-items: flex-start; flex-direction: column; gap: 10px; }
-  .pag-seta { flex-basis: calc(50% - 3px); order: 2; }
 }
 
 /* ------------------------------------------------- painel aberto (visitante) --- */
