@@ -233,8 +233,8 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 
 /* ---------------------- topo: conta (mesmo molde do sistema de certificados) --- */
 .conta { display: flex; align-items: center; gap: 10px; flex: none; }
-/* A conta ocupa as duas linhas do topo e fica centralizada na altura do cabeçalho (título + coleta) */
-.topo-inner > .conta { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+/* A conta ocupa as duas linhas do topo, alinhada em cima, na linha do título "Boletim da Educação Superior" */
+.topo-inner > .conta { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
 /* Visitante: botões e tema na mesma linha, todos com 38px; o convite em texto fica embaixo */
 body.visitante .conta { align-items: flex-start; }
 .conta-texto > span { white-space: nowrap; }
