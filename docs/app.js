@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027212942"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027213317"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -695,7 +695,8 @@ function aviso(texto, erro = false) {
 function mostrarStatus(status) {
   if (!status) { $("atualizado").textContent = "Sem informação de coleta"; return; }
   const quando = new Date(status.ultima_execucao);
-  $("atualizado").textContent = "Última coleta: " + quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  $("atualizado").textContent = `Notícias atualizadas em ${quando.toLocaleDateString("pt-BR")}, às ` +
+    quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   mostrarAgenda(status.agenda);
   const falhas = status.fontes.filter((f) => !f.ok);
   $("status-resumo").textContent = falhas.length
@@ -711,19 +712,16 @@ function mostrarStatus(status) {
 }
 
 /**
- * "Coleta automática: dias úteis, às 8h, 12h e 17h · próxima: hoje às 17h".
+ * No (i) ao lado de "Notícias atualizadas em…": "As fontes são verificadas automaticamente todos os dias, às 4h17 e 10h17."
  * O horário vem do agendamento do GitHub (o coletor lê o coleta.yml), em horário de Brasília.
  */
 function mostrarAgenda(ag) {
   if (!ag || !ag.horas?.length) return;
   const el = $("agenda");
   const proxima = proximaColeta(ag);
-  el.textContent = `Coleta automática: ${ag.descricao.charAt(0).toLowerCase()}${ag.descricao.slice(1)}`;
-  el.title = "Horário de Brasília. O GitHub pode atrasar alguns minutos nos horários de pico.";
-  el.hidden = false;
+  el.textContent = `As fontes são verificadas automaticamente ${ag.descricao.charAt(0).toLowerCase()}${ag.descricao.slice(1)}.`;
   if (proxima) {
-    $("proxima").textContent = `Próxima atualização: ${proxima}`;
-    $("proxima").title = el.title;
+    $("proxima").innerHTML = `<b>Próxima atualização:</b> ${escapar(proxima)}.`;
     $("proxima").hidden = false;
   }
 }

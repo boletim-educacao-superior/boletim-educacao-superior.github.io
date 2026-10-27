@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261027212942">
+<link rel="stylesheet" href="estilo.css?v=20261027213317">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261027212942";</script>
+<script>window.RADAR_VERSAO = "20261027213317";</script>
 </head>
 <body class="bloqueado">
 
@@ -102,10 +102,13 @@
     </div>
     <!-- Segunda linha: situação da coleta ("Coletar agora" fica na linha do menu, à direita) -->
     <div class="topo-acoes">
+      <!-- Uma linha só; agenda e próxima atualização ficam no (i) (pedido do Diego, 27/10/2026) -->
       <div class="coleta-info">
         <span id="atualizado" class="atualizado">Carregando…</span>
-        <span id="agenda" class="agenda" hidden></span>
-        <span id="proxima" class="agenda" hidden></span>
+        <button type="button" class="botao-info" data-info="info-coleta" aria-expanded="false" aria-controls="info-coleta"
+                title="Quando as notícias são atualizadas" aria-label="Quando as notícias são atualizadas">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+        </button>
       </div>
     </div>
     <!-- Ao lado das informações da coleta, alinhado à direita com a conta (27/10/2026).
@@ -330,6 +333,13 @@
   <p class="info-pop-nota">Para isso o Boletim precisa saber quando foi a sua última visita, por isso é preciso entrar
     (a conta é gratuita).</p>
 </div>
+<div class="info-pop" id="info-coleta" role="note" hidden>
+  <p class="info-pop-titulo">Atualização das notícias</p>
+  <p id="agenda">As fontes são verificadas automaticamente todos os dias.</p>
+  <p id="proxima" hidden></p>
+  <p class="info-pop-nota">Horário de Brasília. A atualização pode atrasar um pouco, conforme a disponibilidade do GitHub,
+    onde a coleta roda.</p>
+</div>
 <div class="info-pop" id="info-menu" role="note" hidden>
   <p class="info-pop-titulo">Entenda o menu</p>
   <p><b>Início</b> · as notícias urgentes e de prioridade alta, coletadas todos os dias.</p>
@@ -496,7 +506,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261027212942"></script>
-<script src="app.js?v=20261027212942"></script>
+<script src="acesso.js?v=20261027213317"></script>
+<script src="app.js?v=20261027213317"></script>
 </body>
 </html>

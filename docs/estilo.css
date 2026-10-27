@@ -354,8 +354,7 @@ body.visitante .conta { align-items: flex-start; }
 }
 
 /* ----------------------------------------------------------- coleta e agenda --- */
-.coleta-info { display: flex; flex-direction: column; gap: 1px; }
-.agenda { color: var(--texto-suave); font-size: .8rem; }
+.coleta-info { display: flex; align-items: center; gap: 2px; }
 
 /* ------------------------------------------------- menu principal (abas) --- */
 .menu-principal {
