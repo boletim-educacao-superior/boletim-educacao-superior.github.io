@@ -233,8 +233,9 @@ body.bloqueado > header, body.bloqueado > main, body.bloqueado > footer { displa
 
 /* ---------------------- topo: conta (mesmo molde do sistema de certificados) --- */
 .conta { display: flex; align-items: center; gap: 10px; flex: none; }
-/* A conta ocupa as duas linhas do topo, alinhada em cima, na linha do título "Boletim da Educação Superior" */
-.topo-inner > .conta { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
+/* A conta fica em cima, na linha do título "Boletim da Educação Superior" */
+.topo-inner > .conta { grid-column: 2; grid-row: 1; align-self: start; }
+body.visitante .topo-inner > .conta { grid-row: 1 / span 2; }  /* visitante: convite mais alto, sem botão de coleta */
 /* Visitante: botões e tema na mesma linha, todos com 38px; o convite em texto fica embaixo */
 body.visitante .conta { align-items: flex-start; }
 .conta-texto > span { white-space: nowrap; }
@@ -360,11 +361,10 @@ body.visitante .conta { align-items: flex-start; }
 .menu-principal {
   max-width: 1040px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 2px; align-items: center;
 }
-/* "Coletar agora" na linha do menu, encostado à direita (alinhado com a borda do conteúdo) */
-.menu-principal #btn-coletar,
-.menu-principal #btn-coletar:hover {
-  margin-left: auto; padding: 6px 14px; font-size: .85rem; border-bottom: 0;
-  color: var(--marca-contraste); /* sem isto, a cor dos links do menu vence a do botão */
+/* "Verificar novas notícias": canto direito do topo, embaixo da conta, na altura da última linha da coleta */
+.topo-inner > #btn-coletar { grid-column: 2; grid-row: 2; justify-self: end; align-self: end; padding: 6px 14px; font-size: .85rem; }
+@media (max-width: 720px) {
+  .topo-inner > #btn-coletar { grid-column: 1 / -1; grid-row: 4; justify-self: start; }
 }
 .menu-principal a {
   padding: 10px 14px 11px; font-size: .9rem; font-weight: 600; color: var(--texto-suave); text-decoration: none;
@@ -441,7 +441,7 @@ body.visitante .conta { align-items: flex-start; }
   .menu-principal.tem-antes { -webkit-mask-image: linear-gradient(to left, #000 82%, transparent); mask-image: linear-gradient(to left, #000 82%, transparent); }
   .menu-principal.tem-mais.tem-antes { -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
   .menu-principal a { padding: 8px 9px 9px; font-size: .84rem; white-space: nowrap; flex: none; }
-  .menu-principal .botao-info-menu, .menu-principal #btn-coletar { flex: none; white-space: nowrap; }
+  .menu-principal .botao-info-menu { flex: none; white-space: nowrap; }
 }
 
 /* ----------------------------------------------------------------- tema --- */
