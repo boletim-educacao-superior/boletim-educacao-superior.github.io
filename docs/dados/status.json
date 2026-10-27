@@ -1,15 +1,16 @@
 {
- "ultima_execucao": "2026-10-26T13:44:44+00:00",
- "novos_nesta_execucao": 16,
+ "ultima_execucao": "2026-10-27T12:47:01+00:00",
+ "novos_nesta_execucao": 20,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 4683,
+ "total_no_painel": 4703,
  "agenda": {
-  "descricao": "Todos os dias, às 4h",
+  "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
-   4
+   4,
+   10
   ],
-  "minuto": 0,
+  "minuto": 17,
   "dias": [
    0,
    1,
@@ -25,49 +26,49 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 100
+   "itens": 70
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 9
+   "itens": 8
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 33
+   "itens": 11
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 10
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 100
+   "itens": 40
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 100
+   "itens": 56
   },
   {
    "fonte": "Google Notícias: ABED",
    "instituicao": "ABED",
    "ok": true,
-   "itens": 2
+   "itens": 1
   },
   {
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 11
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: CEE-MG",
@@ -97,7 +98,7 @@
    "fonte": "DOU: ENADE",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 1
+   "itens": 2
   },
   {
    "fonte": "DOU: DCNs",
@@ -121,7 +122,7 @@
    "fonte": "DOU: PUC Minas citada",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 1
+   "itens": 0
   }
  ]
 }
