@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261027211647">
+<link rel="stylesheet" href="estilo.css?v=20261027212311">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261027211647";</script>
+<script>window.RADAR_VERSAO = "20261027212311";</script>
 </head>
 <body class="bloqueado">
 
@@ -147,7 +147,7 @@
     </div>
     <div class="cartao-caixa">
       <button class="cartao cartao-urgente" data-atalho="urgente"><span class="tit">Urgentes</span>
-        <span class="num" id="n-urgente">–</span><span class="rot">Novas normas, prazos oficiais e menções à PUC Minas</span></button>
+        <span class="num" id="n-urgente">–</span><span class="rot">Novas normas, mudanças nas regras e prazos oficiais</span></button>
       <button type="button" class="botao-info botao-info-cartao" data-info="info-prioridade" aria-expanded="false" aria-controls="info-prioridade"
               title="Entenda este indicador" aria-label="Entenda as classificações de prioridade">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
@@ -187,9 +187,15 @@
         </button>
         </span>
         <select id="f-prioridade">
-          <option value="urgente">Urgente</option>
-          <option value="alta+">Urgente e alta</option>
-          <option value="media+">Urgente, alta e média</option>
+          <optgroup label="Combinadas">
+            <option value="alta+">Urgente e alta</option>
+            <option value="media+">Urgente, alta e média</option>
+          </optgroup>
+          <optgroup label="Uma só">
+            <option value="urgente">Somente urgente</option>
+            <option value="alta">Somente alta</option>
+            <option value="media">Somente média</option>
+          </optgroup>
         </select>
       </div>
       <label>Setor do CINEA <select id="f-setor"><option value="">Todos</option></select></label>
@@ -301,13 +307,13 @@
 <div class="info-pop" id="info-prioridade" role="note" hidden>
   <p class="info-pop-titulo">Entenda as classificações</p>
   <p>Cada notícia recebe um selo de prioridade, dado automaticamente pelas palavras do texto.</p>
-  <p><span class="selo-legenda selo-urgente">Urgente</span> Novas normas, prazos oficiais e menções à PUC Minas: ato oficial
-    que cita a PUC Minas, norma nova sobre EAD, mudança nas regras da educação superior (DCNs, avaliação, ENADE, carga horária
-    a distância) ou prazo de órgão oficial.</p>
+  <p><span class="selo-legenda selo-urgente">Urgente</span> Novas normas, mudanças nas regras e prazos oficiais: norma nova
+    sobre EAD, mudança nas regras da educação superior (DCNs, avaliação, ENADE, carga horária a distância) ou prazo de órgão
+    oficial.</p>
   <p><span class="selo-legenda selo-alta">Alta</span> Assuntos que afetam diretamente a educação superior: EAD e educação
     digital, regulação e avaliação de cursos, currículo, formação docente, fomento e editais.</p>
   <p><span class="selo-legenda selo-media">Média</span> Assunto ligado à educação superior, de interesse mais geral.
-    Só aparece quando você escolhe "Urgente, alta e média" no filtro Prioridade.</p>
+    Só aparece quando você escolhe "Urgente, alta e média" ou "Somente média" no filtro Prioridade.</p>
   <p class="info-pop-nota">Clique no cartão para ver só as notícias daquela prioridade.</p>
 </div>
 <div class="info-pop" id="info-periodo" role="note" hidden>
@@ -489,7 +495,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261027211647"></script>
-<script src="app.js?v=20261027211647"></script>
+<script src="acesso.js?v=20261027212311"></script>
+<script src="app.js?v=20261027212311"></script>
 </body>
 </html>

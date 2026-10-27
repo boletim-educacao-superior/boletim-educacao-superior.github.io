@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027211647"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027212311"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -353,7 +353,7 @@ function aplicarAtalho(nome) {
     return;
   }
   estado.somenteNovos = nome === "novos";
-  $("f-prioridade").value = nome === "urgente" ? "urgente" : "alta+";
+  $("f-prioridade").value = nome === "urgente" || nome === "alta" ? nome : "alta+";  // cada cartão mostra só o que conta
   if (nome === "limpar") $("f-periodo").value = PERIODO_INICIAL;
   estado.pagina = 1;
   render();
@@ -382,12 +382,14 @@ function filtrar() {
   const dias = visao.semPeriodo ? "" : $("f-periodo").value;
   const ocultarRotina = $("f-rotina").checked && !visao.comRotina;
   const limite = limitePeriodo(dias);
-  const maxPrio = { urgente: 0, "alta+": 1, "media+": 2 }[prio] ?? 3;
+  // "alta+" e "media+" somam as de cima; "urgente", "alta" e "media" mostram uma só (pedido do Diego, 27/10/2026).
+  const aceitas = { urgente: ["urgente"], alta: ["alta"], media: ["media"],
+                    "alta+": ["urgente", "alta"], "media+": ["urgente", "alta", "media"] }[prio];
 
   const lista = estado.itens.filter((it) => {
     if (!visao.filtro(it)) return false;
     if (estado.somenteNovos && !ehNovo(it)) return false;
-    if (PRIORIDADES[it.prioridade] > maxPrio) return false;
+    if (aceitas && !aceitas.includes(it.prioridade)) return false;
     if (estado.instituicoes.size && !estado.instituicoes.has(it.instituicao)) return false;
     if (tema && !(it.temas || []).includes(tema)) return false;
     if (setor && !(it.setores || []).includes(setor)) return false;
