@@ -69,7 +69,7 @@ Detalhes, configuração e manutenção em [acesso/README.md](acesso/README.md).
 | Modo | Quando | O que acontece |
 |---|---|---|
 | **Manual** | Botão "Verificar novas notícias" no painel (só administradores), ou GitHub › Actions › *Coleta do Radar* › *Run workflow* | Coleta e atualiza o painel (~1 min) |
-| **Automático** | Todos os dias, às 4h (Brasília) | Atualiza o painel em silêncio. **Só alerta se surgir item urgente novo** |
+| **Automático** | Todos os dias, às 4h17 e 10h17 (Brasília; o GitHub pode atrasar) | Atualiza o painel em silêncio. **Só alerta se surgir item urgente novo** |
 
 Para mudar os horários, edite a linha `cron` em `.github/workflows/coleta.yml` (em UTC: Brasília + 3h).
 O painel mostra o novo horário sozinho, a partir da coleta seguinte.

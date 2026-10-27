@@ -17,9 +17,11 @@ on:
         type: boolean
         default: false
   schedule:
-    # Horário em UTC: 7h UTC = 4h em Brasília, todos os dias (pedido do Diego em 23/10/2026).
+    # Horário em UTC: 7h UTC = 4h em Brasília, todos os dias (pedido do Diego em 23/10/2026), e uma segunda
+    # passada às 13h UTC (10h) de reserva: o GitHub atrasa horas ou pula agendamentos em hora cheia (27/10/2026
+    # não rodou). O minuto 17 foge do pico da hora cheia; a segunda passada só grava se houver novidade.
     # O painel lê esta linha para mostrar a agenda: mantenha o formato "MIN HORAS * * DIAS".
-    - cron: "0 7 * * *"
+    - cron: "17 7,13 * * *"
 
 permissions:
   contents: write   # gravar docs/dados/*.json
