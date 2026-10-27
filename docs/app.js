@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027145243"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261027192615"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -47,7 +47,7 @@ const marca = (it) => estado.marcas.get(it.id)?.tipo;
 const VISOES = {
   "inicio": {
     titulo: "Início",
-    explica: "As notícias mais importantes para a educação superior, coletadas todos os dias de MEC, INEP, CNE, CAPES, " +
+    explica: "Notícias e atos normativos de impacto para a educação superior, monitorados diariamente em MEC, INEP, CNE, CAPES, " +
       "SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.",
     filtro: (it) => marca(it) !== "irrelevante",
   },
