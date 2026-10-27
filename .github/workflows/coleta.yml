@@ -69,5 +69,6 @@ jobs:
             echo "Nada novo."
           else
             git commit -m "Coleta $(date -u +'%Y-%m-%d %H:%M') UTC"
-            git push
+            # Se alguém publicou durante a coleta, junta por cima (até 3 tentativas) em vez de perder a coleta.
+            for i in 1 2 3; do git push && exit 0; git pull --rebase || exit 1; done; exit 1
           fi
