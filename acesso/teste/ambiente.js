@@ -7,7 +7,9 @@ const vm = require("vm");
 const crypto = require("crypto");
 // ------------------------------------------------------------ simulador --
 function novoAmbiente() {
-  const props = {}, cache = {}, emails = [], planilhas = {}, pastas = {}, gatilhos = [];
+  // Administrador inicial e dona do script de mentira (os de verdade ficam só nas propriedades do script).
+  const props = { ADMINS_INICIAIS: JSON.stringify([{ email: "diego.teste@exemplo.org", nome: "Diego Eduardo" }]) };
+  const cache = {}, emails = [], planilhas = {}, pastas = {}, gatilhos = [];
   const avisos = { gerado_em: "", itens: [] }, buscas = [];
   let relogio = Date.parse("2026-10-23T12:00:00Z");
   const github = { pedidos: [], codigo: 204 };
@@ -99,6 +101,7 @@ function novoAmbiente() {
       getFileById: (id) => ({
         getParents: () => { const p = pastas[id]; let lido = false; return { hasNext: () => !!p && !lido, next: () => { lido = true; return { getId: () => p }; } }; },
         moveTo: (pasta) => { pastas[id] = pasta.getId(); },
+        getOwner: () => ({ getEmail: () => "Sistema.Teste@exemplo.org" }),
       }),
     },
     ScriptApp: {

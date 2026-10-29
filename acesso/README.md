@@ -1,7 +1,7 @@
 # Servidor de acesso do Radar
 
 Controla **quem entra** no painel: equipe, senhas, primeiro acesso, "esqueci a senha" e administradores.
-Roda no Google Apps Script, na conta **cineaned@gmail.com**, igual ao Painel do sistema de certificados.
+Roda no Google Apps Script, na conta Google do CINEA/NED (a mesma do Painel do sistema de certificados).
 
 > O painel é **aberto** (decisão de 23/10/2026): qualquer pessoa vê as notícias. A entrada serve para a equipe
 > marcar notícias (compartilhado), ver as áreas da equipe e administrar. Os dados são públicos no GitHub.
@@ -98,5 +98,5 @@ Para ver todos antes de publicar: `node acesso/teste/previa-emails.js` e abra `a
   sessões, administração, cota, erros internos).
 - Telas sem o Google: sirva `docs/` (`python -m http.server 8791 --directory docs`) e abra
   `http://localhost:8791/?acesso=simulado`. O código "enviado por e-mail" aparece no console do navegador.
-  Pessoas do simulador: diegoeduardo@pucminas.br (admin, sem senha: use Primeiro acesso) e
+  Pessoas do simulador: diego.teste@exemplo.org (admin, sem senha: use Primeiro acesso) e
   ana.teste@pucminas.br (senha `teste2026ok`).

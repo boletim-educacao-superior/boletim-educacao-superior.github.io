@@ -13,7 +13,7 @@ function conferir(descricao, condicao, extra) {
 }
 function cenario(nome, fn) { console.log("\n" + nome); fn(novoAmbiente()); }
 
-const DIEGO = "diegoeduardo@pucminas.br";
+const DIEGO = "diego.teste@exemplo.org";
 const ANA = "ana.teste@pucminas.br";
 const SENHA = "radar2026ok";
 
@@ -59,7 +59,7 @@ cenario("Primeiro acesso, entrada e sessão", (a) => {
   conferir("senha curta é recusada", !r.ok && /pelo menos 8/.test(r.erro), r);
   r = a.chamar({ acao: "definirSenha", email: DIEGO, codigo, senha: "somenteletras" });
   conferir("senha sem número é recusada", !r.ok && /letras e números/.test(r.erro), r);
-  r = a.chamar({ acao: "definirSenha", email: DIEGO, codigo, senha: "diegoeduardo1" });
+  r = a.chamar({ acao: "definirSenha", email: DIEGO, codigo, senha: "diego.teste1" });
   conferir("senha com o e-mail é recusada", !r.ok && /e-mail/.test(r.erro), r);
   r = a.chamar({ acao: "definirSenha", email: DIEGO, codigo: "000000", senha: SENHA });
   conferir("código errado é recusado e conta tentativas", !r.ok && /Restam 4/.test(r.erro), r);
@@ -160,7 +160,7 @@ cenario("Meu perfil", (a) => {
   a.g.configurar();
   const s = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
   let r = a.api(s, "perfil");
-  conferir("perfil traz cadastro e data da senha", r.ok && r.dados.cadastrado_por === "cineaned@gmail.com" && !!r.dados.senha_em && r.dados.admin, r);
+  conferir("perfil traz cadastro e data da senha", r.ok && r.dados.cadastrado_por === "Conta do sistema" && !!r.dados.senha_em && r.dados.admin, r);
   conferir("perfil não traz o hash da senha", !JSON.stringify(r.dados).includes("v1$"));
   r = a.api(s, "salvarMeuNome", "  Diego   E. Silva ");
   conferir("troca o próprio nome (espaços arrumados)", r.ok && r.dados.nome === "Diego E. Silva", r);

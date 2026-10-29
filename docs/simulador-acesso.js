@@ -5,7 +5,7 @@
 window.SimuladorAcesso = (() => {
   const agora = () => new Date().toISOString().replace("T", " ").slice(0, 19);
   const equipe = [
-    { email: "diegoeduardo@pucminas.br", nome: "Diego Eduardo", admin: true, senha: "", cadastrado_em: agora(), ultimo_acesso: "" },
+    { email: "diego.teste@exemplo.org", nome: "Diego Eduardo", admin: true, senha: "", cadastrado_em: agora(), ultimo_acesso: "" },
     { email: "ana.teste@pucminas.br", nome: "Ana Teste", admin: false, senha: "teste2026ok", cadastrado_em: agora(), ultimo_acesso: "" },
   ];
   const registro = [];
@@ -18,7 +18,7 @@ window.SimuladorAcesso = (() => {
     d.setHours(Math.random() < 0.6 ? 8 + Math.floor(Math.random() * 4) : 13 + Math.floor(Math.random() * 6), 10);
     const equipe = Math.random() < 0.45;
     eventos.push({ quando: d.toLocaleString("sv-SE").slice(0, 19), visitante: "v" + (equipe ? "eq" : Math.floor(Math.random() * 40)),
-                   email: equipe ? (Math.random() < 0.6 ? "diegoeduardo@pucminas.br" : "ana.teste@pucminas.br") : "",
+                   email: equipe ? (Math.random() < 0.6 ? "diego.teste@exemplo.org" : "ana.teste@pucminas.br") : "",
                    tipo: "abertura", detalhe: "inicio", dispositivo: Math.random() < 0.3 ? "celular" : "computador" });
   }
   [["noticia", "MEC|urgente|Novo Marco Regulatório do EAD"], ["noticia", "INEP|alta|Enade 2027: inscrições"], ["noticia", "MEC|urgente|Novo Marco Regulatório do EAD"],
@@ -51,7 +51,7 @@ window.SimuladorAcesso = (() => {
   const reg = (q, acao, detalhe = "") => registro.unshift({ quando: agora(), quem: q, acao, detalhe });
   const tipoDe = (p) => (p.admin ? "admin" : p.perfil === "usuario" ? "usuario" : "equipe");
   const perfil = (p) => ({ email: p.email, nome: p.nome, admin: p.admin, sistema: false, tipo: tipoDe(p), avisos: p.avisos || { imediato: [], semanal: [] }, cadastrado_em: p.cadastrado_em,
-                           cadastrado_por: "cineaned@gmail.com", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso,
+                           cadastrado_por: "Conta do sistema", senha_em: p.senha_em || "", ultimo_acesso: p.ultimo_acesso,
                            // Simulação: a "visita anterior" foi há 3 dias (para o cartão de novidades ter números)
                            visita_anterior: new Date(Date.now() - 3 * 864e5).toLocaleString("sv-SE").slice(0, 19) });
   const lista = () => equipe.map((p) => ({ ...p, senha: undefined, tem_senha: !!p.senha, perfil: p.perfil === "usuario" ? "usuario" : "equipe" }));

@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261029173756"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261029184153"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -318,7 +318,7 @@ async function abrirPerfil(focoAvisos = false) {
     $a("mp-nome").value = p.nome; $a("mp-nome").readOnly = !!p.sistema;
     $a("mp-email").value = p.email;
     $a("mp-desde").value = p.cadastrado_em ? dataCurta(p.cadastrado_em).slice(0, 10) : "—";
-    $a("mp-por").value = p.cadastrado_por === "cineaned@gmail.com" ? "Conta do sistema" : p.cadastrado_por || "—";
+    $a("mp-por").value = p.cadastrado_por || "—";
     $a("mp-por").title = p.cadastrado_por || "";
     $a("mp-senha-em").value = p.senha_em ? dataCurta(p.senha_em).slice(0, 10) : "—";
     $a("mp-salvar").disabled = true;

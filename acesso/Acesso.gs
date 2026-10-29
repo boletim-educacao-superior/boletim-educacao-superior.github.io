@@ -1,18 +1,18 @@
 /**
  * Servidor de acesso do Radar da Educação Superior (CINEA / NED · PUC Minas).
  *
- * Implantar como App da Web: Executar como "Eu" (cineaned@gmail.com), Quem pode acessar "Qualquer pessoa".
+ * Implantar como App da Web: Executar como "Eu" (a conta Google do CINEA/NED, dona do script), Quem pode acessar "Qualquer pessoa".
  * O painel (GitHub Pages) conversa com este servidor por POST, sempre com { acao, ... } em JSON.
  *
  * Mesma lógica do Painel de certificados: equipe numa planilha, código de 6 dígitos por e-mail, sessão de 30 dias
  * guardada no navegador e, no servidor, só como hash. Diferença: aqui a pessoa cria uma SENHA (com o código) e
  * depois entra com e-mail e senha; o código só volta a ser usado no primeiro acesso e em "Esqueci a senha".
  *
- * ATENÇÃO: este arquivo fica num repositório PÚBLICO. Não escreva segredos aqui. O segredo usado nos hashes é
- * criado por configurar() e fica só nas propriedades do script.
+ * ATENÇÃO: este arquivo fica num repositório PÚBLICO. Não escreva segredos nem e-mails de pessoas aqui. O segredo
+ * usado nos hashes é criado por configurar() e fica só nas propriedades do script (assim como a chave do GitHub,
+ * o e-mail da conta do sistema e os administradores iniciais).
  */
 
-const CONTA_SISTEMA = 'cineaned@gmail.com';   // dona do script: sempre administradora
 const ENDERECO_PAINEL = 'https://boletim-educacao-superior.github.io/';
 // Domínio próprio desde 26/10/2026 (organização boletim-educacao-superior). Os endereços antigos em
 // certificacao-cinea.github.io (…/radar-educacao-superior/ e …/boletim-educacao-superior/) redirecionam para este.
@@ -21,8 +21,20 @@ const REMETENTE = 'Boletim · CINEA | PUC Minas';
 const NOME_PLANILHA = 'Radar da Educação Superior - Acesso (não mexer)';
 // Pasta "Radar da Educação Superior" no Drive da cineaned: tudo do Radar no Google fica nela (script e planilha).
 const PASTA_ID = '1yCblAdeKF9ZPn2Ao_4ft5-KL-7HB9Boe';
-// Cadastrados como administradores na primeira execução de configurar().
-const ADMINS_INICIAIS = [{ email: 'diegoeduardo@pucminas.br', nome: 'Diego Eduardo' }];
+// Os e-mails não ficam neste arquivo público (pedido do Diego, 29/10/2026):
+// - conta do sistema = dona do script (sempre administradora), lida do Drive e guardada em contaSistema_();
+// - administradores iniciais = propriedade ADMINS_INICIAIS, JSON [{"email": "...", "nome": "..."}], usada por configurar().
+function contaSistema_() {
+  let c = prop_('contaSistema_()');
+  if (!c) {
+    c = DriveApp.getFileById(ScriptApp.getScriptId()).getOwner().getEmail().toLowerCase();
+    PropertiesService.getScriptProperties().setProperty('contaSistema_()', c);
+  }
+  return c;
+}
+function adminsIniciais_() {
+  try { return JSON.parse(prop_('ADMINS_INICIAIS') || '[]'); } catch (e) { return []; }
+}
 
 const ABAS = {
   // senha = hash (nunca a senha); senha_em = quando foi criada ou trocada
@@ -95,9 +107,9 @@ function configurar() {
   const ss = planilha_();
   const equipe = lerAba_(ss, 'Equipe');
   lerAba_(ss, 'Registro');
-  ADMINS_INICIAIS.forEach(function (a) {
+  adminsIniciais_().forEach(function (a) {
     if (equipe.linhas.some(function (p) { return p.email === a.email; })) return;
-    equipe.sh.appendRow(linhaEquipe_({ email: a.email, nome: a.nome, admin: true, cadastrado_por: CONTA_SISTEMA, cadastrado_em: agora_() }));
+    equipe.sh.appendRow(linhaEquipe_({ email: a.email, nome: a.nome, admin: true, cadastrado_por: contaSistema_(), cadastrado_em: agora_() }));
   });
   instalarGatilhos_();
   Logger.log('Pronto. Pasta: ' + pasta.getUrl() + ' · Planilha: ' + ss.getUrl() +
@@ -174,18 +186,18 @@ function membro_(ss, email) {
   return { tab: tab, p: tab.linhas.filter(function (x) { return x.email.toLowerCase() === email; })[0] || null };
 }
 function ehAdmin_(ss, email) {
-  if (email === CONTA_SISTEMA) return true;
+  if (email === contaSistema_()) return true;
   const m = membro_(ss, email).p;
   return !!m && verdadeiro_(m.admin);
 }
-function podeEntrar_(ss, email) { return email === CONTA_SISTEMA || !!membro_(ss, email).p; }
+function podeEntrar_(ss, email) { return email === contaSistema_() || !!membro_(ss, email).p; }
 
 /**
  * Tipo de pessoa: 'admin' (administra), 'equipe' (equipe do CINEA, cadastrada pelo admin: marca para todos)
  * ou 'usuario' (criou a própria conta: marcações só dela). A conta do sistema é sempre admin.
  */
 function tipoDe_(ss, email) {
-  if (email === CONTA_SISTEMA) return 'admin';
+  if (email === contaSistema_()) return 'admin';
   const m = membro_(ss, email).p;
   if (!m) return '';
   if (verdadeiro_(m.admin)) return 'admin';
@@ -194,13 +206,13 @@ function tipoDe_(ss, email) {
 
 /** A conta do sistema não está na planilha: guarda a senha dela nas propriedades. */
 function senhaDe_(ss, email) {
-  if (email === CONTA_SISTEMA) return { senha: prop_('SENHA_SISTEMA') || '', senha_em: prop_('SENHA_SISTEMA_EM') || '' };
+  if (email === contaSistema_()) return { senha: prop_('SENHA_SISTEMA') || '', senha_em: prop_('SENHA_SISTEMA_EM') || '' };
   const m = membro_(ss, email);
   return m.p ? { senha: m.p.senha, senha_em: m.p.senha_em, tab: m.tab, p: m.p } : null;
 }
 function gravarSenha_(ss, email, hash) {
   const quando = agora_();
-  if (email === CONTA_SISTEMA) {
+  if (email === contaSistema_()) {
     PropertiesService.getScriptProperties().setProperties({ SENHA_SISTEMA: hash, SENHA_SISTEMA_EM: quando });
     return hash;
   }
@@ -327,7 +339,7 @@ function cadastrar_(nome, email) {
   if (nome.length < 3) throw falha_('Digite seu nome.');
   const ss = planilha_();
   USUARIO_ATUAL_ = email;
-  if (email === CONTA_SISTEMA) throw falha_('Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".');
+  if (email === contaSistema_()) throw falha_('Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".');
   const m = membro_(ss, email);
   if (m.p && m.p.senha) throw falha_('Este e-mail já tem conta. Use "Entrar" ou "Esqueci a senha".');
   if (!m.p) {
@@ -459,9 +471,10 @@ function registrarAcesso_(ss) {
 
 function perfil_(ss, email) {
   const m = membro_(ss, email).p;
-  return { email: email, nome: m ? m.nome : 'Conta do sistema', admin: ehAdmin_(ss, email), sistema: email === CONTA_SISTEMA,
+  return { email: email, nome: m ? m.nome : 'Conta do sistema', admin: ehAdmin_(ss, email), sistema: email === contaSistema_(),
            tipo: tipoDe_(ss, email),
-           cadastrado_em: m ? m.cadastrado_em : '', cadastrado_por: m ? m.cadastrado_por : '',
+           cadastrado_em: m ? m.cadastrado_em : '',
+           cadastrado_por: !m ? '' : m.cadastrado_por === contaSistema_() ? 'Conta do sistema' : m.cadastrado_por,
            senha_em: m ? m.senha_em : prop_('SENHA_SISTEMA_EM') || '', ultimo_acesso: m ? m.ultimo_acesso : '',
            visita_anterior: m ? m.visita_anterior : '', avisos: avisosDe_(m) };
 }
@@ -500,7 +513,7 @@ function api_salvarMembro_(ss, email, nome, admin, boasVindas, perfil, avisos) {
   email = emailLimpo_(email);
   nome = String(nome || '').trim().slice(0, 120);
   if (!nome) throw falha_('Digite o nome da pessoa.');
-  if (email === CONTA_SISTEMA) throw falha_('A conta do sistema já é administradora e não entra na lista.');
+  if (email === contaSistema_()) throw falha_('A conta do sistema já é administradora e não entra na lista.');
   const m = membro_(ss, email);
   if (m.p) {
     if (m.p.email === USUARIO_ATUAL_ && verdadeiro_(m.p.admin) && !admin && ultimoAdmin_(m.tab)) throw falha_('Você é o único administrador: cadastre outro antes de tirar o seu.');
@@ -594,7 +607,7 @@ const ID_ITEM_RE = /^[a-f0-9]{16}$/;   // id gerado pelo coletor (radar/fontes.p
 function mapaNomes_(ss) {
   const m = {};
   lerAba_(ss, 'Equipe').linhas.forEach(function (p) { m[p.email.toLowerCase()] = p.nome; });
-  m[CONTA_SISTEMA] = 'Conta do sistema';
+  m[contaSistema_()] = 'Conta do sistema';
   return m;
 }
 
