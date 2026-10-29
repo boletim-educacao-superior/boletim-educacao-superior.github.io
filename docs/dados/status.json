@@ -1,9 +1,9 @@
 {
- "ultima_execucao": "2026-10-28T13:59:49+00:00",
- "novos_nesta_execucao": 19,
+ "ultima_execucao": "2026-10-29T14:15:18+00:00",
+ "novos_nesta_execucao": 29,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 4737,
+ "total_no_painel": 4766,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -26,25 +26,25 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 69
+   "itens": 100
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 12
+   "itens": 13
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 14
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 7
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: SEMESP",
@@ -56,7 +56,7 @@
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 54
+   "itens": 60
   },
   {
    "fonte": "Google Notícias: ABED",
@@ -68,7 +68,7 @@
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 11
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: CEE-MG",
@@ -86,13 +86,13 @@
    "fonte": "DOU: SERES (regulação)",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 11
+   "itens": 6
   },
   {
    "fonte": "DOU: CNE",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 4
+   "itens": 8
   },
   {
    "fonte": "DOU: ENADE",
