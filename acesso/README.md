@@ -41,6 +41,12 @@ visitantes, dispositivos, seções, notícias, instituições e buscas.
   (confira em *Acionadores*, o ícone de relógio no editor).
 - **Segredo:** o código está num repositório público, então o segredo fica só nas propriedades do script
   (`SEGREDO`, criado por `configurar()`). Nunca escreva segredos no `Acesso.gs`.
+- **Verificar novas notícias (botão dos administradores):** o servidor dispara a coleta no GitHub Actions
+  (`coletarAgora`), no máximo 2 vezes por hora somando todos (`COLETAS_MANUAIS` guarda os horários). Precisa da
+  propriedade `GITHUB_TOKEN`: token *fine-grained* criado no GitHub (Settings › Developer settings › Fine-grained tokens),
+  dono `boletim-educacao-superior`, só o repositório `boletim-educacao-superior.github.io`, permissão **Actions: Read and write**.
+  Cole o valor em *Configurações do projeto* › *Propriedades do script* (nome `GITHUB_TOKEN`). Quando o token expirar,
+  o botão avisa que o GitHub recusou: gere outro e troque o valor.
 
 ## Primeira configuração (uma vez, logado como cineaned)
 

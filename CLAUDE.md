@@ -102,6 +102,9 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
   **"Verificar novas notícias"** e só aparece para administradores (classe `so-admin` + `body.perfil-admin`);
   assinatura em duas linhas: "Centro de Inovação em Ensino e Aprendizagem (CINEA)" / "Núcleo de Educação Digital (NED) - PUC Minas"
   (no site e nos e-mails).
+- 29/10/2026: "Verificar novas notícias" deixou de abrir o GitHub: chama `coletarAgora` no Apps Script, que dispara o
+  workflow pela API (token em `GITHUB_TOKEN`, nas propriedades do script) com limite de 2 por hora somando os administradores;
+  o painel espera o `status.json` novo e recarrega as notícias sozinho (`verificarAgora` em app.js). Ver acesso/README.md.
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

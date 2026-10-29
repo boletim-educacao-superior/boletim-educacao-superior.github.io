@@ -10,6 +10,7 @@ function novoAmbiente() {
   const props = {}, cache = {}, emails = [], planilhas = {}, pastas = {}, gatilhos = [];
   const avisos = { gerado_em: "", itens: [] }, buscas = [];
   let relogio = Date.parse("2026-10-23T12:00:00Z");
+  const github = { pedidos: [], codigo: 204 };
 
   const toBytes = (v) => (Array.isArray(v) ? Buffer.from(v.map((b) => b & 255)) : Buffer.from(String(v), "utf8"));
   const toSigned = (buf) => [...buf].map((b) => (b > 127 ? b - 256 : b));
@@ -57,6 +58,7 @@ function novoAmbiente() {
       formatDate: (d, fuso, formato) => {
         const t = new Date(d.getTime() - 3 * 3600e3).toISOString().replace("T", " ").slice(0, 19);
         if (formato === "dd/MM") return t.slice(8, 10) + "/" + t.slice(5, 7);
+        if (formato === "HH'h'mm") return t.slice(11, 13) + "h" + t.slice(14, 16);
         return formato === "yyyy-MM-dd" ? t.slice(0, 10) : t;
       },
     },
@@ -111,8 +113,15 @@ function novoAmbiente() {
       },
     },
     // O avisos.json publicado pelo coletor (o teste muda "avisos" para simular uma coleta nova).
+    // Pedidos à API do GitHub ficam em "github" e respondem com github.codigo (204 = coleta disparada).
     UrlFetchApp: {
-      fetch: (url) => { buscas.push(url); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(avisos) }; },
+      fetch: (url, opcoes) => {
+        if (url.startsWith("https://api.github.com/")) {
+          github.pedidos.push({ url, opcoes });
+          return { getResponseCode: () => github.codigo, getContentText: () => "" };
+        }
+        buscas.push(url); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(avisos) };
+      },
     },
   };
   vm.createContext(g);
@@ -120,7 +129,7 @@ function novoAmbiente() {
 
   const chamar = (corpo) => JSON.parse(g.doPost({ postData: { contents: JSON.stringify(corpo) } }).texto);
   return {
-    g, props, emails, planilhas, pastas, gatilhos, avisos, buscas,
+    g, props, emails, planilhas, pastas, gatilhos, avisos, buscas, github,
     chamar,
     avancar: (min) => { relogio += min * 60e3; },
     ultimoCodigo: (para) => { const e = emails.filter((x) => x.para === para).pop(); return e && (e.assunto.match(/(\d{6})/) || [])[1]; },

@@ -1314,12 +1314,77 @@ function enviarAviso_(p, tipo, itens, exemplo, desde) {
   enviarEmail_(p.email.toLowerCase(), emailAviso_(p, tipo, itens, exemplo, desde));
 }
 
+// ============================================================ atualizar as notícias agora --
+// "Verificar novas notícias" (só administradores) dispara a coleta no GitHub Actions direto do painel.
+// A chave do GitHub fica na propriedade GITHUB_TOKEN do script (nunca neste arquivo, que é público):
+// token "fine-grained" só deste repositório, com a permissão Actions: Read and write.
+// Limite: COLETAS_POR_HORA na última hora, somando todos os administradores (pedido do Diego, 29/10/2026).
+
+const REPOSITORIO = 'boletim-educacao-superior/boletim-educacao-superior.github.io';
+const WORKFLOW_COLETA = 'coleta.yml';
+const COLETAS_POR_HORA = 2;
+const HORA_MS = 60 * 60 * 1000;
+
+/** Horários (ms) das atualizações manuais da última hora. */
+function coletasRecentes_(agora) {
+  let lista = [];
+  try { lista = JSON.parse(prop_('COLETAS_MANUAIS') || '[]'); } catch (e) { lista = []; }
+  return lista.filter(function (t) { return agora - t < HORA_MS; });
+}
+
+function horaMinuto_(ms) { return Utilities.formatDate(new Date(ms), 'America/Sao_Paulo', "HH'h'mm"); }
+
+/** Situação para o botão: quantas ainda dá para pedir nesta hora e quando libera a próxima. */
+function situacaoColeta_(agora) {
+  const recentes = coletasRecentes_(agora);
+  const livre = recentes.length < COLETAS_POR_HORA;
+  const libera = livre ? 0 : Math.min.apply(null, recentes) + HORA_MS;
+  return { restantes: COLETAS_POR_HORA - recentes.length, libera_em: libera ? new Date(libera).toISOString() : '',
+           libera_as: libera ? horaMinuto_(libera) : '', configurado: !!prop_('GITHUB_TOKEN') };
+}
+
+function api_situacaoColeta_(ss) {
+  exigirAdmin_(ss);
+  return situacaoColeta_(Date.now());
+}
+
+function api_coletarAgora_(ss) {
+  exigirAdmin_(ss);
+  const token = prop_('GITHUB_TOKEN');
+  if (!token) throw falha_('A atualização pelo painel ainda não foi configurada (falta a chave do GitHub no servidor).');
+  return comTrava_(function () {  // dois administradores ao mesmo tempo não passam do limite
+    const agora = Date.now(), recentes = coletasRecentes_(agora);
+    if (recentes.length >= COLETAS_POR_HORA) {
+      throw falha_('As notícias já foram atualizadas ' + COLETAS_POR_HORA + ' vezes na última hora. ' +
+                   'Tente de novo a partir das ' + horaMinuto_(Math.min.apply(null, recentes) + HORA_MS) + '.');
+    }
+    const r = UrlFetchApp.fetch('https://api.github.com/repos/' + REPOSITORIO + '/actions/workflows/' + WORKFLOW_COLETA + '/dispatches', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      payload: JSON.stringify({ ref: 'main' })
+    });
+    const codigo = r.getResponseCode();
+    if (codigo !== 204) {
+      registrar_(ss, 'coleta_manual_erro', 'GitHub respondeu ' + codigo);
+      throw falha_(codigo === 401 || codigo === 403 || codigo === 404
+        ? 'O GitHub recusou o pedido (a chave do servidor pode ter expirado). Avise quem cuida do sistema.'
+        : 'O GitHub não respondeu agora (código ' + codigo + '). Tente de novo em alguns minutos.');
+    }
+    recentes.push(agora);
+    PropertiesService.getScriptProperties().setProperty('COLETAS_MANUAIS', JSON.stringify(recentes));
+    registrar_(ss, 'coleta_manual', 'Pediu para atualizar as notícias agora');
+    const s = situacaoColeta_(agora);
+    s.pedido_em = new Date(agora).toISOString();
+    return s;
+  });
+}
+
 const API_ = {
   marcacoes: api_marcacoes_, marcar: api_marcar_, marcarLidos: api_marcarLidos_,
   perfil: api_perfil_, salvarMeuNome: api_salvarMeuNome_, alterarSenha: api_alterarSenha_, equipe: api_equipe_, salvarMembro: api_salvarMembro_,
   removerMembro: api_removerMembro_, apagarSenha: api_apagarSenha_, enviarBoasVindas: api_enviarBoasVindas_,
   registro: api_registro_, uso: api_uso_, salvarAvisos: api_salvarAvisos_, testarAvisos: api_testarAvisos_,
-  salvarAvisosDe: api_salvarAvisosDe_
+  salvarAvisosDe: api_salvarAvisosDe_, coletarAgora: api_coletarAgora_, situacaoColeta: api_situacaoColeta_
 };
 
 // ======================================================================== porta de entrada --

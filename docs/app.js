@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261027214134"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261029173756"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -676,7 +676,7 @@ async function enviarLidos() {
 // Se a pessoa fechar a aba logo depois de marcar, ainda tenta mandar.
 window.addEventListener("pagehide", () => { if (fila.lidas.size || fila.naoLidas.size) enviarLidos(); });
 
-function aviso(texto, erro = false) {
+function aviso(texto, erro = false, duracao = erro ? 6000 : 2500) {
   let a = $("aviso");
   if (!a) {
     a = document.createElement("div");
@@ -687,7 +687,7 @@ function aviso(texto, erro = false) {
   a.classList.toggle("aviso-erro", erro);
   a.classList.add("visivel");
   clearTimeout(aviso.t);
-  aviso.t = setTimeout(() => a.classList.remove("visivel"), erro ? 6000 : 2500);
+  aviso.t = setTimeout(() => a.classList.remove("visivel"), duracao);
 }
 
 // --------------------------------------------------------------- utilidades --
@@ -702,6 +702,7 @@ function mostrarStatus(status) {
     ? `· ${falhas.length} fonte(s) com erro`
     : `· todas as ${status.fontes.length} fontes ok`;
   const corpo = $("status-tabela");
+  corpo.replaceChildren();
   for (const f of status.fontes) {
     const tr = document.createElement("tr");
     const situacao = f.ok ? '<span class="ok">ok</span>' : `<span class="erro">erro: ${escapar(f.erro)}</span>`;
@@ -742,13 +743,61 @@ function proximaColeta(ag) {
   return "";
 }
 
+// "Verificar novas notícias" (só administradores; pedido do Diego, 29/10/2026): o servidor de acesso dispara a coleta
+// no GitHub Actions (até 2 vezes por hora, somando todos) e o painel espera o status.json novo para recarregar as notícias.
+const ESPERA_COLETA_MS = 8 * 60 * 1000;
 function configurarBotaoColeta() {
-  let repo = CONFIG.repositorio;
-  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
-  if (!repo && m) repo = `${m[1]}/${location.pathname.split("/").filter(Boolean)[0] || `${m[1]}.github.io`}`;
   const btn = $("btn-coletar");
-  if (repo && !repo.endsWith("/")) btn.href = `https://github.com/${repo}/actions/workflows/${CONFIG.arquivoWorkflow}`;
-  else btn.hidden = true;
+  if (btn.dataset.ligado) return;
+  btn.dataset.ligado = "1";
+  btn.addEventListener("click", verificarAgora);
+}
+
+async function verificarAgora() {
+  const btn = $("btn-coletar");
+  const ok = await confirmar("Buscar novas notícias agora nas fontes? Leva de 2 a 4 minutos. " +
+    "Para não sobrecarregar, são no máximo 2 atualizações por hora, somando todos os administradores.", "Atualizar agora");
+  if (!ok) return;
+  const rotulo = btn.textContent;
+  btn.disabled = true; btn.textContent = "Iniciando…";
+  try {
+    const r = await api("coletarAgora");
+    btn.textContent = "Atualizando…";
+    aviso("Atualização iniciada. As notícias novas aparecem aqui sozinhas em alguns minutos." +
+      (r.restantes ? "" : ` Próxima atualização manual liberada às ${r.libera_as}.`), false, 7000);
+    const status = await esperarColeta(Date.parse(r.pedido_em));
+    if (status) {
+      await recarregarNoticias(status);
+      const n = status.novos_nesta_execucao || 0;
+      aviso(n ? `Notícias atualizadas: ${n} nova(s) nas fontes.` : "Notícias atualizadas: nada novo nas fontes desde a última coleta.", false, 6000);
+    } else {
+      aviso("A atualização está demorando mais que o normal. Recarregue a página daqui a pouco.", true);
+    }
+  } catch (e) {
+    aviso(e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = rotulo;
+  }
+}
+
+/** Espera o status.json de uma coleta que começou depois do pedido (null se passar do tempo). */
+async function esperarColeta(pedidoEm) {
+  const limite = Date.now() + ESPERA_COLETA_MS;
+  while (Date.now() < limite) {
+    await new Promise((ok) => setTimeout(ok, 20000));
+    const s = await fetch(`dados/status.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (s && Date.parse(s.ultima_execucao) >= pedidoEm - 60000) return s;  // folga para o relógio do GitHub
+  }
+  return null;
+}
+
+/** Traz as notícias da coleta nova sem recarregar a página (mantém filtros, página e marcações). */
+async function recarregarNoticias(status) {
+  const itens = await fetch(`dados/itens.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null));
+  if (!itens) return;
+  estado.itens = itens.filter((it) => PRIORIDADES[it.prioridade] <= PRIORIDADES[PRIORIDADE_MINIMA]);
+  mostrarStatus(status);
+  render();
 }
 
 function escapar(s) {

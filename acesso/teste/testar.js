@@ -473,5 +473,47 @@ cenario("Administrador inscreve alguém nos avisos (gestor que não entra na pla
   conferir("com boas-vindas: um e-mail só, que já conta dos avisos", bv.length === 1 && /liberado/.test(bv[0].assunto) && /também inscreveu você/.test(bv[0].html), bv.map((e) => e.assunto));
 });
 
+cenario("Atualizar as notícias agora (botão Verificar novas notícias)", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  let r = a.api(adm, "coletarAgora");
+  conferir("sem a chave do GitHub, explica que falta configurar", !r.ok && /não foi configurada/.test(r.erro), r);
+  conferir("situação avisa que não está configurado", a.api(adm, "situacaoColeta").dados.configurado === false);
+
+  a.props.GITHUB_TOKEN = "chave-de-teste";
+  r = a.api(adm, "coletarAgora");
+  const p = a.github.pedidos[0];
+  conferir("dispara o workflow da coleta no GitHub", r.ok && p && /actions\/workflows\/coleta\.yml\/dispatches$/.test(p.url)
+    && p.opcoes.method === "post" && JSON.parse(p.opcoes.payload).ref === "main", p);
+  conferir("manda a chave só no cabeçalho", p && p.opcoes.headers.Authorization === "Bearer chave-de-teste" && !/chave-de-teste/.test(p.url));
+  conferir("devolve quantas ainda dá para pedir na hora", r.ok && r.dados.restantes === 1 && r.dados.pedido_em, r);
+  conferir("fica no registro", a.aba("Registro").some((l) => l[2] === "coleta_manual"));
+
+  a.avancar(10);
+  r = a.api(adm, "coletarAgora");
+  conferir("segunda na mesma hora passa", r.ok && r.dados.restantes === 0 && /^\d\dh\d\d$/.test(r.dados.libera_as), r);
+  const libera = r.ok && r.dados.libera_as;
+  r = a.api(adm, "coletarAgora");
+  conferir("terceira na mesma hora é recusada, com o horário de liberação",
+    !r.ok && /2 vezes na última hora/.test(r.erro) && r.erro.includes(libera), r);
+  conferir("a recusada nem chega ao GitHub", a.github.pedidos.length === 2);
+
+  a.avancar(51);
+  r = a.api(adm, "coletarAgora");
+  conferir("passada uma hora da primeira, libera de novo", r.ok && r.dados.restantes === 0, r);
+
+  a.avancar(120);
+  a.github.codigo = 401;
+  r = a.api(adm, "coletarAgora");
+  conferir("chave recusada pelo GitHub: avisa e não gasta o limite", !r.ok && /recusou/.test(r.erro)
+    && a.api(adm, "situacaoColeta").dados.restantes === 2, r);
+  a.github.codigo = 204;
+
+  a.api(adm, "salvarMembro", ANA, "Ana Teste", false, false);
+  const ana = primeiroAcesso(a, ANA, "anaradar2026").dados.sessao;
+  r = a.api(ana, "coletarAgora");
+  conferir("só administrador atualiza as notícias", !r.ok && /administradores/.test(r.erro), r);
+});
+
 console.log(`\n${total - falhas} de ${total} verificações passaram.`);
 process.exit(falhas ? 1 : 0);

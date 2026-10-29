@@ -26,6 +26,7 @@ window.SimuladorAcesso = (() => {
     eventos.push({ quando: agora(), visitante: "veq", email: "", tipo, detalhe, dispositivo: "computador" }));
   const lidos = new Map();         // id → { por, em } (da equipe)
   const codigos = {}, sessoes = {};
+  let coletas = [];      // horários das atualizações manuais (simulado)
   const pessoais = [];  // { email, id, tipo, em }: marcações de quem tem perfil Usuário
 
   // O estado sobrevive a recarregar a página (entrar e sair recarregam), enquanto a aba estiver aberta.
@@ -109,6 +110,19 @@ window.SimuladorAcesso = (() => {
           reg(p.email, "aviso_exemplo", "(simulado: nenhum e-mail sai)");
           return { para: p.email, itens: 3 };
         },
+        // Atualizar agora: 2 por hora; não dispara nada de verdade (a coleta "termina" quando o status.json mudar).
+        coletarAgora: () => {
+          admin();
+          const agora = Date.now();
+          coletas = coletas.filter((t) => agora - t < 3600e3);
+          const hm = (t) => new Date(t).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }).replace(":", "h");
+          if (coletas.length >= 2) throw new Error(`As notícias já foram atualizadas 2 vezes na última hora. Tente de novo a partir das ${hm(coletas[0] + 3600e3)}.`);
+          coletas.push(agora);
+          reg(p.email, "coleta_manual", "Pediu para atualizar as notícias agora");
+          return { restantes: 2 - coletas.length, libera_as: coletas.length >= 2 ? hm(coletas[0] + 3600e3) : "", configurado: true,
+                   pedido_em: new Date(agora - 30 * 864e5).toISOString() };  // simulado: qualquer status.json já "chegou"
+        },
+        situacaoColeta: () => { admin(); return { restantes: 2 - coletas.filter((t) => Date.now() - t < 3600e3).length, configurado: true }; },
         salvarAvisosDe: (email, imediato, semanal) => {
           admin();
           const m = pessoa(email);
