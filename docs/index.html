@@ -6,14 +6,14 @@
 <title>Boletim da Educação Superior</title>
 <meta name="description" content="Boletim da Educação Superior: monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e DOU — Hub de Integração e Relacionamento / CINEA / NED · PUC Minas">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%231f4e8c'/><circle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='white'/></svg>">
-<link rel="stylesheet" href="estilo.css?v=20261029184153">
+<link rel="stylesheet" href="estilo.css?v=20261030120958">
 <!-- Carimbo de versão (ferramentas/versao.py): acesso.js e app.js conferem se vieram da mesma publicação -->
 <script>
   // Abre sempre no tema claro; o escuro só vale para quem escolheu (como no sistema de certificados).
   try { document.documentElement.setAttribute("data-theme", localStorage.getItem("radar.tema") === "escuro" ? "dark" : "light"); }
   catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
 </script>
-<script>window.RADAR_VERSAO = "20261029184153";</script>
+<script>window.RADAR_VERSAO = "20261030120958";</script>
 </head>
 <body class="bloqueado">
 
@@ -29,6 +29,9 @@
         <p class="sub">Centro de Inovação em Ensino e Aprendizagem (CINEA)<br>Núcleo de Educação Digital (NED) - PUC Minas</p>
       </div>
     </div>
+
+    <!-- Enquanto o servidor confere uma sessão guardada (só na primeira vez neste navegador): em vez do formulário -->
+    <p id="portaria-abrindo" class="portaria-abrindo" hidden>Abrindo a sua conta…</p>
 
     <!-- Entrar com e-mail e senha -->
     <form id="form-entrar" class="form-portaria" novalidate onsubmit="return false">
@@ -525,7 +528,7 @@
     a.textContent = "O Boletim não carregou direito neste navegador. Recarregue a página com Ctrl+F5; se continuar, fale com o administrador.";
   });
 </script>
-<script src="acesso.js?v=20261029184153"></script>
-<script src="app.js?v=20261029184153"></script>
+<script src="acesso.js?v=20261030120958"></script>
+<script src="app.js?v=20261030120958"></script>
 </body>
 </html>

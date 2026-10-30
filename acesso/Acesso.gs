@@ -952,6 +952,7 @@ function assinantes_(ss, tipo) {
 /** Gatilho a cada 15 min: se houve coleta nova, avisa na hora quem pediu. */
 function verificarAvisos() {
   USUARIO_ATUAL_ = 'avisos automáticos';
+  try { garantirColetaAgendada_(); } catch (e) { console.error(e); }  // não atrapalha os avisos
   try {
     comTrava_(function () {
       const props = PropertiesService.getScriptProperties(), ss = planilha_(), dados = lerAvisos_();
@@ -1361,6 +1362,47 @@ function api_situacaoColeta_(ss) {
   return situacaoColeta_(Date.now());
 }
 
+/** Pede ao GitHub para rodar o workflow da coleta agora. Devolve o código HTTP (204 = aceito). */
+function dispararColeta_(token) {
+  return UrlFetchApp.fetch('https://api.github.com/repos/' + REPOSITORIO + '/actions/workflows/' + WORKFLOW_COLETA + '/dispatches', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    payload: JSON.stringify({ ref: 'main' })
+  }).getResponseCode();
+}
+
+// Reserva da coleta agendada (30/10/2026): o GitHub pulou a coleta das 4h17 vários dias seguidos (agendamentos do
+// GitHub não são garantidos). A cada 15 min (junto com verificarAvisos), se já passou TOLERANCIA_AGENDA_MIN de um
+// horário da agenda e a última coleta é de antes dele, o servidor dispara a coleta (uma vez por horário).
+// Os horários vêm do status.json (o coletor lê a linha cron do coleta.yml): não há um segundo lugar para manter.
+const TOLERANCIA_AGENDA_MIN = 90;
+const JANELA_RESERVA_MIN = 4 * 60;
+
+function garantirColetaAgendada_() {
+  const token = prop_('GITHUB_TOKEN');
+  if (!token) return;
+  const r = UrlFetchApp.fetch(ENDERECO_PAINEL + 'dados/status.json?t=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
+  if (r.getResponseCode() !== 200) return;
+  const status = JSON.parse(r.getContentText()), ag = status.agenda;
+  if (!ag || !ag.horas || !ag.horas.length) return;
+  const agora = Date.now(), ultima = Date.parse(status.ultima_execucao) || 0;
+  const hoje = Utilities.formatDate(new Date(agora), 'America/Sao_Paulo', 'yyyy-MM-dd');
+  const diaSemana = new Date(Date.parse(hoje + 'T12:00:00-03:00')).getUTCDay();
+  if (ag.dias && ag.dias.indexOf(diaSemana) < 0) return;
+  ag.horas.forEach(function (h) {
+    const marcado = Date.parse(hoje + 'T' + ('0' + h).slice(-2) + ':' + ('0' + (ag.minuto || 0)).slice(-2) + ':00-03:00');
+    const atraso = (agora - marcado) / 60000;
+    if (atraso < TOLERANCIA_AGENDA_MIN || atraso > JANELA_RESERVA_MIN || ultima >= marcado) return;
+    const chave = hoje + ' ' + h;
+    if (prop_('COLETA_RESERVA') === chave) return;  // já disparou para este horário
+    PropertiesService.getScriptProperties().setProperty('COLETA_RESERVA', chave);
+    const codigo = dispararColeta_(token);
+    registrar_(planilha_(), codigo === 204 ? 'coleta_reserva' : 'coleta_reserva_erro',
+      'O GitHub não rodou a coleta das ' + h + 'h' + ('0' + (ag.minuto || 0)).slice(-2) +
+      (codigo === 204 ? '; o servidor disparou a coleta.' : '; o GitHub recusou o disparo (código ' + codigo + ').'));
+  });
+}
+
 function api_coletarAgora_(ss) {
   exigirAdmin_(ss);
   const token = prop_('GITHUB_TOKEN');
@@ -1371,12 +1413,7 @@ function api_coletarAgora_(ss) {
       throw falha_('As notícias já foram atualizadas ' + COLETAS_POR_HORA + ' vezes na última hora. ' +
                    'Tente de novo a partir das ' + horaMinuto_(Math.min.apply(null, recentes) + HORA_MS) + '.');
     }
-    const r = UrlFetchApp.fetch('https://api.github.com/repos/' + REPOSITORIO + '/actions/workflows/' + WORKFLOW_COLETA + '/dispatches', {
-      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-      headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-      payload: JSON.stringify({ ref: 'main' })
-    });
-    const codigo = r.getResponseCode();
+    const codigo = dispararColeta_(token);
     if (codigo !== 204) {
       registrar_(ss, 'coleta_manual_erro', 'GitHub respondeu ' + codigo);
       throw falha_(codigo === 401 || codigo === 403 || codigo === 404

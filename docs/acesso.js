@@ -4,7 +4,7 @@
 // O painel é ABERTO (pedido do Diego, 23/10/2026): qualquer pessoa vê as notícias. Entrar serve para a equipe
 // do CINEA sinalizar, marcar sem relevância ou lida, ver as áreas da equipe e (admins) administrar.
 
-const VERSAO_ACESSO = "20261029184153"; // carimbado por ferramentas/versao.py
+const VERSAO_ACESSO = "20261030120958"; // carimbado por ferramentas/versao.py
 
 /**
  * O navegador guarda cada arquivo por 10 minutos, separadamente. Se a página e os scripts vierem de
@@ -56,6 +56,16 @@ function lerSessao() { try { return localStorage.getItem(CHAVE_SESSAO); } catch 
 function gravarSessao(s) {
   Acesso.sessao = s;
   try { s ? localStorage.setItem(CHAVE_SESSAO, s) : localStorage.removeItem(CHAVE_SESSAO); } catch { /* modo privado */ }
+  if (!s) gravarPerfilGuardado(null);
+}
+
+// O servidor do Google leva de 4 a 10 s para conferir a sessão (mais quando está "frio"). Para não mostrar a tela de
+// entrada nesse tempo (relato do Diego, 30/10/2026), o painel abre com o último perfil guardado neste navegador e
+// confere com o servidor em segundo plano; se a sessão tiver caído, volta a ser visitante.
+const CHAVE_PERFIL = "radar.perfil";
+function lerPerfilGuardado() { try { return JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "null"); } catch { return null; } }
+function gravarPerfilGuardado(p) {
+  try { p ? localStorage.setItem(CHAVE_PERFIL, JSON.stringify(p)) : localStorage.removeItem(CHAVE_PERFIL); } catch { /* modo privado */ }
 }
 
 // Em localhost, ?acesso=simulado usa o simulador (docs/simulador-acesso.js) para testar as telas sem o Google.
@@ -110,11 +120,13 @@ const api = (nome, ...args) => servidor("api", { nome, sessao: Acesso.sessao, ar
 function mostrarPortaria(modo = "entrar") {
   document.body.classList.add("bloqueado");
   $a("portaria").hidden = false;
+  $a("portaria-abrindo").hidden = true;
   // Com o painel aberto ao público, a tela de entrada pode ser fechada para voltar às notícias.
   $a("portaria-fechar").hidden = !painelIniciado;
   trocarModo(modo);
 }
 function fecharPortaria() {
+  $a("portaria-abrindo").hidden = true;
   $a("portaria").hidden = true;
   document.body.classList.remove("bloqueado");
 }
@@ -171,6 +183,7 @@ async function ocupado(botao, fn, espera = "Aguarde…") {
 
 function entrou(dados) {
   gravarSessao(dados.sessao);
+  gravarPerfilGuardado(dados.perfil);  // a página recarregada já abre com a conta
   // Recarrega para trazer as marcações da equipe e as áreas de quem entrou (o painel já pode estar aberto como visitante).
   if (painelIniciado) { location.reload(); return; }
   mostrarPerfil(dados.perfil);
@@ -185,6 +198,7 @@ const ehUsuario = () => Acesso.perfil?.tipo === "usuario";
 
 function preencherConta(perfil) {
   Acesso.perfil = perfil;
+  gravarPerfilGuardado(perfil);
   $a("usuario-nome").textContent = perfil.nome;
   $a("usuario-nome").title = `Meu perfil (${perfil.email})`;
   const tag = $a("perfil-topo");
@@ -662,6 +676,18 @@ document.addEventListener("DOMContentLoaded", async function iniciarAcesso() {
   const s = lerSessao();
   if (!s) return abrirPublico();
   Acesso.sessao = s;
+  const guardado = lerPerfilGuardado();
+  if (guardado) {
+    mostrarPerfil(guardado);  // abre na hora; o servidor confirma logo depois
+    try {
+      const p = await api("perfil");
+      preencherConta(p);
+      if (typeof perfilAtualizado === "function") perfilAtualizado();
+    } catch { /* sessão caída: api() já voltou para visitante; rede fora: segue com o perfil guardado */ }
+    return;
+  }
+  $a("form-entrar").hidden = true;
+  $a("portaria-abrindo").hidden = false;
   try { mostrarPerfil(await api("perfil")); }
   catch (e) {
     // Sessão vencida ou servidor fora do ar: segue como visitante (as notícias continuam visíveis).

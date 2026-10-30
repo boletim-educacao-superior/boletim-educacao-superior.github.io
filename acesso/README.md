@@ -47,6 +47,8 @@ visitantes, dispositivos, seções, notícias, instituições e buscas.
   dono `boletim-educacao-superior`, só o repositório `boletim-educacao-superior.github.io`, permissão **Actions: Read and write**.
   Cole o valor em *Configurações do projeto* › *Propriedades do script* (nome `GITHUB_TOKEN`). Quando o token expirar,
   o botão avisa que o GitHub recusou: gere outro e troque o valor.
+- **Reserva da coleta agendada:** o mesmo `GITHUB_TOKEN` permite ao `verificarAvisos` disparar a coleta quando o GitHub
+  pula um horário da agenda (passada 1h30 do horário sem coleta nova). Fica no Registro como `coleta_reserva`.
 
 ## Primeira configuração (uma vez, logado como cineaned)
 

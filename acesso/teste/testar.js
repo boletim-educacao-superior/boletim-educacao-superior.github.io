@@ -515,5 +515,36 @@ cenario("Atualizar as notícias agora (botão Verificar novas notícias)", (a) =
   conferir("só administrador atualiza as notícias", !r.ok && /administradores/.test(r.erro), r);
 });
 
+cenario("Reserva da coleta agendada (quando o GitHub pula o horário)", (a) => {
+  a.g.configurar();
+  // Relógio do teste: 23/10/2026 09h00 em Brasília. Última coleta: 22/10 às 10h20.
+  a.status.ultima_execucao = "2026-10-22T13:20:00+00:00";
+  a.g.verificarAvisos();
+  conferir("sem a chave do GitHub, não faz nada", a.github.pedidos.length === 0);
+
+  a.props.GITHUB_TOKEN = "chave-de-teste";
+  a.g.verificarAvisos();  // 09h00: 4h17 já passou da janela de 4 h; 10h17 ainda não chegou
+  conferir("fora da janela, não dispara", a.github.pedidos.length === 0);
+
+  a.avancar(20 * 60 + 30);  // 24/10 05h30: 4h17 + 73 min, ainda dentro da tolerância
+  a.g.verificarAvisos();
+  conferir("dá tolerância ao atraso normal do GitHub", a.github.pedidos.length === 0);
+
+  a.avancar(20);  // 05h50: passou 1h30 e a coleta das 4h17 não rodou
+  a.g.verificarAvisos();
+  conferir("GitHub pulou as 4h17: o servidor dispara a coleta", a.github.pedidos.length === 1
+    && /coleta\.yml\/dispatches$/.test(a.github.pedidos[0].url));
+  conferir("fica no registro", a.aba("Registro").some((l) => l[2] === "coleta_reserva" && /4h17/.test(l[3])));
+  a.avancar(15);
+  a.g.verificarAvisos();
+  conferir("dispara uma vez só por horário", a.github.pedidos.length === 1);
+
+  a.status.ultima_execucao = "2026-10-24T09:06:00+00:00";  // a coleta de reserva rodou às 06h06
+  a.avancar(5 * 60 + 40);  // 11h45: a das 10h17 rodou no horário
+  a.status.ultima_execucao = "2026-10-24T13:20:00+00:00";
+  a.g.verificarAvisos();
+  conferir("se o GitHub rodou, não dispara", a.github.pedidos.length === 1);
+});
+
 console.log(`\n${total - falhas} de ${total} verificações passaram.`);
 process.exit(falhas ? 1 : 0);

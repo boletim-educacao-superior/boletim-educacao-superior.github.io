@@ -105,6 +105,10 @@ o contexto fica neste arquivo (mesma regra do sistema de certificados, em `Docum
 - 29/10/2026: "Verificar novas notícias" deixou de abrir o GitHub: chama `coletarAgora` no Apps Script, que dispara o
   workflow pela API (token em `GITHUB_TOKEN`, nas propriedades do script) com limite de 2 por hora somando os administradores;
   o painel espera o `status.json` novo e recarrega as notícias sozinho (`verificarAgora` em app.js). Ver acesso/README.md.
+- 30/10/2026: o GitHub pulava a coleta das 4h17 todo dia. `verificarAvisos` (a cada 15 min) chama `garantirColetaAgendada_`:
+  se passou 1h30 de um horário da agenda (lida do `status.json`) e a última coleta é de antes dele, dispara a coleta pela API
+  (uma vez por horário; registro `coleta_reserva`). Login: o painel abre com o perfil guardado (`radar.perfil` no navegador)
+  e confere a sessão em segundo plano, em vez de mostrar a tela de entrada enquanto o Google responde.
 - **Antes de publicar mudanças em `docs/`, rode `python ferramentas/versao.py`.** O Pages guarda cada arquivo 10 min no
   navegador; sem o carimbo, a página nova com um script antigo quebrava o "Entrar" sem mostrar erro (relato do Diego, 23/10/2026).
   Com versões diferentes, o painel recarrega sozinho uma vez (`conferirVersao` em acesso.js).

@@ -11,6 +11,8 @@ function novoAmbiente() {
   const props = { ADMINS_INICIAIS: JSON.stringify([{ email: "diego.teste@exemplo.org", nome: "Diego Eduardo" }]) };
   const cache = {}, emails = [], planilhas = {}, pastas = {}, gatilhos = [];
   const avisos = { gerado_em: "", itens: [] }, buscas = [];
+  // status.json publicado pelo coletor (agenda e última coleta), para a reserva da coleta agendada.
+  const status = { ultima_execucao: "", agenda: { horas: [4, 10], minuto: 17, dias: [0, 1, 2, 3, 4, 5, 6] } };
   let relogio = Date.parse("2026-10-23T12:00:00Z");
   const github = { pedidos: [], codigo: 204 };
 
@@ -123,6 +125,7 @@ function novoAmbiente() {
           github.pedidos.push({ url, opcoes });
           return { getResponseCode: () => github.codigo, getContentText: () => "" };
         }
+        if (url.includes("dados/status.json")) return { getResponseCode: () => 200, getContentText: () => JSON.stringify(status) };
         buscas.push(url); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(avisos) };
       },
     },
@@ -132,7 +135,7 @@ function novoAmbiente() {
 
   const chamar = (corpo) => JSON.parse(g.doPost({ postData: { contents: JSON.stringify(corpo) } }).texto);
   return {
-    g, props, emails, planilhas, pastas, gatilhos, avisos, buscas, github,
+    g, props, emails, planilhas, pastas, gatilhos, avisos, buscas, github, status,
     chamar,
     avancar: (min) => { relogio += min * 60e3; },
     ultimoCodigo: (para) => { const e = emails.filter((x) => x.para === para).pop(); return e && (e.assunto.match(/(\d{6})/) || [])[1]; },

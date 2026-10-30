@@ -639,6 +639,7 @@ i.seg-publico, .seg-publico { background: var(--barra-publico); }
 
 /* Assinatura do CINEA em duas linhas: menor no celular e na tela de entrada, para cada linha caber inteira */
 .portaria-marca .sub { font-size: .8rem; }
+.portaria-abrindo { margin: 18px 0 6px; color: var(--texto-suave); text-align: center; }
 @media (max-width: 720px) { .topo .sub { font-size: .78rem; } }
 
 /* Celular, quem entrou: título ao lado da conta; a assinatura do CINEA desce e usa a largura toda (não quebra em 4 linhas) */

@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261029184153"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261030120958"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -114,6 +114,12 @@ async function carregar() {
 }
 
 const logado = () => !!Acesso.perfil;
+/** acesso.js abriu o painel com o perfil guardado e o servidor mandou o atual: refaz "novas para você". */
+function perfilAtualizado() {
+  if (!painelIniciado || !estado.itens.length) return;
+  estado.ultimaVisita = logado() && Acesso.perfil.visita_anterior ? brasiliaParaData(Acesso.perfil.visita_anterior) : null;
+  render();
+}
 /** "2026-10-23 14:05:00" (horário de Brasília, como o servidor grava) → Date. */
 function brasiliaParaData(t) {
   const d = new Date(String(t).replace(" ", "T") + "-03:00");
