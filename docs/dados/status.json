@@ -1,6 +1,6 @@
 {
- "ultima_execucao": "2026-11-01T14:15:27+00:00",
- "novos_nesta_execucao": 2,
+ "ultima_execucao": "2026-11-02T08:47:22+00:00",
+ "novos_nesta_execucao": 0,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
  "total_no_painel": 4860,
@@ -26,31 +26,31 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 78
+   "itens": 100
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 12
+   "itens": 13
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 60
+   "itens": 13
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 22
+   "itens": 21
   },
   {
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 38
+   "itens": 37
   },
   {
    "fonte": "Google Notícias: ABMES",
@@ -62,13 +62,13 @@
    "fonte": "Google Notícias: ABED",
    "instituicao": "ABED",
    "ok": true,
-   "itens": 1
+   "itens": 2
   },
   {
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 10
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: CEE-MG",
@@ -86,13 +86,13 @@
    "fonte": "DOU: SERES (regulação)",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 2
+   "itens": 1
   },
   {
    "fonte": "DOU: CNE",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 6
+   "itens": 5
   },
   {
    "fonte": "DOU: ENADE",
@@ -110,7 +110,7 @@
    "fonte": "DOU: Censo da Educação Superior",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 1
+   "itens": 0
   },
   {
    "fonte": "DOU: Carga horária a distância",
