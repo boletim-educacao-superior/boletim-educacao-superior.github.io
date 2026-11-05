@@ -8,6 +8,24 @@ Meu perfil. Detalhes no CLAUDE.md e em acesso/README.md. O texto abaixo é o his
 Pendente: quando os avisos estiverem rodando bem, decidir se a issue de alerta no GitHub continua (`ALERTA_GITHUB=0`).
 Atenção à cota de e-mail (~100/dia, dividida com os certificados) se o número de assinantes crescer.
 
+## 2. Inscrição só com e-mail, sem criar conta: PARA DEPOIS (ideia do Diego, 29/10/2026)
+
+Um quadro "Receba o Boletim por e-mail" na página, só com o e-mail e duas opções: resumo semanal (marcada) e
+urgentes assim que saírem. Combinado: esperar para implementar.
+
+- **Confirmação por e-mail obrigatória** (dupla confirmação): sem ela, qualquer um inscreve o e-mail de outra pessoa.
+  Limite de pedidos por e-mail e por dia. Registra o consentimento (LGPD).
+- **Cota do Gmail** (~100/dia, 30 reservados aos certificados): cada destinatário conta, mesmo em cópia oculta.
+  Resumo semanal cabe até ~60 pessoas; "na hora" para muitos estoura o limite. Alternativa: liberar ao público só o
+  resumo semanal. Para divulgação ampla, usar um serviço de envio próprio em vez do Gmail.
+- Inscritos numa aba própria da planilha; lista e remoção no painel de administração; aviso quando chegar perto do limite.
+- Reaproveita o que já existe: modelos de e-mail, fila, link "parar de receber".
+
+## 3. Avaliação, sugestões e relato de falhas: PARA DEPOIS (ideia do Diego, 05/11/2026)
+
+Uma forma de quem usa o Boletim avaliar, sugerir melhorias ou reportar falhas. Ainda não desenhado: pensar depois
+(onde fica o botão, se precisa de login, para onde vão as mensagens, como a equipe acompanha e responde).
+
 ## Histórico: proposta de 23/10/2026
 
 **Atualização (23/10/2026, noite):** com o cadastro aberto, a ideia do Diego é que **cada pessoa com conta** (equipe ou
