@@ -849,6 +849,14 @@ function listaAvisos_(v) {
 function avisosDe_(p) {
   return { imediato: listaAvisos_(p && p.avisos_imediato), semanal: listaAvisos_(p && p.avisos_semanal) };
 }
+/** Para o rodapé dos e-mails: "na hora: urgentes · resumo semanal: urgentes e alta". */
+function escolhaEmail_(a) {
+  const quais = function (l) { return l.length === 2 ? 'urgentes e alta' : l[0] === 'urgente' ? 'urgentes' : 'alta'; };
+  const f = [];
+  if (a.imediato.length) f.push('na hora: ' + quais(a.imediato));
+  if (a.semanal.length) f.push('resumo semanal: ' + quais(a.semanal));
+  return f.join(' · ');
+}
 function descreverAvisos_(a) {
   const d = function (l) { return l.length ? l.map(function (p) { return ROTULO_PRIORIDADE[p].toLowerCase(); }).join(' e ') : 'nada'; };
   return 'imediato: ' + d(a.imediato) + ' · semanal: ' + d(a.semanal);
@@ -1128,12 +1136,9 @@ function emailHtml_(o) {
     '<tr><td style="background:' + c.superficie + ';border:1px solid ' + c.borda + ';border-top:1px solid ' + c.borda + ';border-radius:0 0 12px 12px;padding:24px 28px 10px">' +
     '<h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;font-weight:700;color:' + c.texto + '">' + esc_(o.titulo) + '</h1>' +
     o.corpo + '</td></tr>' +
-    // rodapé
-    '<tr><td style="padding:16px 28px 8px;font-size:12px;line-height:1.55;color:' + c.suave + '">' +
-    (o.rodape ? o.rodape + '<br><br>' : '') +
-    esc_(NOME_SISTEMA) + ' · <a href="' + esc_(ENDERECO_PAINEL) + '" style="color:' + c.suave + '">' + esc_(ENDERECO_PAINEL.replace(/^https:\/\//, '').replace(/\/$/, '')) + '</a><br>' +
-    'Monitoramento de MEC, INEP, CNE, CAPES, SEMESP, ABMES, ABED, FAPEMIG, CEE-MG e Diário Oficial da União.<br>' +
-    ASSINATURA_EMAIL.map(esc_).join('<br>') + '</td></tr>' +
+    // rodapé: só por que a pessoa recebe e como parar. Nome, endereço e assinatura já estão no cabeçalho
+    // (pedido do Diego, 05/11/2026: o rodapé repetia tudo).
+    (o.rodape ? '<tr><td style="padding:14px 28px 8px;font-size:12px;line-height:1.55;color:' + c.suave + '">' + o.rodape + '</td></tr>' : '') +
     '</table></td></tr></table></body></html>';
 }
 
@@ -1268,14 +1273,14 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
   const hoje = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM');
   const inicio = Utilities.formatDate(new Date(desde ? Date.parse(desde) : Date.now() - 7 * DIA_MS), 'America/Sao_Paulo', 'dd/MM');
   const cancelar = ENDERECO_PAINEL + '#parar-avisos=' + chaveAvisos_(email);
-  const escolha = descreverAvisos_(avisosDe_(p));
+  const escolha = escolhaEmail_(avisosDe_(p));
   // Quem foi inscrito por um administrador (e talvez nunca entre no Boletim) vê quem o inscreveu.
   const motivoTexto = p.avisos_por
-    ? 'Você recebe este e-mail porque ' + p.avisos_por + ' inscreveu você nos avisos do Boletim (' + escolha + ').\nPara mudar, fale com ' + p.avisos_por + '.'
-    : 'Você recebe este e-mail porque escolheu, em "Meu perfil" no Boletim, receber avisos (' + escolha + ').\nPara mudar: entre no Boletim e abra Meu perfil > Avisos por e-mail.';
+    ? p.avisos_por + ' inscreveu você nos avisos do Boletim (' + escolha + '). Para mudar, fale com ' + p.avisos_por + '.'
+    : 'Seus avisos: ' + escolha + '. Para mudar, entre no Boletim e abra Meu perfil > Avisos por e-mail.';
   const motivoHtml = p.avisos_por
-    ? 'Você recebe este e-mail porque ' + esc_(p.avisos_por) + ' inscreveu você nos avisos do Boletim (' + esc_(escolha) + '). Para mudar, fale com ' + esc_(p.avisos_por) + '.'
-    : 'Você recebe este e-mail porque escolheu, em Meu perfil, receber avisos (' + esc_(escolha) + '). Para mudar, entre no Boletim e abra <b>Meu perfil › Avisos por e-mail</b>.';
+    ? esc_(p.avisos_por) + ' inscreveu você nos avisos do Boletim (' + esc_(escolha) + '). Para mudar, fale com ' + esc_(p.avisos_por) + '.'
+    : 'Seus avisos: ' + esc_(escolha) + '. Para mudar, use <b>Meu perfil › Avisos por e-mail</b> no Boletim.';
   const titulo = semanal ? 'Resumo da semana' : (itens.some(function (it) { return it.prioridade === 'urgente'; }) ? 'Notícia urgente no Boletim' : 'Novidade no Boletim');
   const intro = semanal
     ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + '.'
@@ -1318,7 +1323,7 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
     texto: texto,
     html: emailHtml_({
       previa: itens[0] ? itens[0].titulo : intro, titulo: titulo, corpo: corpo,
-      rodape: motivoHtml + ' <a href="' + esc_(cancelar) + '" style="color:' + c.suave + '">Parar de receber todos os avisos</a>.'
+      rodape: motivoHtml + ' <a href="' + esc_(cancelar) + '" style="color:' + c.suave + '">Parar de receber</a>.'
     })
   };
 }
