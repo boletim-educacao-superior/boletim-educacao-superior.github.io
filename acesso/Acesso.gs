@@ -902,7 +902,7 @@ function inscrever_(ss, m, avisos) {
 /** E-mail "Você vai receber os avisos do Boletim" (sem cota, não manda; a inscrição vale do mesmo jeito). */
 function avisarInscricao_(ss, p) {
   if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) { registrar_(ss, 'inscricao_sem_email', p.email + ' (limite de e-mails do dia)'); return; }
-  enviarEmail_(p.email.toLowerCase(), emailInscricao_(p, perfil_(ss, USUARIO_ATUAL_).nome));
+  enviarEmail_(p.email.toLowerCase(), emailInscricao_(p));
   registrar_(ss, 'inscricao_avisada', p.email);
 }
 
@@ -1234,30 +1234,31 @@ function emailBoasVindas_(nome, quem, email, avisos) {
 // --------------------------------------------------------------- modelo: inscrição --
 
 /** Administrador inscreveu a pessoa nos avisos (ela pode nunca entrar no Boletim: o e-mail explica tudo). */
-function emailInscricao_(p, quem) {
+/** Não cita o nome de quem inscreveu (pedido do Diego, 05/11/2026): fala da equipe do CINEA. */
+function emailInscricao_(p) {
   const a = avisosDe_(p), frases = frasesAvisos_(a), email = p.email.toLowerCase();
   const cancelar = ENDERECO_PAINEL + '#parar-avisos=' + chaveAvisos_(email);
   const primeiro = p.nome.split(' ')[0];
   const corpo =
-    pEmail_('Olá, ' + esc_(primeiro) + '! ' + esc_(quem) + ' inscreveu você para receber por e-mail as notícias do ' + esc_(NOME_SISTEMA) +
+    pEmail_('Olá, ' + esc_(primeiro) + '! A equipe do CINEA inscreveu você para receber por e-mail as notícias do ' + esc_(NOME_SISTEMA) +
             ': comunicados, editais e atos oficiais da educação superior que pedem atenção do CINEA e da PUC Minas.') +
     pEmail_('<b>O que você vai receber:</b>', 'margin-bottom:10px') +
     passosEmail_(frases) +
     pEmail_('Não é preciso entrar na plataforma: as notícias chegam neste e-mail, com o link para cada uma. ' +
             'Se quiser ver tudo, o Boletim é aberto a qualquer pessoa.') +
     botaoEmail_('Conhecer o Boletim', ENDERECO_PAINEL) +
-    notaEmail_('Não quer receber? Use o link "Parar de receber" no fim deste e-mail ou fale com ' + esc_(quem) + '.');
+    notaEmail_('Não quer receber? Use o link "Parar de receber" no fim deste e-mail.');
   return {
-    assunto: quem + ' inscreveu você nos avisos do ' + NOME_SISTEMA,
-    texto: 'Olá, ' + primeiro + '!\n\n' + quem + ' inscreveu você para receber por e-mail as notícias do ' + NOME_SISTEMA + '.\n\n' +
+    assunto: 'Inscrição nos avisos do ' + NOME_SISTEMA,
+    texto: 'Olá, ' + primeiro + '!\n\nA equipe do CINEA inscreveu você para receber por e-mail as notícias do ' + NOME_SISTEMA + '.\n\n' +
       'O que você vai receber:\n' + frases.map(function (f) { return '• ' + f.replace(/<\/?b>/g, ''); }).join('\n') +
       '\n\nNão é preciso entrar na plataforma. Para ver tudo: ' + ENDERECO_PAINEL +
       '\n\nPara parar de receber: ' + cancelar + rodapeTexto_(),
     html: emailHtml_({
       previa: 'Você vai receber ' + (a.imediato.length ? 'as notícias urgentes na hora' : 'o resumo semanal') + ', sem precisar entrar na plataforma.',
       titulo: 'Você vai receber os avisos do Boletim', corpo: corpo,
-      rodape: 'Você recebeu este e-mail porque ' + esc_(quem) + ' inscreveu este endereço nos avisos do ' + esc_(NOME_SISTEMA) + '. ' +
-        '<a href="' + esc_(cancelar) + '" style="color:' + COR_EMAIL.suave + '">Parar de receber todos os avisos</a>.'
+      rodape: 'Você recebeu este e-mail porque a equipe do CINEA inscreveu este endereço nos avisos do ' + esc_(NOME_SISTEMA) + '. ' +
+        '<a href="' + esc_(cancelar) + '" style="color:' + COR_EMAIL.suave + '">Parar de receber</a>.'
     })
   };
 }
@@ -1276,10 +1277,10 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
   const escolha = escolhaEmail_(avisosDe_(p));
   // Quem foi inscrito por um administrador (e talvez nunca entre no Boletim) vê quem o inscreveu.
   const motivoTexto = p.avisos_por
-    ? p.avisos_por + ' inscreveu você nos avisos do Boletim (' + escolha + '). Para mudar, fale com ' + p.avisos_por + '.'
+    ? 'A equipe do CINEA inscreveu você nos avisos do Boletim (' + escolha + ').'
     : 'Seus avisos: ' + escolha + '. Para mudar, entre no Boletim e abra Meu perfil > Avisos por e-mail.';
   const motivoHtml = p.avisos_por
-    ? esc_(p.avisos_por) + ' inscreveu você nos avisos do Boletim (' + esc_(escolha) + '). Para mudar, fale com ' + esc_(p.avisos_por) + '.'
+    ? 'A equipe do CINEA inscreveu você nos avisos do Boletim (' + esc_(escolha) + ').'
     : 'Seus avisos: ' + esc_(escolha) + '. Para mudar, use <b>Meu perfil › Avisos por e-mail</b> no Boletim.';
   const titulo = semanal ? 'Resumo da semana' : (itens.some(function (it) { return it.prioridade === 'urgente'; }) ? 'Notícia urgente no Boletim' : 'Novidade no Boletim');
   const intro = semanal

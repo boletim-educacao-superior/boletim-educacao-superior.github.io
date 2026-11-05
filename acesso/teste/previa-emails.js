@@ -31,7 +31,7 @@ const modelos = [
   ["Código: esqueci a senha", "Quem já tem senha e pediu para trocar.", g.emailCodigo_("senha", "Ana Paula Teste", "482915")],
   ["Boas-vindas", "Enviado quando um administrador cadastra alguém da equipe (ou em \"Reenviar boas-vindas\").", g.emailBoasVindas_("Ana Paula Teste", "Diego Eduardo", pessoa.email)],
   ["Inscrição nos avisos", "Administrador inscreve alguém que só quer os e-mails (sem boas-vindas), como um gestor.",
-    g.emailInscricao_(Object.assign({}, pessoa, { nome: "João Gestor", email: "joao.gestor@pucminas.br" }), "Diego Eduardo")],
+    g.emailInscricao_(Object.assign({}, pessoa, { nome: "João Gestor", email: "joao.gestor@pucminas.br" }))],
   ["Boas-vindas com avisos", "Cadastro com boas-vindas e avisos marcados: um e-mail só.",
     g.emailBoasVindas_("Ana Paula Teste", "Diego Eduardo", pessoa.email, { imediato: ["urgente"], semanal: ["urgente", "alta"] })],
   ["Aviso para quem foi inscrito", "Mesmo aviso; o rodapé diz quem inscreveu a pessoa.",

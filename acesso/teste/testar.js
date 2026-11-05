@@ -444,8 +444,8 @@ cenario("Administrador inscreve alguém nos avisos (gestor que não entra na pla
   let r = a.api(adm, "salvarMembro", GESTOR, "João Gestor", false, false, "", { imediato: ["urgente"], semanal: ["urgente", "alta"] });
   conferir("cadastra já com os avisos", r.ok && r.dados.find((p) => p.email === GESTOR).avisos.semanal.join() === "urgente,alta", r);
   const insc = a.emails.slice(antes);
-  conferir("sem boas-vindas: sai só o e-mail de inscrição", insc.length === 1 && /inscreveu você nos avisos/.test(insc[0].assunto), insc.map((e) => e.assunto));
-  conferir("inscrição explica o que vai receber e quem inscreveu", /Diego Eduardo/.test(insc[0].corpo) && /Na hora/.test(insc[0].corpo)
+  conferir("sem boas-vindas: sai só o e-mail de inscrição", insc.length === 1 && /^Inscrição nos avisos/.test(insc[0].assunto), insc.map((e) => e.assunto));
+  conferir("inscrição explica o que vai receber, sem citar o nome de quem inscreveu", /equipe do CINEA/.test(insc[0].corpo) && !/Diego/.test(insc[0].corpo + insc[0].html) && /Na hora/.test(insc[0].corpo)
     && /Resumo semanal/.test(insc[0].corpo) && /#parar-avisos=/.test(insc[0].corpo));
   conferir("quem inscreveu fica guardado", r.dados.find((p) => p.email === GESTOR).avisos_por === "Diego Eduardo");
 
@@ -453,7 +453,7 @@ cenario("Administrador inscreve alguém nos avisos (gestor que não entra na pla
   a.g.verificarAvisos();
   const aviso = a.emails.filter((e) => e.para === GESTOR).pop();
   conferir("recebe o aviso na hora mesmo sem senha", aviso && /Notícia 2{16}/.test(aviso.corpo), aviso && aviso.assunto);
-  conferir("rodapé diz quem inscreveu", aviso && /Diego Eduardo inscreveu você/.test(aviso.corpo) && /Diego Eduardo inscreveu você/.test(aviso.html));
+  conferir("rodapé diz que foi a equipe, sem o nome", aviso && /equipe do CINEA inscreveu você/.test(aviso.corpo) && /equipe do CINEA inscreveu você/.test(aviso.html) && !/Diego/.test(aviso.corpo + aviso.html));
 
   r = a.api(adm, "salvarAvisosDe", GESTOR, [], ["urgente"], true);
   conferir("administrador muda os avisos de outra pessoa", r.ok && r.dados.find((p) => p.email === GESTOR).avisos.imediato.length === 0, r);
