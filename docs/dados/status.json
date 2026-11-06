@@ -1,6 +1,6 @@
 {
- "ultima_execucao": "2026-11-06T14:47:23+00:00",
- "novos_nesta_execucao": 12,
+ "ultima_execucao": "2026-11-06T14:59:53+00:00",
+ "novos_nesta_execucao": 0,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
  "total_no_painel": 4979,
@@ -50,7 +50,7 @@
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 47
+   "itens": 46
   },
   {
    "fonte": "Google Notícias: ABMES",
