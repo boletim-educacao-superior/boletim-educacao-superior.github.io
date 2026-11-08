@@ -1,9 +1,9 @@
 {
- "ultima_execucao": "2026-11-07T13:58:20+00:00",
- "novos_nesta_execucao": 5,
+ "ultima_execucao": "2026-11-08T08:47:22+00:00",
+ "novos_nesta_execucao": 7,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5014,
+ "total_no_painel": 5021,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -26,7 +26,7 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 84
+   "itens": 86
   },
   {
    "fonte": "Google Notícias: INEP",
@@ -38,7 +38,7 @@
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 7
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: CAPES",
@@ -74,7 +74,7 @@
    "fonte": "Google Notícias: CEE-MG",
    "instituicao": "CEE-MG",
    "ok": true,
-   "itens": 8
+   "itens": 9
   },
   {
    "fonte": "DOU: Educação a distância",
