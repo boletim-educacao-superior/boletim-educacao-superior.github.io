@@ -1,9 +1,11 @@
 {
- "ultima_execucao": "2026-11-09T17:27:08+00:00",
- "novos_nesta_execucao": 3,
- "urgentes_novos": 0,
- "alertas_enviados_por": [],
- "total_no_painel": 5055,
+ "ultima_execucao": "2026-11-10T08:47:21+00:00",
+ "novos_nesta_execucao": 28,
+ "urgentes_novos": 1,
+ "alertas_enviados_por": [
+  "github"
+ ],
+ "total_no_painel": 5083,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -26,7 +28,7 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 92
+   "itens": 97
   },
   {
    "fonte": "Google Notícias: INEP",
@@ -38,25 +40,25 @@
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 9
+   "itens": 10
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 8
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 41
+   "itens": 40
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 55
+   "itens": 57
   },
   {
    "fonte": "Google Notícias: ABED",
@@ -86,7 +88,7 @@
    "fonte": "DOU: SERES (regulação)",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 8
+   "itens": 19
   },
   {
    "fonte": "DOU: CNE",
@@ -98,7 +100,7 @@
    "fonte": "DOU: ENADE",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 0
+   "itens": 1
   },
   {
    "fonte": "DOU: DCNs",
@@ -122,7 +124,7 @@
    "fonte": "DOU: PUC Minas citada",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 1
+   "itens": 2
   }
  ]
 }
