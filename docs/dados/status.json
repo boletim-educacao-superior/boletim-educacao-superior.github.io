@@ -1,11 +1,9 @@
 {
- "ultima_execucao": "2026-11-10T14:47:23+00:00",
- "novos_nesta_execucao": 6,
- "urgentes_novos": 1,
- "alertas_enviados_por": [
-  "github"
- ],
- "total_no_painel": 5089,
+ "ultima_execucao": "2026-11-10T15:34:13+00:00",
+ "novos_nesta_execucao": 1,
+ "urgentes_novos": 0,
+ "alertas_enviados_por": [],
+ "total_no_painel": 5090,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -40,13 +38,13 @@
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 10
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 13
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: SEMESP",
@@ -58,7 +56,7 @@
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 58
+   "itens": 59
   },
   {
    "fonte": "Google Notícias: ABED",
