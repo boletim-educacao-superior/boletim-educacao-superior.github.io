@@ -46,6 +46,9 @@ class Triagem:
         self.temas_prioritarios = set(u.get("temas_prioritarios", []))
         self.re_prazo = _compilar(u.get("termos_prazo", []))
         self.inst_oficiais = set(u.get("instituicoes_oficiais", []))
+        d = regras.get("destaque_ia", {})
+        self.re_destaque_assunto = _compilar(d.get("termos_assunto", []))
+        self.re_destaque_norma = _compilar(d.get("termos_norma", []))
         self.re_internos = _compilar(u.get("orgaos_internos", []))
         self.re_normativos = _compilar(u.get("orgaos_normativos", []))
         desconhecidos = (self.temas_urgentes | self.temas_prioritarios) - set(self.setores_por_tema)
@@ -94,9 +97,13 @@ class Triagem:
               and _palavra(self.re_prazo, titulo)):
             motivo = "Prazo ou convocação em tema prioritário"
 
+        # Regra oficial sobre IA: título com IA + palavra de norma, vinda de órgão oficial, sobe para alta.
+        destaque_ia = (oficial and not rotina and _palavra(self.re_destaque_assunto, titulo)
+                       and _palavra(self.re_destaque_norma, titulo))
+
         if motivo:
             prioridade = "urgente"
-        elif pontos >= self.limiar_alta:
+        elif pontos >= self.limiar_alta or destaque_ia:
             prioridade = "alta"
         elif pontos >= self.limiar_media:
             prioridade = "media"

@@ -95,7 +95,7 @@ nome = "Tecnologias e dados educacionais"
 peso = 3
 setores = ["Tecnologias"]
 termos = [
-  "inteligencia artificial", "ia generativa", "chatgpt", "tecnologia educacional",
+  "inteligencia artificial", "ia", "ias", "ia generativa", "chatgpt", "tecnologia educacional",
   "tecnologias educacionais", "tecnologias digitais", "transformacao digital",
   "plataforma digital", "lms", "canvas", "moodle", "learning analytics",
   "analitica da aprendizagem", "dados educacionais", "ciencia de dados", "edtech", "edtechs",
@@ -241,9 +241,22 @@ termos_criticos = [
 ]
 
 # 4) Prazo/convocação em tema prioritário, vindo de órgão oficial.
+#    (Mais abaixo: [destaque_ia], que não é urgência, mas sobe para ALTA.)
 temas_prioritarios = ["EAD e educação digital", "Regulação", "Avaliação de cursos", "Currículo e PPC"]
 termos_prazo = [
   "prazo", "ultimo dia", "ultimos dias", "encerra", "prorroga", "cronograma",
   "convocacao", "obrigatorio", "obrigatoria",
 ]
 instituicoes_oficiais = ["DOU", "MEC", "CNE", "INEP"]
+
+# ------------------------------------------------- Regra oficial sobre IA --
+# Notícia de MEC, CNE, INEP ou DOU cujo TÍTULO fala de IA e anuncia regra ou norma sobe para ALTA, mesmo com poucos
+# pontos (as notícias do Google vêm só com o título, que sozinho dá no máximo "média"). Pedido do Diego em 12/11/2026,
+# depois de "MEC estabelece diretrizes para uso responsável da IA na educação" ficar como baixa. Não vale para atos de
+# rotina nem para atos internos de outra instituição. Treinamentos, cursos, eventos e parcerias sobre IA ficam como média.
+[destaque_ia]
+termos_assunto = ["ia", "ias", "inteligencia artificial"]
+termos_norma = [
+  "diretriz*", "regra", "regras", "regulament*", "marco", "politica nacional",
+  "norma", "normas", "institui", "estabelece", "cria", "define", "aprova",
+]

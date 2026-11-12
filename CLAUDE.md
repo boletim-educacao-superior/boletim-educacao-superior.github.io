@@ -126,3 +126,8 @@ Ver `BACKLOG.md`. Os avisos por e-mail foram feitos em 26/10/2026; falta o domí
 - A org `certificacao-cinea` bloqueia permissão de escrita *padrão* para workflows; o `permissions:` explícito no YAML funciona.
 - O Google Notícias devolve itens antigos às vezes: descartar os de fora da retenção antes de contar como novos.
 - Atos de rotina do DOU citam "portaria normativa", DCNs etc. na fundamentação: termos críticos não valem para rotina.
+- 12/11/2026: a notícia "MEC estabelece diretrizes para uso responsável da IA na educação" ficou como baixa porque a sigla
+  "IA" não era termo de tema (o Google Notícias só traz o título). Agora "ia"/"ias" estão em *Tecnologias e dados educacionais*
+  e há a regra `[destaque_ia]` em regras.toml: título de MEC/CNE/INEP/DOU com IA + palavra de norma (diretriz, regras,
+  estabelece, institui…) sobe para **alta**; fora de órgão oficial ou sem norma no título fica em média. Toda coleta
+  reclassifica o histórico com as regras atuais.
