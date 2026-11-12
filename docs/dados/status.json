@@ -1,9 +1,9 @@
 {
- "ultima_execucao": "2026-11-12T14:47:23+00:00",
- "novos_nesta_execucao": 5,
+ "ultima_execucao": "2026-11-12T15:57:24+00:00",
+ "novos_nesta_execucao": 4,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5166,
+ "total_no_painel": 5170,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -38,7 +38,7 @@
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 15
+   "itens": 16
   },
   {
    "fonte": "Google Notícias: CAPES",
@@ -50,13 +50,13 @@
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 38
+   "itens": 39
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 61
+   "itens": 60
   },
   {
    "fonte": "Google Notícias: ABED",
@@ -68,13 +68,13 @@
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 4
+   "itens": 5
   },
   {
    "fonte": "Google Notícias: CEE-MG",
    "instituicao": "CEE-MG",
    "ok": true,
-   "itens": 8
+   "itens": 9
   },
   {
    "fonte": "DOU: Educação a distância",
