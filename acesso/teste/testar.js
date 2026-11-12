@@ -546,5 +546,68 @@ cenario("Reserva da coleta agendada (quando o GitHub pula o horário)", (a) => {
   conferir("se o GitHub rodou, não dispara", a.github.pedidos.length === 1);
 });
 
+cenario("Boletim especial (envio avulso de uma notícia)", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  a.api(adm, "salvarMembro", ANA, "Ana Teste", false, false);
+  const ana = primeiroAcesso(a, ANA, "anaradar2026").dados.sessao;
+  const BETO = "beto@pucminas.br", CLEO = "cleo@pucminas.br", DUDA = "duda@pucminas.br", ELI = "eli@pucminas.br";
+  a.api(adm, "salvarMembro", BETO, "Beto Alta", false, false, "", { imediato: ["alta"], semanal: [] });
+  a.api(adm, "salvarMembro", CLEO, "Cléo Semanal", false, false, "", { imediato: [], semanal: ["urgente", "alta"] });
+  a.api(adm, "salvarMembro", DUDA, "Duda Urgente", false, false, "", { imediato: ["urgente"], semanal: [] });
+  a.api(adm, "salvarMembro", ELI, "Eli Nada", false, false);
+  a.api(ana, "salvarAvisos", [], []);
+
+  const ID = "f".repeat(16);
+  const vm = require("vm");
+  vm.runInContext("BOLETINS_ESPECIAIS.length = 0; BOLETINS_ESPECIAIS.push({ id: 'teste-ia', ids: ['" + ID + "'] })", a.g);
+  a.avisos.itens = [{ id: ID, prioridade: "alta", visto_em: "2026-10-20T07:00:00+00:00", data: "2026-10-20", instituicao: "MEC",
+    titulo: "MEC estabelece diretrizes para uso responsável da IA", link: "https://www.gov.br/x", tipo: "Notícia", resumo: "", motivo_urgencia: "" }];
+
+  const antes = a.emails.length;
+  a.g.verificarAvisos();  // primeira conferência: só marca o ponto de partida
+  a.g.verificarAvisos();  // a partir da segunda, o boletim especial sai
+  const envios = () => a.emails.slice(antes).filter((e) => /^Destaque:/.test(e.assunto));
+  conferir("o boletim sai no primeiro ciclo, para quem recebe avisos da prioridade da notícia (na hora ou semanal)",
+    envios().map((e) => e.para).sort().join() === [BETO, CLEO].sort().join(), envios().map((e) => e.para));
+  conferir("não vai para quem só quer urgentes, para quem não escolheu aviso nem para quem desligou",
+    !envios().some((e) => [DUDA, ELI, ANA, DIEGO].includes(e.para)));
+  const e = envios()[0];
+  conferir("assunto e título dizem que é um destaque, com o título da notícia",
+    e && e.assunto === "Destaque: MEC estabelece diretrizes para uso responsável da IA" && /Destaque do Boletim/.test(e.html), e && e.assunto);
+  conferir("texto não diz que foi a última coleta", e && /separou uma notícia/.test(e.corpo) && !/última coleta/.test(e.corpo + e.html));
+  conferir("traz o link da notícia e o de parar de receber", e && /gov\.br\/x/.test(e.html) && /#parar-avisos=/.test(e.html));
+  conferir("fica no registro", a.aba("Registro").some((l) => l[2] === "boletim_especial" && /teste-ia: 2 e-mail/.test(l[3])));
+
+  a.g.verificarAvisos();
+  a.g.verificarAvisos();
+  conferir("nunca repete o mesmo boletim", envios().length === 2, envios().length);
+
+  // cota: só sai o que cabe acima da reserva dos certificados; o resto espera e não repete quem já recebeu
+  vm.runInContext("BOLETINS_ESPECIAIS.push({ id: 'teste-cota', ids: ['" + ID + "'] })", a.g);
+  a.api(adm, "salvarMembro", "fabi@pucminas.br", "Fabi Alta", false, false, "", { imediato: ["alta"], semanal: [] });
+  a.api(adm, "salvarMembro", "gui@pucminas.br", "Gui Alta", false, false, "", { imediato: ["alta"], semanal: [] });
+  const tot = a.emails.length;
+  const cotaAntes = a.g.MailApp.cota;
+  a.g.MailApp.cota = 31;  // só 1 e-mail acima da reserva de 30
+  a.g.verificarAvisos();
+  const cota1 = a.emails.slice(tot).filter((x) => /^Destaque:/.test(x.assunto));
+  conferir("sem cota, manda só o que cabe acima da reserva", cota1.length === 1, cota1.map((x) => x.para));
+  a.g.MailApp.cota = 100;
+  a.g.verificarAvisos();
+  const cota2 = a.emails.slice(tot).filter((x) => /^Destaque:/.test(x.assunto));
+  const paras = cota2.map((x) => x.para);
+  conferir("com cota de volta, termina sem repetir ninguém", new Set(paras).size === paras.length && paras.length === 4, paras);
+  a.g.MailApp.cota = cotaAntes;
+
+  // sem relevância marcada pela equipe: não manda
+  vm.runInContext("BOLETINS_ESPECIAIS.push({ id: 'teste-irr', ids: ['" + ID + "'] })", a.g);
+  a.api(adm, "marcar", ID, "irrelevante", true, "", "MEC estabelece diretrizes", "https://www.gov.br/x");
+  const n = a.emails.length;
+  a.g.verificarAvisos();
+  conferir("notícia marcada como sem relevância não é enviada", a.emails.length === n);
+});
+
+
 console.log(`\n${total - falhas} de ${total} verificações passaram.`);
 process.exit(falhas ? 1 : 0);

@@ -983,8 +983,50 @@ function verificarAvisos() {
       }
       props.setProperty('AVISOS_ULTIMO', maisNovo);
       enviarFila_(ss, dados);
+      enviarBoletinsEspeciais_(ss, dados);
     });
   } catch (e) { console.error(e); }
+}
+
+// ---- Boletim especial (envio avulso) --------------------------------------------------------------------------
+// Manda uma ou mais notícias, fora da rotina de coletas, a quem recebe avisos da prioridade delas (na hora ou resumo
+// semanal). O Apps Script não roda daqui: o envio sai no próximo ciclo de verificarAvisos (até 15 min), uma vez só
+// (cada boletim guarda quem já recebeu em ESPECIAL_<id>), respeitando a reserva de e-mails dos certificados.
+// "ids" são os ids das notícias no avisos.json. Quem não recebe avisos da prioridade da notícia não recebe.
+const BOLETINS_ESPECIAIS = [
+  // 12/11/2026, pedido do Diego: "MEC estabelece diretrizes para uso responsável da IA na educação" (alta, só a cópia do MEC)
+  { id: '2026-11-12-ia', ids: ['f2f8e204c2d45eed'] }
+];
+
+function enviarBoletinsEspeciais_(ss, dados) {
+  const irr = irrelevantes_();
+  BOLETINS_ESPECIAIS.forEach(function (b) {
+    const chave = 'ESPECIAL_' + b.id;
+    let estado;
+    try { estado = JSON.parse(prop_(chave) || '{}'); } catch (e) { estado = {}; }
+    if (estado.completo) return;
+    const itens = dados.itens.filter(function (it) { return b.ids.indexOf(it.id) >= 0 && !irr[it.id]; });
+    if (!itens.length) return;  // ainda não está no avisos.json, ou a equipe marcou "sem relevância"
+    const prioridades = itens.map(function (it) { return it.prioridade; });
+    estado.enviados = estado.enviados || [];
+    const pendentes = lerAba_(ss, 'Equipe').linhas.filter(function (p) {
+      const a = avisosDe_(p), quer = a.imediato.concat(a.semanal);
+      return prioridades.some(function (pr) { return quer.indexOf(pr) >= 0; }) && estado.enviados.indexOf(p.email.toLowerCase()) < 0;
+    });
+    let novos = 0, faltou = false;
+    pendentes.forEach(function (p) {
+      if (faltou) return;
+      if (MailApp.getRemainingDailyQuota() <= RESERVA_CERTIFICADOS) { faltou = true; return; }
+      try {
+        enviarAviso_(p, 'especial', itens, false);
+        estado.enviados.push(p.email.toLowerCase()); novos++;
+        PropertiesService.getScriptProperties().setProperty(chave, JSON.stringify(estado));  // nunca repete, nem se falhar no meio
+      } catch (e) { console.error(e); }
+    });
+    estado.completo = !faltou && novos === pendentes.length;
+    PropertiesService.getScriptProperties().setProperty(chave, JSON.stringify(estado));
+    if (novos) registrar_(ss, 'boletim_especial', b.id + ': ' + novos + ' e-mail(s)' + (estado.completo ? '' : ' (o resto espera a cota de amanhã)'));
+  });
 }
 
 /** Gatilho semanal (segunda, 8h): resumo dos últimos 7 dias, só para quem tem novidade. */
@@ -1282,10 +1324,14 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
   const motivoHtml = p.avisos_por
     ? 'A equipe do CINEA inscreveu você nos avisos do Boletim (' + esc_(escolha) + ').'
     : 'Seus avisos: ' + esc_(escolha) + '. Para mudar, use <b>Meu perfil › Avisos por e-mail</b> no Boletim.';
-  const titulo = semanal ? 'Resumo da semana' : (itens.some(function (it) { return it.prioridade === 'urgente'; }) ? 'Notícia urgente no Boletim' : 'Novidade no Boletim');
-  const intro = semanal
-    ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + '.'
-    : 'A última coleta do Boletim encontrou ' + contagem_(itens) + '.';
+  const especial = tipo === 'especial';  // boletim avulso, fora da rotina de coletas
+  const titulo = especial ? 'Destaque do Boletim' : semanal ? 'Resumo da semana'
+    : (itens.some(function (it) { return it.prioridade === 'urgente'; }) ? 'Notícia urgente no Boletim' : 'Novidade no Boletim');
+  const intro = especial
+    ? (itens.length === 1 ? 'O Boletim separou uma notícia para você acompanhar.' : 'O Boletim separou ' + itens.length + ' notícias para você acompanhar.')
+    : semanal
+      ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + '.'
+      : 'A última coleta do Boletim encontrou ' + contagem_(itens) + '.';
   const ola = 'Olá, ' + p.nome.split(' ')[0] + '!';
 
   const cartoes = itens.map(function (it) {
@@ -1319,7 +1365,7 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
     // Uma notícia só: o título dela vai no assunto (fica claro na caixa de entrada sem abrir).
     assunto: (exemplo ? '[Exemplo] ' : '') + (semanal
       ? 'Resumo da semana (' + inicio + ' a ' + hoje + '): ' + contagem_(itens)
-      : (titulo === 'Notícia urgente no Boletim' ? 'Urgente: ' : 'Novidade: ') +
+      : (especial ? 'Destaque: ' : titulo === 'Notícia urgente no Boletim' ? 'Urgente: ' : 'Novidade: ') +
         (itens.length === 1 ? (itens[0].titulo.length > 90 ? itens[0].titulo.slice(0, 89) + '…' : itens[0].titulo) : contagem_(itens))),
     texto: texto,
     html: emailHtml_({

@@ -49,6 +49,10 @@ visitantes, dispositivos, seções, notícias, instituições e buscas.
   o botão avisa que o GitHub recusou: gere outro e troque o valor.
 - **Reserva da coleta agendada:** o mesmo `GITHUB_TOKEN` permite ao `verificarAvisos` disparar a coleta quando o GitHub
   pula um horário da agenda (passada 1h30 do horário sem coleta nova). Fica no Registro como `coleta_reserva`.
+- **Boletim especial (envio avulso):** `BOLETINS_ESPECIAIS` em Acesso.gs lista envios únicos (`id` + ids das notícias no
+  avisos.json). O `verificarAvisos` manda o e-mail "Destaque: …" a quem recebe avisos da prioridade da notícia (na hora ou
+  semanal), uma vez só (`ESPECIAL_<id>` guarda quem já recebeu), respeitando a reserva de e-mails dos certificados.
+  Sai no próximo ciclo de 15 min depois do `clasp push`. Registro: `boletim_especial`.
 
 ## Primeira configuração (uma vez, logado como cineaned)
 

@@ -39,6 +39,9 @@ const modelos = [
   ["Aviso na hora (urgente)", "Logo depois da coleta, para quem marcou \"Na hora\". Só as notícias novas.", g.emailAviso_(pessoa, "imediato", itens.slice(0, 1), false)],
   ["Aviso na hora (só alta)", "Mesmo aviso quando não há urgente entre as novidades.", g.emailAviso_(pessoa, "imediato", itens.slice(1, 2), false)],
   ["Resumo semanal", "Segundas, 8h, só para quem teve novidade na semana.", g.emailAviso_(pessoa, "semanal", itens, false)],
+  ["Destaque (boletim especial)", "Envio avulso de uma notícia importante, fora da rotina, a quem recebe avisos da prioridade dela.",
+    g.emailAviso_(pessoa, "especial", [{ id: "a4", prioridade: "alta", instituicao: "MEC", data: "2026-11-10", tipo: "Notícia",
+      titulo: "MEC estabelece diretrizes para uso responsável da IA na educação", link: "https://www.gov.br/mec", motivo_urgencia: "", resumo: "" }], false)],
   ["Exemplo (Meu perfil)", "\"Enviar um exemplo para mim\": as notícias mais recentes, com a faixa de exemplo.", g.emailAviso_(pessoa, "imediato", itens.slice(0, 2), true)],
 ];
 
