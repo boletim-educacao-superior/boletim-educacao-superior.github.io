@@ -1,9 +1,9 @@
 {
- "ultima_execucao": "2026-11-19T16:31:26+00:00",
- "novos_nesta_execucao": 2,
+ "ultima_execucao": "2026-11-20T08:47:23+00:00",
+ "novos_nesta_execucao": 23,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5381,
+ "total_no_painel": 5404,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -26,13 +26,13 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 86
+   "itens": 87
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 19
+   "itens": 18
   },
   {
    "fonte": "Google Notícias: CNE",
@@ -56,7 +56,7 @@
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 59
+   "itens": 57
   },
   {
    "fonte": "Google Notícias: ABED",
@@ -92,7 +92,7 @@
    "fonte": "DOU: CNE",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 19
+   "itens": 18
   },
   {
    "fonte": "DOU: ENADE",
@@ -110,7 +110,7 @@
    "fonte": "DOU: Censo da Educação Superior",
    "instituicao": "DOU",
    "ok": true,
-   "itens": 6
+   "itens": 5
   },
   {
    "fonte": "DOU: Carga horária a distância",
