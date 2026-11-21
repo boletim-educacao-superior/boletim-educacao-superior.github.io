@@ -1,6 +1,6 @@
 {
- "ultima_execucao": "2026-11-21T14:47:22+00:00",
- "novos_nesta_execucao": 1,
+ "ultima_execucao": "2026-11-21T15:20:21+00:00",
+ "novos_nesta_execucao": 0,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
  "total_no_painel": 5411,
@@ -56,7 +56,7 @@
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 59
+   "itens": 100
   },
   {
    "fonte": "Google Notícias: ABED",
