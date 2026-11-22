@@ -1,5 +1,5 @@
 {
- "ultima_execucao": "2026-11-22T14:47:29+00:00",
+ "ultima_execucao": "2026-11-22T15:15:41+00:00",
  "novos_nesta_execucao": 0,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
@@ -32,7 +32,7 @@
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 14
+   "itens": 13
   },
   {
    "fonte": "Google Notícias: CNE",
@@ -79,8 +79,8 @@
   {
    "fonte": "DOU: Educação a distância",
    "instituicao": "DOU",
-   "ok": true,
-   "itens": 1
+   "ok": false,
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22educa%C3%A7%C3%A3o+a+dist%C3%A2ncia%22&s=do1&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: SERES (regulação)",
