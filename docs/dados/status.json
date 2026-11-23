@@ -1,6 +1,6 @@
 {
- "ultima_execucao": "2026-11-23T14:47:27+00:00",
- "novos_nesta_execucao": 9,
+ "ultima_execucao": "2026-11-23T19:13:09+00:00",
+ "novos_nesta_execucao": 0,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
  "total_no_painel": 5447,
@@ -25,56 +25,56 @@
   {
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
-   "ok": true,
-   "itens": 77
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Agov.br%2Fmec+-site%3Agov.br%2Fmec%2Fpt-br%2Fcne+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
-   "ok": true,
-   "itens": 7
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Agov.br%2Finep+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
-   "ok": true,
-   "itens": 9
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Agov.br%2Fmec%2Fpt-br%2Fcne+OR+%22Conselho+Nacional+de+Educa%C3%A7%C3%A3o%22+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
-   "ok": true,
-   "itens": 11
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Agov.br%2Fcapes+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
-   "ok": true,
-   "itens": 42
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Asemesp.org.br+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
-   "ok": true,
-   "itens": 58
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Aabmes.org.br+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: ABED",
    "instituicao": "ABED",
-   "ok": true,
-   "itens": 0
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Aabed.org.br+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
-   "ok": true,
-   "itens": 7
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=site%3Afapemig.br+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "Google Notícias: CEE-MG",
    "instituicao": "CEE-MG",
-   "ok": true,
-   "itens": 6
+   "ok": false,
+   "erro": "falha ao baixar https://news.google.com/rss/search?q=%22Conselho+Estadual+de+Educa%C3%A7%C3%A3o%22+%22Minas+Gerais%22+when%3A7d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419: HTTP Error 503: Service Unavailable"
   },
   {
    "fonte": "DOU: Educação a distância",
