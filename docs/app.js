@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261125134154"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261125134807"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -203,13 +203,14 @@ function irPara(hash) {
   const bruto = String(hash || "").replace(/^#/, "") || "inicio";
   const nome = APELIDO_VISAO[bruto] || bruto;
   const admin = nome === "admin" && Acesso.perfil?.admin;
-  const metodo = nome === "como-funciona";
-  $("pagina-radar").hidden = admin || metodo;
+  const metodo = nome === "como-funciona", numeros = nome === "em-numeros";
+  $("pagina-radar").hidden = admin || metodo || numeros;
   $("pagina-admin").hidden = !admin;
   $("pagina-metodo").hidden = !metodo;
-  if (metodo) {
-    marcarMenu("como-funciona");
-    abrirMetodo();
+  $("pagina-numeros").hidden = !numeros;
+  if (metodo || numeros) {
+    marcarMenu(nome);
+    metodo ? abrirMetodo() : abrirNumeros();
     return;
   }
   if (admin) {
@@ -297,6 +298,94 @@ function desenharMetodo(m) {
       negrito("Atos de rotina de outras instituições", "· tiram " + m.rotina.peso + " pontos (por exemplo autorização ou reconhecimento de um curso específico em outra faculdade). Podem ser ocultados no filtro da página inicial.")]),
     detalhes("Palavras de educação básica e administrativas", m.ruido.termos),
     detalhes("Palavras de atos de rotina", m.rotina.termos));
+}
+
+// ------------------------------------------------------------ página "Em números" --
+// Lê dados/numeros.json (o coletor refaz a cada coleta). Só desenha: nenhuma conta de regra mora aqui.
+let numerosCarregado = false;
+function abrirNumeros() {
+  if (numerosCarregado) return;
+  fetch("dados/numeros.json?t=" + Date.now()).then((r) => r.json()).then((n) => {
+    numerosCarregado = true;
+    desenharNumeros(n);
+  }).catch(() => { $("numeros-corpo").textContent = "Não foi possível carregar os números agora. Tente novamente em instantes."; });
+}
+
+function desenharNumeros(n) {
+  const el = (tag, texto, classe) => { const e = document.createElement(tag); if (texto != null) e.textContent = texto; if (classe) e.className = classe; return e; };
+  const fmt = (v) => Number(v).toLocaleString("pt-BR");
+  const raiz = $("numeros-corpo");
+  raiz.replaceChildren();
+  const bloco = (titulo, nota, ...filhos) => {
+    const s = el("section", null, "metodo-bloco");
+    s.append(el("h3", titulo));
+    if (nota) s.append(el("p", nota, "numeros-nota"));
+    s.append(...filhos); raiz.append(s); return s;
+  };
+
+  // Cartões
+  const cartoes = el("div", null, "numeros-cartoes");
+  const cartao = (valor, rotulo, apoio) => { const c = el("div", null, "numeros-cartao"); c.append(el("div", valor, "numeros-valor"), el("div", rotulo, "numeros-rotulo")); if (apoio) c.append(el("div", apoio, "numeros-apoio")); cartoes.append(c); };
+  const sel = n.prioridade.urgente + n.prioridade.alta;
+  cartao(fmt(n.total), "publicações analisadas", "desde " + n.desde.split("-").reverse().join("/"));
+  cartao(fmt(sel), "selecionadas como destaque", "urgentes e de prioridade alta (" + (n.total ? Math.round(sel * 100 / n.total) : 0) + "% do total)");
+  cartao(fmt(n.prioridade.urgente), "urgentes", "pedem atenção rápida");
+  cartao(fmt(n.coleta.analisadas), "lidas na última coleta", n.coleta.fontes_ok + " de " + n.coleta.fontes_total + " fontes responderam");
+  raiz.append(cartoes);
+
+  // Barras horizontais simples: uma cor, valor escrito ao lado.
+  const barras = (linhas, cor) => {
+    const max = Math.max(1, ...linhas.map((l) => l.valor));
+    const g = el("div", null, "numeros-barras");
+    linhas.forEach((l) => {
+      const r = el("div", null, "numeros-linha");
+      const trilho = el("div", null, "numeros-trilho"), b = el("div", null, "numeros-barra");
+      b.style.width = Math.max(l.valor ? 2 : 0, l.valor * 100 / max) + "%";
+      b.style.background = l.cor || cor;
+      trilho.append(b);
+      r.append(el("span", l.nome, "numeros-nome"), trilho, el("span", fmt(l.valor) + (l.extra ? " " + l.extra : ""), "numeros-num"));
+      g.append(r);
+    });
+    return g;
+  };
+
+  bloco("Como as publicações foram classificadas",
+    "Cada publicação recebe uma prioridade. Só urgentes e altas entram no Início e nos avisos por e-mail.",
+    barras([
+      { nome: "Urgente", valor: n.prioridade.urgente, cor: "var(--urgente)" },
+      { nome: "Alta", valor: n.prioridade.alta, cor: "var(--alta)" },
+      { nome: "Média", valor: n.prioridade.media, cor: "var(--media)" },
+      { nome: "Baixa", valor: n.prioridade.baixa, cor: "var(--baixa)" }]));
+
+  // Coluna por dia (últimos 30 dias): publicações novas e, em destaque, as selecionadas
+  const dias = n.por_dia, maxD = Math.max(1, ...dias.map((d) => d.novas));
+  const W = 640, H = 150, base = 128, larg = W / dias.length;
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "numeros-svg"); svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Publicações novas por dia nos últimos 30 dias");
+  const ret = (x, y, w, h, cor, tip) => { const r = document.createElementNS(NS, "rect"); r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", Math.max(0, h)); r.setAttribute("rx", 2); r.setAttribute("fill", cor); const t = document.createElementNS(NS, "title"); t.textContent = tip; r.append(t); svg.append(r); };
+  dias.forEach((d, i) => {
+    const x = i * larg + 2, w = larg - 4, h = d.novas * (base - 12) / maxD, hs = d.selecionadas * (base - 12) / maxD;
+    const tip = d.data.split("-").reverse().join("/") + ": " + d.novas + " novas, " + d.selecionadas + " em destaque";
+    ret(x, base - h, w, h, "var(--media-fundo)", tip);
+    if (d.selecionadas) ret(x, base - hs, w, hs, "var(--alta)", tip);
+    if (i % 5 === 0 || i === dias.length - 1) { const t = document.createElementNS(NS, "text"); t.setAttribute("x", x + w / 2); t.setAttribute("y", 144); t.setAttribute("text-anchor", "middle"); t.setAttribute("class", "numeros-eixo"); t.textContent = d.data.slice(8) + "/" + d.data.slice(5, 7); svg.append(t); }
+  });
+  const leg = el("p", null, "numeros-legenda");
+  leg.append(el("span", "■ ", "leg-alta"), "em destaque (urgente ou alta)   ", el("span", "■ ", "leg-novas"), "demais publicações novas");
+  bloco("Publicações novas por dia", "O que o Boletim encontrou a cada dia nos últimos 30 dias.", svg, leg);
+
+  bloco("Publicações por mês", "Total lido em cada mês e quantas foram selecionadas como destaque.",
+    barras(n.por_mes.map((m) => ({ nome: m.mes, valor: m.total, extra: "(" + fmt(m.destaque) + " em destaque)" })), "var(--marca)"));
+
+  bloco("Destaques por fonte", "Quantas publicações de cada fonte viraram urgente ou alta.",
+    barras(n.por_instituicao.map((i) => ({ nome: i.instituicao, valor: i.destaque, extra: "de " + fmt(i.total) })), "var(--alta)"));
+
+  bloco("Assuntos mais frequentes nos destaques", "Os temas que mais aparecem entre as publicações urgentes e altas (uma publicação pode ter mais de um tema).",
+    barras(n.por_tema.map((t) => ({ nome: t.tema, valor: t.destaque })), "var(--marca)"));
+
+  raiz.append(el("p", "Atualizado em " + new Date(n.gerado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) + ", a cada coleta.", "numeros-nota"));
 }
 
 // Largura de celular: menu rolando para o lado e paginação compacta.

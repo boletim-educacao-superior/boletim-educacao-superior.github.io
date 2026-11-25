@@ -663,3 +663,20 @@ i.seg-publico, .seg-publico { background: var(--barra-publico); }
 .metodo-termos { margin: 4px 0 0; font-size: .9rem; }
 .metodo-termos summary { cursor: pointer; color: var(--marca, #1a5fa8); }
 .metodo-termos p { color: var(--suave, #5b6472); margin: 6px 0 0; }
+
+/* Página "Em números" */
+.numeros-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 14px; }
+.numeros-cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; padding: 14px 18px; }
+.numeros-valor { font-size: 2rem; font-weight: 700; color: var(--marca); line-height: 1.1; }
+.numeros-rotulo { font-weight: 600; margin-top: 2px; }
+.numeros-apoio, .numeros-nota { font-size: .85rem; color: var(--texto-suave); }
+.numeros-barras { display: grid; gap: 6px; }
+.numeros-linha { display: grid; grid-template-columns: minmax(90px, 200px) 1fr minmax(70px, auto); gap: 10px; align-items: center; font-size: .9rem; }
+.numeros-trilho { background: var(--baixa-fundo); border-radius: 4px; height: 14px; overflow: hidden; }
+.numeros-barra { height: 100%; border-radius: 4px; }
+.numeros-num { color: var(--texto-suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.numeros-svg { width: 100%; height: auto; display: block; }
+.numeros-eixo { font-size: 10px; fill: var(--texto-suave); }
+.numeros-legenda { font-size: .85rem; color: var(--texto-suave); margin: 6px 0 0; }
+.leg-alta { color: var(--alta); } .leg-novas { color: var(--media); }
+@media (max-width: 720px) { .numeros-linha { grid-template-columns: 1fr; gap: 2px; } }

@@ -36,6 +36,8 @@ ARQ_STATUS = RAIZ / "docs" / "dados" / "status.json"
 ARQ_AVISOS = RAIZ / "docs" / "dados" / "avisos.json"
 # O que o algoritmo busca e como classifica, em linguagem de dados: a página "Como funciona" lê este arquivo.
 ARQ_METODO = RAIZ / "docs" / "dados" / "metodo.json"
+# Números para a aba "Em números" (totais por prioridade, fonte, mês, tema e dia).
+ARQ_NUMEROS = RAIZ / "docs" / "dados" / "numeros.json"
 DIAS_AVISOS = 35
 # Texto integral dos atos do DOU: usado só na triagem, fica fora de docs/ para o painel carregar leve.
 ARQ_TEXTOS = RAIZ / "dados" / "textos_dou.json"
@@ -182,6 +184,48 @@ def gerar_metodo(config, regras):
     }
 
 
+def gerar_numeros(itens, relatorio, agora, analisadas):
+    """Contagens simples para a aba "Em números". Conta TUDO que foi lido, inclusive as publicações de prioridade baixa."""
+    destaque = lambda it: it["prioridade"] in ("urgente", "alta")
+    prioridade = {p: sum(1 for it in itens if it["prioridade"] == p) for p in ("urgente", "alta", "media", "baixa")}
+    por_inst = {}
+    for it in itens:
+        d = por_inst.setdefault(it["instituicao"], [0, 0])
+        d[0] += 1
+        d[1] += destaque(it)
+    por_mes = {}
+    for it in itens:
+        mes = (it.get("data") or "")[:7]
+        if mes:
+            d = por_mes.setdefault(mes, [0, 0])
+            d[0] += 1
+            d[1] += destaque(it)
+    por_tema = {}
+    for it in itens:
+        if destaque(it):
+            for t in it.get("temas", []):
+                por_tema[t] = por_tema.get(t, 0) + 1
+    hoje = datetime.fromisoformat(agora).astimezone(timezone(timedelta(hours=FUSO_BRASILIA))).date()
+    por_dia = []
+    for i in range(29, -1, -1):
+        dia = (hoje - timedelta(days=i)).isoformat()
+        do_dia = [it for it in itens if (it.get("visto_em") or "")[:10] == dia]
+        por_dia.append({"data": dia, "novas": len(do_dia), "selecionadas": sum(1 for it in do_dia if destaque(it))})
+    nome_mes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+    datas = [it["data"] for it in itens if it.get("data")]
+    return {
+        "gerado_em": agora,
+        "desde": min(datas) if datas else "",
+        "total": len(itens),
+        "prioridade": prioridade,
+        "coleta": {"analisadas": analisadas, "fontes_ok": sum(1 for r in relatorio if r.get("ok")), "fontes_total": len(relatorio)},
+        "por_instituicao": sorted(({"instituicao": k, "total": v[0], "destaque": v[1]} for k, v in por_inst.items()), key=lambda x: -x["destaque"]),
+        "por_mes": [{"mes": f"{nome_mes[int(m[5:7]) - 1]}/{m[2:4]}", "total": v[0], "destaque": v[1]} for m, v in sorted(por_mes.items())],
+        "por_tema": [{"tema": k, "destaque": v} for k, v in sorted(por_tema.items(), key=lambda x: -x[1])],
+        "por_dia": por_dia,
+    }
+
+
 def main(argv):
     config = carregar_toml("fontes.toml")
     regras = carregar_toml("regras.toml")
@@ -261,6 +305,7 @@ def main(argv):
     desde_semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
     analisadas_semana = sum(1 for it in itens if (it.get("visto_em") or "") >= desde_semana)
     ARQ_METODO.write_text(json.dumps(gerar_metodo(config, regras), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    ARQ_NUMEROS.write_text(json.dumps(gerar_numeros(itens, relatorio, agora, analisadas), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     ARQ_AVISOS.write_text(json.dumps({
         "gerado_em": agora,
         "analisadas": analisadas, "fontes": fontes_ok, "analisadas_semana": analisadas_semana,
