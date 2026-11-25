@@ -1,9 +1,10 @@
 {
- "ultima_execucao": "2026-11-25T08:47:22+00:00",
- "novos_nesta_execucao": 21,
+ "ultima_execucao": "2026-11-25T14:47:22+00:00",
+ "novos_nesta_execucao": 16,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5513,
+ "total_no_painel": 5529,
+ "analisadas": 405,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -32,13 +33,13 @@
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 12
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 10
+   "itens": 26
   },
   {
    "fonte": "Google Notícias: CAPES",
@@ -50,7 +51,7 @@
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 93
+   "itens": 85
   },
   {
    "fonte": "Google Notícias: ABMES",
@@ -62,7 +63,7 @@
    "fonte": "Google Notícias: ABED",
    "instituicao": "ABED",
    "ok": true,
-   "itens": 0
+   "itens": 7
   },
   {
    "fonte": "Google Notícias: FAPEMIG",
