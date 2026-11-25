@@ -204,6 +204,8 @@ termos = [
   "recredenciamento d*", "credenciamento de centro universitario", "recurso contra a decisao",
   "cebas", "entidade beneficente", "certificado de entidade beneficente",
   "homologado o parecer cne/ces", "conheceu do recurso", "negou-lhe provimento", "aditamento",
+  # Equivalência de estudos no exterior na educação básica (súmulas de pareceres do CNE): não é ensino superior.
+  "declaracao de validade de documentos", "validade de documentos apresentados",
 ]
 
 # --------------------------------------------------------- Urgência --

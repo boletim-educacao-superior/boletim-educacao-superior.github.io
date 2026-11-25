@@ -34,6 +34,8 @@ ARQ_ITENS = RAIZ / "docs" / "dados" / "itens.json"
 ARQ_STATUS = RAIZ / "docs" / "dados" / "status.json"
 # Só urgente e alta dos últimos dias: o servidor de acesso (Apps Script) lê este arquivo para mandar os avisos por e-mail.
 ARQ_AVISOS = RAIZ / "docs" / "dados" / "avisos.json"
+# O que o algoritmo busca e como classifica, em linguagem de dados: a página "Como funciona" lê este arquivo.
+ARQ_METODO = RAIZ / "docs" / "dados" / "metodo.json"
 DIAS_AVISOS = 35
 # Texto integral dos atos do DOU: usado só na triagem, fica fora de docs/ para o painel carregar leve.
 ARQ_TEXTOS = RAIZ / "dados" / "textos_dou.json"
@@ -51,7 +53,7 @@ def carregar_toml(nome):
 def coletar(config):
     janela = config["geral"].get("janela_google", "7d")
     tarefas = [
-        (f["instituicao"], f"Google Notícias: {f['instituicao']}", lambda f=f: buscar_google_news(f, janela))
+        (f["instituicao"], f"Google Notícias: {f['instituicao']}", lambda f=f: buscar_google_news(f, f.get('janela', janela)))
         for f in config.get("google_news", []) if f.get("ativo", True)
     ] + [
         ("DOU", f"DOU: {f.get('rotulo', f['consulta'])}", lambda f=f: buscar_dou(f))
@@ -165,9 +167,25 @@ def limite_retencao(config):
     return min(por_dias, geral.get("manter_desde", por_dias))
 
 
+def gerar_metodo(config, regras):
+    """Resumo público das fontes e das regras de triagem, tirado direto dos arquivos de configuração (nunca fica defasado)."""
+    fontes = [{"instituicao": f["instituicao"], "nome": f.get("nome", ""), "tipo": "Notícias"} for f in config.get("google_news", []) if f.get("ativo", True)]
+    fontes += [{"instituicao": f["instituicao"], "nome": f.get("rotulo", ""), "tipo": "Diário Oficial"} for f in config.get("dou", []) if f.get("ativo", True)]
+    prio = regras.get("prioridade", {})
+    return {
+        "fontes": fontes,
+        "limiar_alta": prio.get("limiar_alta"), "limiar_media": prio.get("limiar_media"),
+        "temas": [{"nome": t["nome"], "peso": t["peso"], "termos": t["termos"]} for t in regras.get("tema", [])],
+        "ruido": {"peso": regras.get("ruido", {}).get("peso"), "termos": regras.get("ruido", {}).get("termos", [])},
+        "rotina": {"peso": regras.get("rotina", {}).get("peso"), "termos": regras.get("rotina", {}).get("termos", [])},
+        "criticos": regras.get("urgencia", {}).get("termos_criticos", []),
+    }
+
+
 def main(argv):
     config = carregar_toml("fontes.toml")
-    triagem = Triagem(carregar_toml("regras.toml"))
+    regras = carregar_toml("regras.toml")
+    triagem = Triagem(regras)
     agora = datetime.now(timezone.utc).isoformat(timespec="seconds")
     hoje = date.today().isoformat()
     desde = argv[argv.index("--desde") + 1] if "--desde" in argv else None
@@ -237,8 +255,15 @@ def main(argv):
     ids = {it["id"] for it in itens}
     ARQ_TEXTOS.write_text(json.dumps({k: v for k, v in textos.items() if k in ids}, ensure_ascii=False), encoding="utf-8")
     desde_avisos = (datetime.now(timezone.utc) - timedelta(days=DIAS_AVISOS)).isoformat(timespec="seconds")
+    # Quantas publicações o coletor leu nesta coleta (e em quantas fontes), para a nota "como escolhemos" dos e-mails.
+    analisadas = sum(r.get("itens", 0) for r in relatorio)
+    fontes_ok = sum(1 for r in relatorio if r.get("ok"))
+    desde_semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
+    analisadas_semana = sum(1 for it in itens if (it.get("visto_em") or "") >= desde_semana)
+    ARQ_METODO.write_text(json.dumps(gerar_metodo(config, regras), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     ARQ_AVISOS.write_text(json.dumps({
         "gerado_em": agora,
+        "analisadas": analisadas, "fontes": fontes_ok, "analisadas_semana": analisadas_semana,
         "itens": [
             {k: it.get(k) for k in ("id", "instituicao", "titulo", "link", "data", "visto_em", "prioridade", "tipo", "motivo_urgencia")}
             | {"resumo": (it.get("resumo") or "")[:400]}
@@ -251,6 +276,7 @@ def main(argv):
         "urgentes_novos": len(urgentes_novos),
         "alertas_enviados_por": canais,
         "total_no_painel": len(itens),
+        "analisadas": analisadas,
         "agenda": agenda_automatica(),
         "fontes": relatorio,
     }, ensure_ascii=False, indent=1), encoding="utf-8")

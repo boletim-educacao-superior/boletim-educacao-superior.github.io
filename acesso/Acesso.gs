@@ -945,7 +945,26 @@ function lerAvisos_() {
   const r = UrlFetchApp.fetch(ENDERECO_AVISOS + '?t=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
   if (r.getResponseCode() !== 200) throw new Error('avisos.json respondeu ' + r.getResponseCode());
   const d = JSON.parse(r.getContentText());
+  // Quantas publicações o coletor leu (nota "como escolhemos" dos e-mails). Se o coletor ainda não publicou, a nota some.
+  ANALISE_ = (d.analisadas > 0) ? { coleta: Number(d.analisadas), fontes: Number(d.fontes) || 0, semana: Number(d.analisadas_semana) || 0 } : null;
   return { gerado_em: String(d.gerado_em || ''), itens: Array.isArray(d.itens) ? d.itens : [] };
+}
+let ANALISE_ = null;
+
+/** "Como escolhemos": quantas publicações o Boletim leu para chegar a estas notícias, com o link da página que explica. */
+function notaAnalise_(tipo) {
+  if (!ANALISE_ || tipo === 'especial') return { html: '', texto: '' };
+  const num = function (n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+  const f = ANALISE_.fontes ? ' em ' + ANALISE_.fontes + ' fontes' : '';
+  const frase = tipo === 'semanal' && ANALISE_.semana
+    ? 'Nesta semana o Boletim registrou ' + num(ANALISE_.semana) + ' publicações novas' + f + ' e separou as de maior destaque para você.'
+    : 'Nesta coleta o Boletim analisou ' + num(ANALISE_.coleta) + ' publicações' + f + ' e separou as de maior destaque para você.';
+  const link = ENDERECO_PAINEL + '#como-funciona';
+  return {
+    html: '<p style="margin:0 0 14px;font-size:12px;line-height:1.5;color:' + COR_EMAIL.suave + '">' + esc_(frase) +
+      ' <a href="' + esc_(link) + '" style="color:' + COR_EMAIL.suave + '">Como funciona a seleção</a>.</p>',
+    texto: frase + ' Como funciona a seleção: ' + link
+  };
 }
 function irrelevantes_() {
   const m = {};
@@ -1333,6 +1352,7 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
       ? 'De ' + inicio + ' a ' + hoje + ', o Boletim encontrou ' + contagem_(itens) + '.'
       : 'A última coleta do Boletim encontrou ' + contagem_(itens) + '.';
   const ola = 'Olá, ' + p.nome.split(' ')[0] + '!';
+  const analise = notaAnalise_(tipo);
 
   const cartoes = itens.map(function (it) {
     const borda = it.prioridade === 'urgente' ? c.urgente : c.alta;
@@ -1350,6 +1370,7 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
     (exemplo ? notaEmail_('<b>Este é um exemplo</b> do aviso que você escolheu, com as notícias mais recentes. Os avisos de verdade chegam sozinhos.', 'atencao') : '') +
     pEmail_(esc_(ola) + ' ' + esc_(intro)) +
     cartoes +
+    analise.html +
     botaoEmail_('Ver tudo no Boletim', ENDERECO_PAINEL);
 
   const texto = [ola, '', (exemplo ? 'Este é um EXEMPLO do aviso que você escolheu.\n\n' : '') + intro, '']
@@ -1357,6 +1378,7 @@ function emailAviso_(p, tipo, itens, exemplo, desde) {
       return '• [' + ROTULO_PRIORIDADE[it.prioridade] + '] ' + it.instituicao + ' · ' + dataBr_(it.data) + '\n  ' + it.titulo +
         '\n  ' + it.link + '\n';
     }))
+    .concat((analise.texto ? [analise.texto, ''] : []))
     .concat(['Ver tudo no painel: ' + ENDERECO_PAINEL, '',
       motivoTexto,
       'Para parar de receber todos os avisos: ' + cancelar]).join('\n') + rodapeTexto_();

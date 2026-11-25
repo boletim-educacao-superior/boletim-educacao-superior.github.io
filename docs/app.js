@@ -3,7 +3,7 @@
 // Marcações ("sinalizada", "sem relevância" e "lida") são da equipe: ficam no servidor de acesso
 // (acesso.js / acesso/Acesso.gs) e aparecem para todos, com quem marcou. A "última visita" fica no localStorage.
 
-const VERSAO_APP = "20261112130721"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
+const VERSAO_APP = "20261125134154"; // carimbado por ferramentas/versao.py; conferido em acesso.js (conferirVersao)
 
 const CONFIG = {
   // Repositório no GitHub ("usuario/repositorio"). Se vazio, é deduzido do
@@ -203,8 +203,15 @@ function irPara(hash) {
   const bruto = String(hash || "").replace(/^#/, "") || "inicio";
   const nome = APELIDO_VISAO[bruto] || bruto;
   const admin = nome === "admin" && Acesso.perfil?.admin;
-  $("pagina-radar").hidden = admin;
+  const metodo = nome === "como-funciona";
+  $("pagina-radar").hidden = admin || metodo;
   $("pagina-admin").hidden = !admin;
+  $("pagina-metodo").hidden = !metodo;
+  if (metodo) {
+    marcarMenu("como-funciona");
+    abrirMetodo();
+    return;
+  }
   if (admin) {
     marcarMenu(null);
     abrirPaginaAdmin();
@@ -231,6 +238,66 @@ window.addEventListener("hashchange", () => {
   window.scrollTo(0, 0);
   registrarEvento("visao", String(location.hash || "#inicio").slice(1));
 });
+
+// ------------------------------------------------------- página "Como funciona" --
+// Lê dados/metodo.json, que o coletor gera a partir de config/regras.toml e config/fontes.toml.
+let metodoCarregado = false;
+function abrirMetodo() {
+  if (metodoCarregado) return;
+  fetch("dados/metodo.json?t=" + Date.now()).then((r) => r.json()).then((m) => {
+    metodoCarregado = true;
+    desenharMetodo(m);
+  }).catch(() => { $("metodo-corpo").textContent = "Não foi possível carregar esta página agora. Tente novamente em instantes."; });
+}
+
+function desenharMetodo(m) {
+  const el = (tag, texto, classe) => { const e = document.createElement(tag); if (texto != null) e.textContent = texto; if (classe) e.className = classe; return e; };
+  const raiz = $("metodo-corpo");
+  raiz.replaceChildren();
+  const bloco = (titulo, ...filhos) => { const s = el("section", null, "metodo-bloco"); s.append(el("h3", titulo), ...filhos); raiz.append(s); return s; };
+  const lista = (itens) => { const u = el("ul"); itens.forEach((t) => { const li = el("li"); li.append(t); u.append(li); }); return u; };
+  const negrito = (a, b) => { const f = document.createDocumentFragment(); f.append(el("b", a), " " + b); return f; };
+  const detalhes = (titulo, termos) => { const d = el("details", null, "metodo-termos"); d.append(el("summary", titulo), el("p", termos.join(" · "))); return d; };
+
+  bloco("Em resumo",
+    el("p", "O Boletim lê todos os dias as fontes oficiais abaixo, junta tudo num só lugar e dá uma nota a cada publicação, comparando o título, o resumo " +
+      "(e o texto completo, no caso do Diário Oficial) com listas de assuntos de interesse da educação superior. É uma triagem automática por palavras-chave, " +
+      "sem inteligência artificial: serve para ajudar a equipe a não perder o que importa, e não substitui a leitura do ato original."),
+    el("p", "Como toda triagem automática, pode errar para mais ou para menos. A equipe corrige marcando uma notícia como Relevante ou Sem relevância."));
+
+  const porInst = new Map();
+  m.fontes.forEach((f) => { if (!porInst.has(f.instituicao)) porInst.set(f.instituicao, []); porInst.get(f.instituicao).push(f); });
+  const fontes = [...porInst].map(([inst, fs]) => {
+    const noticias = fs.filter((f) => f.tipo === "Notícias");
+    const dou = fs.filter((f) => f.tipo === "Diário Oficial");
+    return negrito(inst, noticias.length ? "· " + (noticias[0].nome || "notícias do site") : "· Diário Oficial da União: " + dou.map((f) => f.nome).join("; "));
+  });
+  bloco("O que é monitorado", lista(fontes),
+    el("p", "As coletas rodam automaticamente duas vezes por dia, e quem é da equipe pode pedir uma atualização na hora pelo botão no alto da página."));
+
+  bloco("Como a prioridade é decidida",
+    lista([
+      negrito("Urgente", "· exige atenção rápida. Vale quando o ato do MEC ou de órgão ligado cita a PUC Minas; quando é um ato normativo (portaria, resolução, parecer, decreto) sobre educação a distância; quando trata de mudança estrutural (marco regulatório, diretrizes curriculares, instrumentos de avaliação, calendário do Enade, carga horária a distância); ou quando traz prazo ou convocação em tema prioritário vindo de órgão oficial."),
+      negrito("Alta", "· o assunto afeta diretamente a educação superior. Chega a nota mínima de " + m.limiar_alta + " pontos somando os temas encontrados. Regras oficiais sobre inteligência artificial (MEC, CNE, INEP ou DOU) também entram aqui."),
+      negrito("Média", "· há relação com o tema, mas o impacto é menor (nota a partir de " + m.limiar_media + "). Aparece nos filtros, não no Início padrão."),
+      negrito("Baixa", "· pouca ou nenhuma relação. Fica guardada, mas não é exibida.")]));
+
+  const temas = el("div", null, "metodo-temas");
+  m.temas.forEach((t) => {
+    const c = el("div", null, "metodo-tema"), p = el("p");
+    p.append(el("b", t.nome), " · vale " + t.peso + " pontos");
+    c.append(p, detalhes("Ver palavras buscadas (" + t.termos.length + ")", t.termos));
+    temas.append(c);
+  });
+  bloco("O que ele procura", el("p", "Cada tema encontrado soma pontos à notícia (uma vez por tema). As palavras são comparadas sem acento e sem diferenciar maiúsculas."), temas);
+
+  bloco("O que rebaixa uma notícia",
+    lista([
+      negrito("Educação básica e assuntos administrativos", "· tiram " + m.ruido.peso + " pontos (por exemplo ensino fundamental, merenda, licitações)."),
+      negrito("Atos de rotina de outras instituições", "· tiram " + m.rotina.peso + " pontos (por exemplo autorização ou reconhecimento de um curso específico em outra faculdade). Podem ser ocultados no filtro da página inicial.")]),
+    detalhes("Palavras de educação básica e administrativas", m.ruido.termos),
+    detalhes("Palavras de atos de rotina", m.rotina.termos));
+}
 
 // Largura de celular: menu rolando para o lado e paginação compacta.
 const CELULAR = matchMedia("(max-width: 720px)");

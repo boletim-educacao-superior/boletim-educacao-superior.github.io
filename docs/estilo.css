@@ -651,3 +651,15 @@ i.seg-publico, .seg-publico { background: var(--barra-publico); }
 }
 /* O rótulo "Prioridade" dentro do campo não estica (no celular, os labels dos filtros ganham flex) */
 .linha-filtros .rotulo-filtro label { flex: none; }
+
+/* Página "Como funciona" */
+.metodo-bloco { background: var(--superficie, #fff); border: 1px solid var(--borda, #e3e6ec); border-radius: 12px; padding: 16px 20px; margin: 0 0 14px; }
+.metodo-bloco h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.metodo-bloco p { margin: 0 0 8px; line-height: 1.55; }
+.metodo-bloco ul { margin: 0 0 8px; padding-left: 1.2rem; line-height: 1.55; }
+.metodo-bloco li { margin-bottom: 6px; }
+.metodo-temas { display: grid; gap: 8px; }
+.metodo-tema p { margin: 0 0 2px; }
+.metodo-termos { margin: 4px 0 0; font-size: .9rem; }
+.metodo-termos summary { cursor: pointer; color: var(--marca, #1a5fa8); }
+.metodo-termos p { color: var(--suave, #5b6472); margin: 6px 0 0; }

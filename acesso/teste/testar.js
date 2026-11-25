@@ -546,6 +546,33 @@ cenario("Reserva da coleta agendada (quando o GitHub pula o horário)", (a) => {
   conferir("se o GitHub rodou, não dispara", a.github.pedidos.length === 1);
 });
 
+cenario("Nota 'como escolhemos' nos avisos", (a) => {
+  a.g.configurar();
+  const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;
+  const BETO = "beto@pucminas.br";
+  a.api(adm, "salvarMembro", BETO, "Beto Alta", false, false, "", { imediato: ["alta"], semanal: ["alta"] });
+  const ID = "e".repeat(16);
+  a.avisos.itens = [{ id: ID, prioridade: "alta", visto_em: "2026-10-20T07:00:00+00:00", data: "2026-10-20", instituicao: "MEC",
+    titulo: "Portaria sobre EAD", link: "https://www.gov.br/y", tipo: "Notícia", resumo: "", motivo_urgencia: "" }];
+  a.avisos.analisadas = 1234; a.avisos.fontes = 17; a.avisos.analisadas_semana = 4321;
+  const antes = a.emails.length;
+  a.g.verificarAvisos();
+  a.avisos.itens.push({ id: "d".repeat(16), prioridade: "alta", visto_em: "2026-10-21T07:00:00+00:00", data: "2026-10-21", instituicao: "CNE",
+    titulo: "Parecer novo", link: "https://www.gov.br/z", tipo: "Notícia", resumo: "", motivo_urgencia: "" });
+  a.g.verificarAvisos();
+  const e = a.emails.slice(antes).find((x) => x.para === BETO);
+  conferir("o aviso diz quantas publicações a coleta analisou, com ponto de milhar e número de fontes",
+    e && /analisou 1\.234 publicações em 17 fontes/.test(e.html) && /analisou 1\.234/.test(e.corpo), e && e.corpo);
+  conferir("tem o link da página Como funciona", e && /#como-funciona/.test(e.html) && /#como-funciona/.test(e.corpo));
+  a.avisos.analisadas = 0;
+  a.avisos.itens.push({ id: "c".repeat(16), prioridade: "alta", visto_em: "2026-10-22T07:00:00+00:00", data: "2026-10-22", instituicao: "INEP",
+    titulo: "Edital novo", link: "https://www.gov.br/w", tipo: "Notícia", resumo: "", motivo_urgencia: "" });
+  const n = a.emails.length;
+  a.g.verificarAvisos();
+  const e2 = a.emails.slice(n).find((x) => x.para === BETO);
+  conferir("sem a contagem do coletor, o aviso sai normal e sem a nota", e2 && !/analisou/.test(e2.html));
+});
+
 cenario("Boletim especial (envio avulso de uma notícia)", (a) => {
   a.g.configurar();
   const adm = primeiroAcesso(a, DIEGO, SENHA).dados.sessao;

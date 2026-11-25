@@ -65,6 +65,8 @@ ativo = true
 instituicao = "ABED"
 nome = "Associação Brasileira de Educação a Distância"
 consulta = "site:abed.org.br"
+# O Google indexa este site com atraso e com poucas notícias: a janela padrão de 7 dias deixava notícias de fora.
+janela = "30d"
 ativo = true
 
 # ------------------------------------------------------------ Minas Gerais --

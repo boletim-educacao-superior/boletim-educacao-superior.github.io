@@ -131,3 +131,8 @@ Ver `BACKLOG.md`. Os avisos por e-mail foram feitos em 26/10/2026; falta o domí
   e há a regra `[destaque_ia]` em regras.toml: título de MEC/CNE/INEP/DOU com IA + palavra de norma (diretriz, regras,
   estabelece, institui…) sobe para **alta**; fora de órgão oficial ou sem norma no título fica em média. Toda coleta
   reclassifica o histórico com as regras atuais.
+
+## Página "Como funciona" e nota nos avisos (25/11/2026)
+- `docs/dados/metodo.json` é gerado a cada coleta a partir de `config/fontes.toml` e `config/regras.toml` (função `gerar_metodo`); a aba "Como funciona" do painel (`abrirMetodo`/`desenharMetodo` em `docs/app.js`) só desenha esse arquivo. Texto fixo da aba (regras de urgência) fica em `desenharMetodo`: revisar se as regras de `[urgencia]` mudarem.
+- `avisos.json` ganhou `analisadas`, `fontes` e `analisadas_semana`; os e-mails de aviso mostram "Nesta coleta o Boletim analisou N publicações em F fontes" (`notaAnalise_` no `Acesso.gs`). Sem esses campos, a nota some.
+- Fontes aceitam `janela` própria (ex.: ABED usa "30d").
