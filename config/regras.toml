@@ -183,6 +183,7 @@ termos = [
   "alfabetizacao", "creche", "pnae", "alimentacao escolar", "merenda", "saeb",
   "enem", "pe-de-meia", "escola em tempo integral", "rede municipal", "rede estadual",
   "eja", "educacao de jovens e adultos", "redes de ensino",
+  "ensino basico", "nas escolas", "bncc", "fundeb", "pnld", "cne/ceb", "camara de educacao basica",
   "extrato de contrato", "extrato de termo aditivo", "aviso de licitacao",
   "pregao eletronico", "registro de diplomas",
 ]
@@ -206,6 +207,8 @@ termos = [
   "homologado o parecer cne/ces", "conheceu do recurso", "negou-lhe provimento", "aditamento",
   # Equivalência de estudos no exterior na educação básica (súmulas de pareceres do CNE): não é ensino superior.
   "declaracao de validade de documentos", "validade de documentos apresentados",
+  # Pareceres da Câmara de Educação Básica do CNE.
+  "camara de educacao basica", "cne/ceb",
 ]
 
 # --------------------------------------------------------- Urgência --

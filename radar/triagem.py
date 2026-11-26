@@ -98,7 +98,7 @@ class Triagem:
             motivo = "Prazo ou convocação em tema prioritário"
 
         # Regra oficial sobre IA: título com IA + palavra de norma, vinda de órgão oficial, sobe para alta.
-        destaque_ia = (oficial and not rotina and _palavra(self.re_destaque_assunto, titulo)
+        destaque_ia = (oficial and not rotina and not _palavra(self.re_ruido, titulo) and _palavra(self.re_destaque_assunto, titulo)
                        and _palavra(self.re_destaque_norma, titulo))
 
         if motivo:
