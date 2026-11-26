@@ -1,10 +1,10 @@
 {
- "ultima_execucao": "2026-11-26T08:47:22+00:00",
- "novos_nesta_execucao": 20,
+ "ultima_execucao": "2026-11-26T14:47:20+00:00",
+ "novos_nesta_execucao": 8,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5551,
- "analisadas": 277,
+ "total_no_painel": 5559,
+ "analisadas": 340,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -27,37 +27,37 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 83
+   "itens": 100
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 10
+   "itens": 9
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 12
+   "itens": 13
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 12
+   "itens": 11
   },
   {
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 85
+   "itens": 82
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 50
+   "itens": 100
   },
   {
    "fonte": "Google Notícias: ABED",
@@ -99,7 +99,7 @@
    "fonte": "DOU: ENADE",
    "instituicao": "DOU",
    "ok": false,
-   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Exame+Nacional+de+Desempenho+dos+Estudantes%22&s=todos&sortType=1&exactDate=semana: The read operation timed out"
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Exame+Nacional+de+Desempenho+dos+Estudantes%22&s=todos&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: DCNs",
@@ -117,13 +117,13 @@
    "fonte": "DOU: Carga horária a distância",
    "instituicao": "DOU",
    "ok": false,
-   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22carga+hor%C3%A1ria+a+dist%C3%A2ncia%22&s=do1&sortType=1&exactDate=semana: The read operation timed out"
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22carga+hor%C3%A1ria+a+dist%C3%A2ncia%22&s=do1&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: PUC Minas citada",
    "instituicao": "DOU",
    "ok": false,
-   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Pontif%C3%ADcia+Universidade+Cat%C3%B3lica+de+Minas+Gerais%22&s=todos&sortType=1&exactDate=semana: The read operation timed out"
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Pontif%C3%ADcia+Universidade+Cat%C3%B3lica+de+Minas+Gerais%22&s=todos&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   }
  ]
 }
