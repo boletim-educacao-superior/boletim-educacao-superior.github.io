@@ -1,10 +1,10 @@
 {
- "ultima_execucao": "2026-11-27T14:47:25+00:00",
- "novos_nesta_execucao": 9,
+ "ultima_execucao": "2026-11-27T17:26:21+00:00",
+ "novos_nesta_execucao": 6,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5599,
- "analisadas": 262,
+ "total_no_painel": 5605,
+ "analisadas": 303,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -27,19 +27,19 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 85
+   "itens": 84
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 13
+   "itens": 12
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 15
+   "itens": 14
   },
   {
    "fonte": "Google Notícias: CAPES",
@@ -51,13 +51,13 @@
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 49
+   "itens": 53
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 59
+   "itens": 100
   },
   {
    "fonte": "Google Notícias: ABED",
@@ -69,7 +69,7 @@
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 8
+   "itens": 7
   },
   {
    "fonte": "Google Notícias: CEE-MG",
@@ -105,7 +105,7 @@
    "fonte": "DOU: DCNs",
    "instituicao": "DOU",
    "ok": false,
-   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Diretrizes+Curriculares+Nacionais%22&s=do1&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Diretrizes+Curriculares+Nacionais%22&s=do1&sortType=1&exactDate=semana: The read operation timed out"
   },
   {
    "fonte": "DOU: Censo da Educação Superior",
