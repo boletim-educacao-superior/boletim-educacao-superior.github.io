@@ -1,10 +1,10 @@
 {
- "ultima_execucao": "2026-11-27T08:47:23+00:00",
- "novos_nesta_execucao": 26,
+ "ultima_execucao": "2026-11-27T14:47:25+00:00",
+ "novos_nesta_execucao": 9,
  "urgentes_novos": 0,
  "alertas_enviados_por": [],
- "total_no_painel": 5590,
- "analisadas": 302,
+ "total_no_painel": 5599,
+ "analisadas": 262,
  "agenda": {
   "descricao": "Todos os dias, às 4h17 e 10h17",
   "horas": [
@@ -27,49 +27,49 @@
    "fonte": "Google Notícias: MEC",
    "instituicao": "MEC",
    "ok": true,
-   "itens": 88
+   "itens": 85
   },
   {
    "fonte": "Google Notícias: INEP",
    "instituicao": "INEP",
    "ok": true,
-   "itens": 10
+   "itens": 13
   },
   {
    "fonte": "Google Notícias: CNE",
    "instituicao": "CNE",
    "ok": true,
-   "itens": 14
+   "itens": 15
   },
   {
    "fonte": "Google Notícias: CAPES",
    "instituicao": "CAPES",
    "ok": true,
-   "itens": 16
+   "itens": 15
   },
   {
    "fonte": "Google Notícias: SEMESP",
    "instituicao": "SEMESP",
    "ok": true,
-   "itens": 50
+   "itens": 49
   },
   {
    "fonte": "Google Notícias: ABMES",
    "instituicao": "ABMES",
    "ok": true,
-   "itens": 100
+   "itens": 59
   },
   {
    "fonte": "Google Notícias: ABED",
    "instituicao": "ABED",
    "ok": true,
-   "itens": 7
+   "itens": 8
   },
   {
    "fonte": "Google Notícias: FAPEMIG",
    "instituicao": "FAPEMIG",
    "ok": true,
-   "itens": 7
+   "itens": 8
   },
   {
    "fonte": "Google Notícias: CEE-MG",
@@ -111,7 +111,7 @@
    "fonte": "DOU: Censo da Educação Superior",
    "instituicao": "DOU",
    "ok": false,
-   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Censo+da+Educa%C3%A7%C3%A3o+Superior%22&s=todos&sortType=1&exactDate=semana: The read operation timed out"
+   "erro": "falha ao baixar https://www.in.gov.br/consulta/-/buscar/dou?q=%22Censo+da+Educa%C3%A7%C3%A3o+Superior%22&s=todos&sortType=1&exactDate=semana: HTTP Error 502: Bad Gateway"
   },
   {
    "fonte": "DOU: Carga horária a distância",
